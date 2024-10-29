@@ -753,6 +753,14 @@ class ComfyApi extends EventTarget {
   async getFolderPaths(): Promise<Record<string, string[]>> {
     return (await axios.get(this.internalURL('/folder_paths'))).data
   }
+
+  /**
+   * Clear user input folder
+   * @returns { Promise<void> }
+   */
+  async clearInputs() {
+    return this.fetchApi(`/inputs`, { method: 'DELETE' })
+  }
 }
 
 export const api = new ComfyApi()

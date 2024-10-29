@@ -100,6 +100,7 @@ app.registerExtension({
         } else {
           w = node.size[0]
           h = node.size[1]
+          // @ts-expect-error
           const titleMode = node.constructor.title_mode
           if (
             titleMode !== LiteGraph.TRANSPARENT_TITLE &&

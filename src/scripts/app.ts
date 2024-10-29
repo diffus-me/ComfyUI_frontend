@@ -1426,6 +1426,7 @@ export class ComfyApp {
 
       if (color) {
         const shape =
+          // @ts-expect-error
           node._shape || node.constructor.shape || LiteGraph.ROUND_SHAPE
         ctx.lineWidth = lineWidth
         ctx.globalAlpha = 0.8
@@ -2683,7 +2684,7 @@ export class ComfyApp {
           }
 
           this.canvas.draw(true, true)
-          await this.ui.queue.update()
+          // await this.ui.queue.update()
         }
       }
     } finally {

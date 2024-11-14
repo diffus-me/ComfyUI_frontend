@@ -11,6 +11,8 @@ import ExecutionErrorDialogContent from '@/components/dialog/content/ExecutionEr
 import TemplateWorkflowsContent from '@/components/templates/TemplateWorkflowsContent.vue'
 import PromptDialogContent from '@/components/dialog/content/PromptDialogContent.vue'
 import NeedUpgradeDialogContent from '@/components/dialog/content/NeedUpgradeDialogContent.vue'
+import MonitorErrorDialogContent from '@/components/dialog/content/MonitorErrorDialogContent.vue'
+
 import { i18n } from '@/i18n'
 import type { MissingNodeType } from '@/types/comfy'
 
@@ -98,5 +100,18 @@ export async function showTierNotAllowedDialog() {
   useDialogStore().showDialog({
     title: 'Upgrade To Use ComfyUI',
     component: NeedUpgradeDialogContent
+  })
+}
+export async function showMonitorErrorDialog(
+  upgradeReason: string,
+  needUpgrade: boolean
+) {
+  useDialogStore().showDialog({
+    title: 'Prompt Error',
+    component: MonitorErrorDialogContent,
+    props: {
+      upgradeReason: upgradeReason,
+      needUpgrade: needUpgrade
+    }
   })
 }

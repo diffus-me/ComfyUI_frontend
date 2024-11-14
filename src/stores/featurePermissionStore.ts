@@ -1,16 +1,23 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { ComfyWorkflow } from '@/scripts/workflows'
-import { buildTree } from '@/utils/treeUtil'
-import { api } from '@/scripts/api'
+
+let _upgradableTiers = ['Basic', 'Plus', 'Pro', 'Api']
 
 export interface Feature {
   name: string
   allowed_tiers: string[]
 }
 
+export interface Limit {
+  tier: string
+  max_sampling_steps: number
+  max_controlnet_units: number
+  max_concurrent_tasks: number
+}
+
 export interface FeaturePermission {
   features: Feature[]
+  limits: Limit[]
 }
 
 export const useFeaturePermissionStore = defineStore(
@@ -27,10 +34,22 @@ export const useFeaturePermissionStore = defineStore(
         ?.allowed_tiers
     })
 
+    const limits = computed(() => {
+      return featurePermission.value?.limits
+    })
+
+    const upgradableLimits = computed(() => {
+      return _upgradableTiers.map((tier) =>
+        featurePermission.value?.limits.find((l) => l.tier === tier)
+      )
+    })
+
     return {
       featurePermission,
       setFeaturePermission,
-      allowedTiers
+      allowedTiers,
+      limits,
+      upgradableLimits
     }
   }
 )

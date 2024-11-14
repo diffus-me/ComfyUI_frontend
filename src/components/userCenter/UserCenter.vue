@@ -66,13 +66,12 @@ import Button from 'primevue/button'
 import Menu from 'primevue/menu'
 import Divider from 'primevue/divider'
 import { api } from '@/scripts/api'
-import { ComfyDialog } from '@/scripts/ui'
 import Toast from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
-import { useOrderInfoStore } from '@/stores/orderInfo'
-import { useFeaturePermissionStore } from '@/stores/featurePerssionStore'
+import { useOrderInfoStore } from '@/stores/orderInfoStore'
+import { useFeaturePermissionStore } from '@/stores/featurePermissionStore'
+import { showMonitorErrorDialog } from '@/services/dialogService'
 
-const dialog = new ComfyDialog()
 const toast = useToast()
 const menu = ref()
 const orderInfoStore = useOrderInfoStore()
@@ -156,7 +155,7 @@ const fetchFeaturePermission = () => {
 
 const checkUserOrderInfo = () => {
   fetchUserOrderInfo()
-  setTimeout(checkUserOrderInfo, 5 * 60 * 1000)
+  setTimeout(checkUserOrderInfo, 30 * 1000)
 }
 
 const redirectToUserCenter = () => {
@@ -235,7 +234,7 @@ const onInputCleared = async ({ detail }: CustomEvent) => {
 }
 
 const onMonitorError = async ({ detail }: CustomEvent) => {
-  dialog.show(detail.message)
+  showMonitorErrorDialog(detail.message.reason, detail.message.need_upgrade)
 }
 
 onMounted(() => {

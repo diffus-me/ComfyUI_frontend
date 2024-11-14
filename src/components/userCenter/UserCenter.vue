@@ -69,10 +69,14 @@ import { api } from '@/scripts/api'
 import { ComfyDialog } from '@/scripts/ui'
 import Toast from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
+import { useOrderInfoStore } from '@/stores/orderInfo'
+import { useFeaturePermissionStore } from '@/stores/featurePerssionStore'
 
 const dialog = new ComfyDialog()
 const toast = useToast()
 const menu = ref()
+const orderInfoStore = useOrderInfoStore()
+const featurePermissionStore = useFeaturePermissionStore()
 
 const userAvatar = ref('')
 const userName = ref('')
@@ -96,7 +100,7 @@ const getAvatar = (url: string, name: string, callback: CallableFunction) => {
   img.src = url
 }
 
-const updateUserInfo = () => {
+const fetchUserOrderInfo = () => {
   const url = '/api/order_info'
   fetch(url, {
     method: 'GET',
@@ -110,15 +114,49 @@ const updateUserInfo = () => {
       throw new Error('Network response was not ok')
     })
     .then((orderInfo) => {
-      userEmail.value = orderInfo.email
-      userName.value = orderInfo.name
-      getAvatar(orderInfo.picture, orderInfo.name, (url: string) => {
-        userAvatar.value = url
-      })
+      orderInfoStore.setOrderInfo(orderInfo)
+
+      if (!userEmail.value) {
+        userEmail.value = orderInfo.email
+      }
+      if (!userName.value) {
+        userName.value = orderInfo.name
+      }
+      if (!userAvatar.value) {
+        getAvatar(orderInfo.picture, orderInfo.name, (url: string) => {
+          userAvatar.value = url
+        })
+      }
     })
     .catch((error) => {
       console.warn(error)
     })
+}
+
+const fetchFeaturePermission = () => {
+  const url = '/api/config/feature_permissions'
+  fetch(url, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-cache'
+  })
+    .then((response) => {
+      if (response.ok) {
+        return response.json()
+      }
+      throw new Error('Network response was not ok')
+    })
+    .then((featurePermission) => {
+      featurePermissionStore.setFeaturePermission(featurePermission)
+    })
+    .catch((error) => {
+      console.warn(error)
+    })
+}
+
+const checkUserOrderInfo = () => {
+  fetchUserOrderInfo()
+  setTimeout(checkUserOrderInfo, 5 * 60 * 1000)
 }
 
 const redirectToUserCenter = () => {
@@ -205,7 +243,9 @@ onMounted(() => {
   api.addEventListener('finished', onPromptFinished)
   api.addEventListener('input_cleared', onInputCleared)
   api.addEventListener('monitor_error', onMonitorError)
-  updateUserInfo()
+
+  fetchFeaturePermission()
+  checkUserOrderInfo()
 })
 
 onUnmounted(() => {
@@ -232,6 +272,7 @@ onUnmounted(() => {
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 1000; /* Ensure it's above other elements */
 }
+
 .p-menu-item-link {
   cursor: pointer;
   display: flex;
@@ -246,13 +287,19 @@ onUnmounted(() => {
   outline: 0 none;
 }
 .button-icon {
-  width: 50px; /* Adjust size as needed */
+  width: 50px;
   height: 50px;
-  margin-right: 8px; /* Space between image and text */
+  margin-right: 8px;
   vertical-align: middle;
   border-radius: 50%;
 }
+
 .p-divider {
   margin: 2px 0; /* Adjust spacing as needed */
+}
+
+.p-menu-item-link img {
+  width: 100%;
+  height: 100%;
 }
 </style>

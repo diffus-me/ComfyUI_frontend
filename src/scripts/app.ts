@@ -44,7 +44,8 @@ import _ from 'lodash'
 import {
   showExecutionErrorDialog,
   showLoadWorkflowWarning,
-  showMissingModelsWarning
+  showMissingModelsWarning,
+  showTierNotAllowedDialog
 } from '@/services/dialogService'
 import { useSettingStore } from '@/stores/settingStore'
 import { useToastStore } from '@/stores/toastStore'
@@ -56,6 +57,8 @@ import { IWidget } from '@comfyorg/litegraph'
 import { useExtensionStore } from '@/stores/extensionStore'
 import { KeyComboImpl, useKeybindingStore } from '@/stores/keybindingStore'
 import { useCommandStore } from '@/stores/commandStore'
+import { useOrderInfoStore } from '@/stores/orderInfo'
+import { useFeaturePermissionStore } from '@/stores/featurePerssionStore'
 import { shallowReactive } from 'vue'
 
 export const ANIM_PREVIEW_WIDGET = '$$comfy_animation_preview'
@@ -2627,8 +2630,25 @@ export class ComfyApp {
     return '(unknown error)'
   }
 
+  #checkTier() {
+    const userStore = useOrderInfoStore()
+    const featurePermissionStore = useFeaturePermissionStore()
+    const userTier = userStore.userTier
+    const allowedTiers = featurePermissionStore.allowedTiers
+    if (!allowedTiers.includes(userTier)) {
+      showTierNotAllowedDialog()
+      return false
+    }
+    return true
+  }
+
   async queuePrompt(number, batchCount = 1) {
     this.#queueItems.push({ number, batchCount })
+
+    // Check if the user tier is allowed to generate
+    if (!this.#checkTier()) {
+      return false
+    }
 
     // Only have one action process the items so each one gets a unique seed correctly
     if (this.#processingQueue) {

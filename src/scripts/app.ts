@@ -1928,6 +1928,8 @@ export class ComfyApp {
     this.#addWidgetLinkHandling()
 
     await this.#invokeExtensionsAsync('setup')
+
+    api.dispatchEvent(new CustomEvent('setup_finished', { detail: null }))
   }
 
   resizeCanvas() {
@@ -2711,7 +2713,7 @@ export class ComfyApp {
       this.#processingQueue = false
     }
     api.dispatchEvent(
-      new CustomEvent('promptQueued', { detail: { number, batchCount } })
+      new CustomEvent('prompt_queued', { detail: { number, batchCount } })
     )
     return !this.lastNodeErrors
   }

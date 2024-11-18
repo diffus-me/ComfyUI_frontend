@@ -153,11 +153,6 @@ const fetchFeaturePermission = () => {
     })
 }
 
-const checkUserOrderInfo = () => {
-  fetchUserOrderInfo()
-  setTimeout(checkUserOrderInfo, 30 * 1000)
-}
-
 const redirectToUserCenter = () => {
   window.location.href = '/user'
 }
@@ -173,6 +168,10 @@ const cancelSubscription = () => {
 const logout = () => {
   document.cookie = 'auth-session=;'
   window.location.href = '/api/logout'
+}
+
+const redirectToUpgrade = () => {
+  window.location.href = '/pricing_table'
 }
 
 const items = ref([
@@ -237,21 +236,34 @@ const onMonitorError = async ({ detail }: CustomEvent) => {
   showMonitorErrorDialog(detail.message.reason, detail.message.need_upgrade)
 }
 
+const onSetupFinished = async ({ detail }: CustomEvent) => {
+  setTimeout(() => {
+    const userTier = orderInfoStore.userTier
+    const allowedTiers = featurePermissionStore.allowedTiers
+    if (!allowedTiers.includes(userTier)) {
+      redirectToUpgrade()
+    }
+  }, 10 * 1000)
+}
+
 onMounted(() => {
-  api.addEventListener('promptQueued', onPromptQueued)
+  api.addEventListener('prompt_queued', onPromptQueued)
   api.addEventListener('finished', onPromptFinished)
   api.addEventListener('input_cleared', onInputCleared)
   api.addEventListener('monitor_error', onMonitorError)
+  api.addEventListener('setup_finished', onSetupFinished)
 
   fetchFeaturePermission()
-  checkUserOrderInfo()
+  fetchUserOrderInfo()
+  setInterval(fetchUserOrderInfo, 30 * 1000)
 })
 
 onUnmounted(() => {
-  api.removeEventListener('promptQueued', onPromptQueued)
+  api.removeEventListener('prompt_queued', onPromptQueued)
   api.removeEventListener('finished', onPromptFinished)
   api.removeEventListener('input_cleared', onInputCleared)
   api.removeEventListener('monitor_error', onMonitorError)
+  api.removeEventListener('setup_finished', onSetupFinished)
 })
 </script>
 
@@ -285,6 +297,7 @@ onUnmounted(() => {
   user-select: none;
   outline: 0 none;
 }
+
 .button-icon {
   width: 50px;
   height: 50px;

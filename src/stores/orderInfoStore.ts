@@ -1,8 +1,10 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { ComfyWorkflow } from '@/scripts/workflows'
-import { buildTree } from '@/utils/treeUtil'
-import { api } from '@/scripts/api'
+
+export interface BundleInfo {
+  name: string
+  source: string
+}
 
 export interface OrderInfo {
   user_id: string
@@ -11,6 +13,7 @@ export interface OrderInfo {
   picture: string
   email: string
   tier: string
+  bundles: BundleInfo[]
 }
 export const useOrderInfoStore = defineStore('orderInfo', () => {
   const orderInfo = ref<OrderInfo | null>(null)
@@ -23,9 +26,14 @@ export const useOrderInfoStore = defineStore('orderInfo', () => {
     return orderInfo.value?.tier
   })
 
+  const comfyUIBundle = computed(() => {
+    return orderInfo.value?.bundles.find((b) => b.name === 'ComfyUI')
+  })
+
   return {
     orderInfo,
     setOrderInfo,
-    userTier
+    userTier,
+    comfyUIBundle
   }
 })

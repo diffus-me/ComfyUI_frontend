@@ -22,7 +22,12 @@
     >
       <img :src="userAvatar" />
     </Button>
-    <Menu ref="menu" id="comfy-user-center-menu" :model="items" :popup="true">
+    <Menu
+      ref="menu"
+      id="comfy-user-center-menu"
+      :model="modelItems"
+      :popup="true"
+    >
       <template #start>
         <div>
           <ul class="list-none p-0 m-0 flex flex-col">
@@ -70,7 +75,11 @@ import Toast from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
 import { useOrderInfoStore } from '@/stores/orderInfoStore'
 import { useFeaturePermissionStore } from '@/stores/featurePermissionStore'
-import { showMonitorErrorDialog } from '@/services/dialogService'
+import {
+  showMonitorErrorDialog,
+  showComfyUIBundleDialog
+} from '@/services/dialogService'
+import { getStorageValue, setStorageValue } from '@/scripts/utils'
 
 const toast = useToast()
 const menu = ref()
@@ -174,7 +183,7 @@ const redirectToUpgrade = () => {
   window.location.href = '/pricing_table'
 }
 
-const items = ref([
+const modelItems = ref([
   {
     label: 'User Center',
     icon: 'pi pi-user',
@@ -198,7 +207,6 @@ const items = ref([
 ])
 
 const onPromptQueued = async ({ detail }: CustomEvent) => {
-  console.log('user center: onPromptQueued', detail)
   toast.add({
     severity: 'info',
     summary: 'Updated',
@@ -236,7 +244,31 @@ const onMonitorError = async ({ detail }: CustomEvent) => {
   showMonitorErrorDialog(detail.message.reason, detail.message.need_upgrade)
 }
 
+function showComfyUIBundleDialogIfNeeded() {
+  const bundlePromptStatusKey = 'Diffus.BundlePromptStatus'
+  const bundlePromptStatus = getStorageValue(bundlePromptStatusKey)
+  if (bundlePromptStatus) {
+    const lastPromptedAt = new Date(Date.parse(bundlePromptStatus))
+    if (new Date().getMonth() === lastPromptedAt.getMonth()) {
+      return
+    }
+  }
+
+  const now = new Date()
+  setStorageValue(bundlePromptStatusKey, now.toISOString())
+
+  showComfyUIBundleDialog()
+}
+
+function checkComfyUIBundle() {
+  const bundle = orderInfoStore.comfyUIBundle
+  if (bundle && bundle.source === 'reward') {
+    showComfyUIBundleDialogIfNeeded()
+  }
+}
+
 const onSetupFinished = async ({ detail }: CustomEvent) => {
+  checkComfyUIBundle()
   setTimeout(() => {
     const userTier = orderInfoStore.userTier
     const allowedTiers = featurePermissionStore.allowedTiers

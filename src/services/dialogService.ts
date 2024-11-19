@@ -12,6 +12,7 @@ import TemplateWorkflowsContent from '@/components/templates/TemplateWorkflowsCo
 import PromptDialogContent from '@/components/dialog/content/PromptDialogContent.vue'
 import NeedUpgradeDialogContent from '@/components/dialog/content/NeedUpgradeDialogContent.vue'
 import MonitorErrorDialogContent from '@/components/dialog/content/MonitorErrorDialogContent.vue'
+import ComfyUIBundleDialogContent from '@/components/dialog/content/ComfyUIBundleDialogContent.vue'
 
 import { i18n } from '@/i18n'
 import type { MissingNodeType } from '@/types/comfy'
@@ -102,6 +103,7 @@ export async function showTierNotAllowedDialog() {
     component: NeedUpgradeDialogContent
   })
 }
+
 export async function showMonitorErrorDialog(
   upgradeReason: string,
   needUpgrade: boolean
@@ -113,5 +115,12 @@ export async function showMonitorErrorDialog(
       upgradeReason: upgradeReason,
       needUpgrade: needUpgrade
     }
+  })
+}
+
+export async function showComfyUIBundleDialog() {
+  useDialogStore().showDialog({
+    title: 'You Have a Reward ComfyUI Bundle',
+    component: ComfyUIBundleDialogContent
   })
 }

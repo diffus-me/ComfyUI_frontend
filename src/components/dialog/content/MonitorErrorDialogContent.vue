@@ -19,8 +19,6 @@ import { useDialogStore } from '@/stores/dialogStore'
 import { useOrderInfoStore } from '@/stores/orderInfoStore'
 import { useFeaturePermissionStore } from '@/stores/featurePermissionStore'
 
-// const ADDONS_URL = '/pricing_table/addons'
-const SUBSCRIPTION_URL = '/pricing_table'
 const AFFILIATE_PROGRAM =
   '<a href="/affiliate/everyone" target="_blank" style="text-wrap: nowrap">Affiliate Program</a>'
 const DISCORD_SUPPORT =
@@ -40,8 +38,6 @@ function _joinWords(words, conjunction = 'and') {
 }
 
 function makeNsfwContentMessage() {
-  const url = SUBSCRIPTION_URL
-
   const ALLOWED_TIERS = ['Basic', 'Plus', 'Pro', 'Api']
   const allowed_tiers_message = _joinWords(ALLOWED_TIERS, 'or')
 
@@ -134,7 +130,7 @@ const confirmButtonText = computed(() => {
 })
 
 function confirmUrl() {
-  return SUBSCRIPTION_URL
+  return orderInfoStore.pricingTableUrl
 }
 
 const onConfirm = () => {

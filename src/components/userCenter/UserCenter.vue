@@ -180,7 +180,7 @@ const logout = () => {
 }
 
 const redirectToUpgrade = () => {
-  window.location.href = '/pricing_table'
+  window.location.href = orderInfoStore.pricingTableUrl
 }
 
 const modelItems = ref([

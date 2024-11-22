@@ -30,10 +30,15 @@ export const useOrderInfoStore = defineStore('orderInfo', () => {
     return orderInfo.value?.bundles.find((b) => b.name === 'ComfyUI')
   })
 
+  const pricingTableUrl = computed(() => {
+    return '/app/pricing-table'
+  })
+
   return {
     orderInfo,
     setOrderInfo,
     userTier,
-    comfyUIBundle
+    comfyUIBundle,
+    pricingTableUrl
   }
 })

@@ -19,16 +19,15 @@ import { useOrderInfoStore } from '@/stores/orderInfoStore'
 import { useFeaturePermissionStore } from '@/stores/featurePermissionStore'
 import { computed } from 'vue'
 
-const SUBSCRIPTION_URL = '/pricing_table'
+const orderInfoStore = useOrderInfoStore()
 
 const onConfirm = () => {
-  window.open(SUBSCRIPTION_URL, '_blank')
+  window.open(orderInfoStore.pricingTableUrl, '_blank')
   useDialogStore().closeDialog()
 }
 
 const message = computed(() => {
-  const userStore = useOrderInfoStore()
-  const userTier = userStore.userTier
+  const userTier = orderInfoStore.userTier
   const featurePermissionStore = useFeaturePermissionStore()
   const allowedTiers = featurePermissionStore.allowedTiers
   const allowedTiersMessage = allowedTiers.join(', ')

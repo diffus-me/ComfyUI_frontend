@@ -120,7 +120,7 @@ export async function showMonitorErrorDialog(
 
 export async function showComfyUIBundleDialog() {
   useDialogStore().showDialog({
-    title: 'You Have a Reward ComfyUI Bundle',
+    title: "🎉 Congratulations! You've Received the ComfyUI Bundle for free!",
     component: ComfyUIBundleDialogContent
   })
 }

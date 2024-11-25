@@ -1,11 +1,11 @@
 <template>
   <div class="flex flex-col gap-2 pt-8">
     <FloatLabel>
-      {{ message }}
+      <span v-html="message"></span>
     </FloatLabel>
     <Divider layout="horizontal" />
     <div class="flex justify-end gap-4">
-      <Button @click="onConfirm">Upgrade Now</Button>
+      <Button @click="onConfirm">{{ confirmButtionTitle }}</Button>
     </div>
   </div>
 </template>
@@ -22,16 +22,42 @@ import { computed } from 'vue'
 const orderInfoStore = useOrderInfoStore()
 
 const onConfirm = () => {
-  window.open(orderInfoStore.pricingTableUrl, '_blank')
+  let pricingTableUrl = orderInfoStore.pricingTableUrl
+  if (orderInfoStore.needUpgrade) {
+    pricingTableUrl = orderInfoStore.pricingTableUrl
+  } else if (orderInfoStore.missBundle) {
+    pricingTableUrl = orderInfoStore.pricingTableAddOnUrl
+  }
+
+  window.open(pricingTableUrl, '_blank')
   useDialogStore().closeDialog()
 }
+
+const confirmButtionTitle = computed(() => {
+  if (orderInfoStore.needUpgrade && orderInfoStore.missBundle) {
+    return 'Upgrade Now'
+  } else if (orderInfoStore.needUpgrade) {
+    return 'Upgrade Now'
+  } else if (orderInfoStore.missBundle) {
+    return 'Subscribe Now'
+  }
+  return 'OK'
+})
 
 const message = computed(() => {
   const userTier = orderInfoStore.userTier
   const featurePermissionStore = useFeaturePermissionStore()
   const allowedTiers = featurePermissionStore.allowedTiers
+
   const allowedTiersMessage = allowedTiers.join(', ')
-  return `ComfyUI is not available in the current plan ${userTier}. Please upgrade to ${allowedTiersMessage} to use it.`
+  if (orderInfoStore.needUpgrade && orderInfoStore.missBundle) {
+    return `ComfyUI is not available in the current plan <b>${userTier}</b>. Please upgrade to ${allowedTiersMessage} <b>AND</b> subscribe ComfyUI Bundle to use it.`
+  } else if (orderInfoStore.needUpgrade) {
+    return `ComfyUI is not available in the current plan <b>${userTier}</b>. Please upgrade to ${allowedTiersMessage} to use it.`
+  } else if (orderInfoStore.missBundle) {
+    return `You need subscribe <b>ComfyUI Bundle</b> to use ComfyUI.`
+  }
+  return "Something error happened. Please join our <a href='https://discord.gg/e4UVBNuHyB'>Discord</a> for futher support."
 })
 
 const onCancel = () => {

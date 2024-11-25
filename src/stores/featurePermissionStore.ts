@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
-let _upgradableTiers = ['Basic', 'Plus', 'Pro', 'Api']
+const _upgradableTiers = ['Basic', 'Plus', 'Pro', 'Api']
 
 export interface Feature {
   name: string

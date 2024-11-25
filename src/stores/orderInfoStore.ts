@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import { useFeaturePermissionStore } from './featurePermissionStore'
 
 export interface BundleInfo {
   name: string
@@ -26,19 +27,36 @@ export const useOrderInfoStore = defineStore('orderInfo', () => {
     return orderInfo.value?.tier
   })
 
-  const comfyUIBundle = computed(() => {
-    return orderInfo.value?.bundles.find((b) => b.name === 'ComfyUI')
+  const bundle = computed(() => {
+    return orderInfo.value?.bundles?.find((b) => b.name === 'ComfyUI')
   })
 
-  const pricingTableUrl = computed(() => {
-    return '/app/pricing-table'
+  const needUpgrade = computed(() => {
+    const featurePermissionStore = useFeaturePermissionStore()
+    const allowedTiers = featurePermissionStore.allowedTiers
+    return (
+      !userTier.value || !allowedTiers || !allowedTiers.includes(userTier.value)
+    )
   })
+
+  const missBundle = computed(() => {
+    return (
+      !userTier.value ||
+      (!['Plus', 'Pro', 'Api'].includes(userTier.value) && !bundle.value)
+    )
+  })
+
+  const pricingTableUrl = '/app/pricing-table'
+  const pricingTableAddOnUrl = '/app/pricing-table/addons/'
 
   return {
     orderInfo,
     setOrderInfo,
     userTier,
-    comfyUIBundle,
-    pricingTableUrl
+    bundle,
+    needUpgrade,
+    missBundle,
+    pricingTableUrl,
+    pricingTableAddOnUrl
   }
 })

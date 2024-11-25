@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-2 pt-8">
     <FloatLabel>
-      {{ message }}
+      <span v-html="promptMessage"></span>
     </FloatLabel>
     <Divider layout="horizontal" />
     <div class="flex justify-end gap-4">
@@ -16,7 +16,9 @@ import FloatLabel from 'primevue/floatlabel'
 import { ref } from 'vue'
 import { useDialogStore } from '@/stores/dialogStore'
 
-const message = ref('You Have a Reward ComfyUI Bundle')
+const promptMessage = ref(
+  'Thank you for your continued support! As a valued loyal user, you’ve been gifted a ComfyUI Bundle for free.<br>Enjoy ComfyUI without any additional charge.'
+)
 
 const onConfirm = () => {
   useDialogStore().closeDialog()

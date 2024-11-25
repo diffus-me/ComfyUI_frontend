@@ -58,7 +58,6 @@ import { useExtensionStore } from '@/stores/extensionStore'
 import { KeyComboImpl, useKeybindingStore } from '@/stores/keybindingStore'
 import { useCommandStore } from '@/stores/commandStore'
 import { useOrderInfoStore } from '@/stores/orderInfoStore'
-import { useFeaturePermissionStore } from '@/stores/featurePermissionStore'
 import { shallowReactive } from 'vue'
 
 export const ANIM_PREVIEW_WIDGET = '$$comfy_animation_preview'
@@ -1428,9 +1427,7 @@ export class ComfyApp {
       }
 
       if (color) {
-        const shape =
-          // @ts-expect-error
-          node._shape || node.constructor.shape || LiteGraph.ROUND_SHAPE
+        const shape = node._shape || node.constructor.shape || LiteGraph.ROUND_SHAPE
         ctx.lineWidth = lineWidth
         ctx.globalAlpha = 0.8
         ctx.beginPath()
@@ -2633,11 +2630,8 @@ export class ComfyApp {
   }
 
   #checkTier() {
-    const userStore = useOrderInfoStore()
-    const featurePermissionStore = useFeaturePermissionStore()
-    const userTier = userStore.userTier
-    const allowedTiers = featurePermissionStore.allowedTiers
-    if (!allowedTiers.includes(userTier)) {
+    const orderInfoStore = useOrderInfoStore()
+    if (orderInfoStore.needUpgrade || orderInfoStore.missBundle) {
       showTierNotAllowedDialog()
       return false
     }

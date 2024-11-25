@@ -260,15 +260,15 @@ function showComfyUIBundleDialogIfNeeded() {
   showComfyUIBundleDialog()
 }
 
-function checkComfyUIBundle() {
-  const bundle = orderInfoStore.comfyUIBundle
+function checkBundle() {
+  const bundle = orderInfoStore.bundle
   if (bundle && bundle.source === 'reward') {
     showComfyUIBundleDialogIfNeeded()
   }
 }
 
 const onSetupFinished = async ({ detail }: CustomEvent) => {
-  checkComfyUIBundle()
+  checkBundle()
   setTimeout(() => {
     const userTier = orderInfoStore.userTier
     const allowedTiers = featurePermissionStore.allowedTiers

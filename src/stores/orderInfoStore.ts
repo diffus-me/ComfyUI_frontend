@@ -48,6 +48,7 @@ export const useOrderInfoStore = defineStore('orderInfo', () => {
 
   const pricingTableUrl = '/app/pricing-table'
   const pricingTableAddOnUrl = '/app/pricing-table/addons/'
+  const pricingTableComfyUrl = '/app/pricing-table/comfy'
 
   return {
     orderInfo,
@@ -57,6 +58,7 @@ export const useOrderInfoStore = defineStore('orderInfo', () => {
     needUpgrade,
     missBundle,
     pricingTableUrl,
-    pricingTableAddOnUrl
+    pricingTableAddOnUrl,
+    pricingTableComfyUrl
   }
 })

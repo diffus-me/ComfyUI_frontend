@@ -23,7 +23,9 @@ const orderInfoStore = useOrderInfoStore()
 
 const onConfirm = () => {
   let pricingTableUrl = orderInfoStore.pricingTableUrl
-  if (orderInfoStore.needUpgrade) {
+  if (orderInfoStore.needUpgrade && orderInfoStore.missBundle) {
+    pricingTableUrl = orderInfoStore.pricingTableComfyUrl
+  } else if (orderInfoStore.needUpgrade) {
     pricingTableUrl = orderInfoStore.pricingTableUrl
   } else if (orderInfoStore.missBundle) {
     pricingTableUrl = orderInfoStore.pricingTableAddOnUrl

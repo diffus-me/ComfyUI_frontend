@@ -10,6 +10,10 @@ import type { ExecutionErrorWsMessage } from '@/types/apiTypes'
 import ExecutionErrorDialogContent from '@/components/dialog/content/ExecutionErrorDialogContent.vue'
 import TemplateWorkflowsContent from '@/components/templates/TemplateWorkflowsContent.vue'
 import PromptDialogContent from '@/components/dialog/content/PromptDialogContent.vue'
+import NeedUpgradeDialogContent from '@/components/dialog/content/NeedUpgradeDialogContent.vue'
+import MonitorErrorDialogContent from '@/components/dialog/content/MonitorErrorDialogContent.vue'
+import ComfyUIBundleDialogContent from '@/components/dialog/content/ComfyUIBundleDialogContent.vue'
+
 import { i18n } from '@/i18n'
 import type { MissingNodeType } from '@/types/comfy'
 
@@ -87,5 +91,33 @@ export async function showPromptDialog({
         }
       }
     })
+  })
+}
+
+export async function showTierNotAllowedDialog() {
+  useDialogStore().showDialog({
+    title: 'Upgrade To Use ComfyUI',
+    component: NeedUpgradeDialogContent
+  })
+}
+
+export async function showMonitorErrorDialog(
+  upgradeReason: string,
+  needUpgrade: boolean
+) {
+  useDialogStore().showDialog({
+    title: 'Prompt Error',
+    component: MonitorErrorDialogContent,
+    props: {
+      upgradeReason: upgradeReason,
+      needUpgrade: needUpgrade
+    }
+  })
+}
+
+export async function showComfyUIBundleDialog() {
+  useDialogStore().showDialog({
+    title: "🎉 Congratulations! You've Received the ComfyUI Bundle for free!",
+    component: ComfyUIBundleDialogContent
   })
 }

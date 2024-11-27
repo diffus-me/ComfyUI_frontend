@@ -17,6 +17,9 @@ export const useDialogStore = defineStore('dialog', () => {
   const props = ref<Record<string, any>>({})
   const dialogComponentProps = ref<DialogComponentProps>({})
 
+  const isGalleryVisible = ref(false)
+  const galleryDrawer = ref('')
+
   function showDialog(options: {
     title?: string
     headerComponent?: Component
@@ -41,6 +44,15 @@ export const useDialogStore = defineStore('dialog', () => {
     isVisible.value = false
   }
 
+  function showGalleryDialog(drawer: string) {
+    galleryDrawer.value = drawer
+    isGalleryVisible.value = true
+  }
+
+  function closeGalleryDialog() {
+    isGalleryVisible.value = false
+  }
+
   return {
     isVisible,
     title,
@@ -49,6 +61,10 @@ export const useDialogStore = defineStore('dialog', () => {
     props,
     dialogComponentProps,
     showDialog,
-    closeDialog
+    closeDialog,
+    showGalleryDialog,
+    closeGalleryDialog,
+    isGalleryVisible,
+    galleryDrawer
   }
 })

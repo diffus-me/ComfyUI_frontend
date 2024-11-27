@@ -6,7 +6,7 @@ import { toggleSwitch } from './ui/toggleSwitch'
 import { ComfySettingsDialog } from './ui/settings'
 import { ComfyApp, app } from './app'
 import { TaskItem } from '@/types/apiTypes'
-import { showSettingsDialog } from '@/services/dialogService'
+import { showSettingsDialog, showGalleryDialog } from '@/services/dialogService'
 import { useSettingStore } from '@/stores/settingStore'
 import { useCommandStore } from '@/stores/commandStore'
 
@@ -587,6 +587,20 @@ export class ComfyUI {
       // ]),
       // this.queue.element,
       // this.history.element,
+      $el('button', {
+        id: 'diffus-model-gallery-button',
+        textContent: 'Model Gallery',
+        onclick: () => {
+          showGalleryDialog('')
+        }
+      }),
+      $el('button', {
+        id: 'diffus-image-gallery-button',
+        textContent: 'Image Gallery',
+        onclick: () => {
+          showGalleryDialog('images')
+        }
+      }),
       $el('button', {
         id: 'comfy-save-button',
         textContent: 'Save',

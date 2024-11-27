@@ -5,6 +5,7 @@
     class="absolute inset-0 flex justify-center items-center h-screen"
   />
   <GlobalDialog />
+  <GalleryDialog />
   <BlockUI full-screen :blocked="isLoading" />
 </template>
 
@@ -15,9 +16,11 @@ import { useWorkspaceStore } from '@/stores/workspaceStateStore'
 import BlockUI from 'primevue/blockui'
 import ProgressSpinner from 'primevue/progressspinner'
 import GlobalDialog from '@/components/dialog/GlobalDialog.vue'
+import GalleryDialog from '@/components/dialog/GalleryDialog.vue'
 import { useEventListener } from '@vueuse/core'
 
 const workspaceStore = useWorkspaceStore()
+
 const isLoading = computed<boolean>(() => workspaceStore.spinner)
 const handleKey = (e: KeyboardEvent) => {
   workspaceStore.shiftDown = e.shiftKey

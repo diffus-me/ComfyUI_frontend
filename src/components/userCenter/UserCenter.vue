@@ -180,7 +180,11 @@ const logout = () => {
 }
 
 const redirectToUpgrade = () => {
-  window.location.href = orderInfoStore.pricingTableUrl
+  if (orderInfoStore.needUpgrade && orderInfoStore.missBundle) {
+    window.location.href = orderInfoStore.pricingTableComfyUrl
+  } else if (orderInfoStore.needUpgrade) {
+    window.location.href = orderInfoStore.pricingTableUrl
+  }
 }
 
 const modelItems = ref([

@@ -18,6 +18,7 @@ import ProgressSpinner from 'primevue/progressspinner'
 import GlobalDialog from '@/components/dialog/GlobalDialog.vue'
 import GalleryDialog from '@/components/dialog/GalleryDialog.vue'
 import { useEventListener } from '@vueuse/core'
+import { app } from '@/scripts/app'
 
 const workspaceStore = useWorkspaceStore()
 
@@ -25,8 +26,14 @@ const isLoading = computed<boolean>(() => workspaceStore.spinner)
 const handleKey = (e: KeyboardEvent) => {
   workspaceStore.shiftDown = e.shiftKey
 }
+const runImage = (e: string) => {
+  const pnginfo = JSON.parse(e)
+  app.loadGraphData(pnginfo.workflow)
+}
+
 useEventListener(window, 'keydown', handleKey)
 useEventListener(window, 'keyup', handleKey)
+useEventListener(window, 'runimage', runImage)
 
 onMounted(() => {
   window['__COMFYUI_FRONTEND_VERSION__'] = config.app_version

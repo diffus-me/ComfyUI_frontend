@@ -44,7 +44,8 @@ import _ from 'lodash'
 import {
   showExecutionErrorDialog,
   showLoadWorkflowWarning,
-  showMissingModelsWarning
+  showMissingModelsWarning,
+  showTierNotAllowedDialog
 } from '@/services/dialogService'
 import { useSettingStore } from '@/stores/settingStore'
 import { useToastStore } from '@/stores/toastStore'
@@ -56,6 +57,7 @@ import { IWidget } from '@comfyorg/litegraph'
 import { useExtensionStore } from '@/stores/extensionStore'
 import { KeyComboImpl, useKeybindingStore } from '@/stores/keybindingStore'
 import { useCommandStore } from '@/stores/commandStore'
+import { useOrderInfoStore } from '@/stores/orderInfoStore'
 import { shallowReactive } from 'vue'
 import { type IBaseWidget } from '@comfyorg/litegraph/dist/types/widgets'
 import { workflowService } from '@/services/workflowService'
@@ -1393,8 +1395,7 @@ export class ComfyApp {
       }
 
       if (color) {
-        const shape =
-          node._shape || node.constructor.shape || LiteGraph.ROUND_SHAPE
+        const shape = node._shape || node.constructor.shape || LiteGraph.ROUND_SHAPE
         ctx.lineWidth = lineWidth
         ctx.globalAlpha = 0.8
         ctx.beginPath()
@@ -1774,6 +1775,8 @@ export class ComfyApp {
     this.#addWidgetLinkHandling()
 
     await this.#invokeExtensionsAsync('setup')
+
+    api.dispatchCustomEvent('setupFinished')
   }
 
   resizeCanvas() {
@@ -2481,8 +2484,22 @@ export class ComfyApp {
     return '(unknown error)'
   }
 
+  #checkTier() {
+    const orderInfoStore = useOrderInfoStore()
+    if (orderInfoStore.needUpgrade || orderInfoStore.missBundle) {
+      showTierNotAllowedDialog()
+      return false
+    }
+    return true
+  }
+
   async queuePrompt(number, batchCount = 1) {
     this.#queueItems.push({ number, batchCount })
+
+    // Check if the user tier is allowed to generate
+    if (!this.#checkTier()) {
+      return false
+    }
 
     // Only have one action process the items so each one gets a unique seed correctly
     if (this.#processingQueue) {
@@ -2541,7 +2558,7 @@ export class ComfyApp {
           }
 
           this.canvas.draw(true, true)
-          await this.ui.queue.update()
+          // await this.ui.queue.update()
         }
       }
     } finally {

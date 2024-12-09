@@ -30,6 +30,8 @@ export interface ShowDialogOptions {
 
 export const useDialogStore = defineStore('dialog', () => {
   const dialogStack = ref<DialogInstance[]>([])
+  const isGalleryVisible = ref(false)
+  const galleryDrawer = ref('')
 
   const genDialogKey = () => `dialog-${Math.random().toString(36).slice(2, 9)}`
 
@@ -125,10 +127,23 @@ export const useDialogStore = defineStore('dialog', () => {
     return dialog
   }
 
+  function showGalleryDialog(drawer: string) {
+    galleryDrawer.value = drawer
+    isGalleryVisible.value = true
+  }
+
+  function closeGalleryDialog() {
+    isGalleryVisible.value = false
+  }
+
   return {
     dialogStack,
     riseDialog,
     showDialog,
-    closeDialog
+    closeDialog,
+    showGalleryDialog,
+    closeGalleryDialog,
+    isGalleryVisible,
+    galleryDrawer
   }
 })

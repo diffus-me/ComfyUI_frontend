@@ -1,16 +1,18 @@
 // @ts-strict-ignore
 import { api } from './api'
 import { ComfyDialog as _ComfyDialog } from './ui/dialog'
+import { ComfyConfirmDialog as _ComfyConfirmDialog } from './ui/confirmDialog'
 import { toggleSwitch } from './ui/toggleSwitch'
 import { ComfySettingsDialog } from './ui/settings'
 import { ComfyApp, app } from './app'
 import { TaskItem, type StatusWsMessageStatus } from '@/types/apiTypes'
-import { showSettingsDialog } from '@/services/dialogService'
+import { showSettingsDialog, showGalleryDialog } from '@/services/dialogService'
 import { useSettingStore } from '@/stores/settingStore'
 import { useCommandStore } from '@/stores/commandStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 
 export const ComfyDialog = _ComfyDialog
+export const ComfyConfirmDialog = _ComfyConfirmDialog
 
 type Position2D = {
   x: number
@@ -343,6 +345,7 @@ class ComfyList {
 export class ComfyUI {
   app: ComfyApp
   dialog: _ComfyDialog
+  confirmDialog: _ComfyConfirmDialog
   settings: ComfySettingsDialog
   batchCount: number
   lastQueueSize: number
@@ -359,16 +362,17 @@ export class ComfyUI {
   constructor(app) {
     this.app = app
     this.dialog = new ComfyDialog()
+    this.confirmDialog = new ComfyConfirmDialog()
     this.settings = new ComfySettingsDialog(app)
 
     this.batchCount = 1
     this.lastQueueSize = 0
-    this.queue = new ComfyList('Queue')
-    this.history = new ComfyList('History', 'history', true)
+    // this.queue = new ComfyList('Queue')
+    // this.history = new ComfyList('History', 'history', true)
 
     api.addEventListener('status', () => {
-      this.queue.update()
-      this.history.update()
+      // this.queue.update()
+      // this.history.update()
     })
 
     this.setup(document.body)
@@ -436,10 +440,10 @@ export class ComfyUI {
           $el('span.drag-handle'),
           $el('span.comfy-menu-queue-size', { $: (q) => (this.queueSize = q) }),
           $el('div.comfy-menu-actions', [
-            $el('button.comfy-settings-btn', {
-              textContent: '⚙️',
-              onclick: showSettingsDialog
-            }),
+            // $el('button.comfy-settings-btn', {
+            //   textContent: '⚙️',
+            //   onclick: showSettingsDialog
+            // }),
             $el('button.comfy-close-menu-btn', {
               textContent: '\u00d7',
               onclick: () => {
@@ -509,7 +513,7 @@ export class ComfyUI {
               id: 'batchCountInputRange',
               type: 'range',
               min: '1',
-              max: '100',
+              max: '10',
               value: this.batchCount,
               oninput: (i) => {
                 this.batchCount = i.srcElement.value
@@ -521,55 +525,69 @@ export class ComfyUI {
                 ).value = i.srcElement.value
               }
             })
-          ]),
-          $el('div', [
-            $el('label', {
-              for: 'autoQueueCheckbox',
-              innerHTML: 'Auto Queue'
-            }),
-            $el('input', {
-              id: 'autoQueueCheckbox',
-              type: 'checkbox',
-              checked: false,
-              title: 'Automatically queue prompt when the queue size hits 0',
-              onchange: (e) => {
-                this.autoQueueEnabled = e.target.checked
-                autoQueueModeEl.style.display = this.autoQueueEnabled
-                  ? ''
-                  : 'none'
-              }
-            }),
-            autoQueueModeEl
           ])
+          // $el('div', [
+          //   $el('label', {
+          //     for: 'autoQueueCheckbox',
+          //     innerHTML: 'Auto Queue'
+          //   }),
+          //   $el('input', {
+          //     id: 'autoQueueCheckbox',
+          //     type: 'checkbox',
+          //     checked: false,
+          //     title: 'Automatically queue prompt when the queue size hits 0',
+          //     onchange: (e) => {
+          //       this.autoQueueEnabled = e.target.checked
+          //       autoQueueModeEl.style.display = this.autoQueueEnabled
+          //         ? ''
+          //         : 'none'
+          //     }
+          //   }),
+          //   autoQueueModeEl
+          // ])
         ]
       ),
-      $el('div.comfy-menu-btns', [
-        $el('button', {
-          id: 'queue-front-button',
-          textContent: 'Queue Front',
-          onclick: () => app.queuePrompt(-1, this.batchCount)
-        }),
-        $el('button', {
-          $: (b) => (this.queue.button = b as HTMLButtonElement),
-          id: 'comfy-view-queue-button',
-          textContent: 'View Queue',
-          onclick: () => {
-            this.history.hide()
-            this.queue.toggle()
-          }
-        }),
-        $el('button', {
-          $: (b) => (this.history.button = b as HTMLButtonElement),
-          id: 'comfy-view-history-button',
-          textContent: 'View History',
-          onclick: () => {
-            this.queue.hide()
-            this.history.toggle()
-          }
-        })
-      ]),
-      this.queue.element,
-      this.history.element,
+      // $el('div.comfy-menu-btns', [
+      //   $el('button', {
+      //     id: 'queue-front-button',
+      //     textContent: 'Queue Front',
+      //     onclick: () => app.queuePrompt(-1, this.batchCount)
+      //   }),
+      //   $el('button', {
+      //     $: (b) => (this.queue.button = b as HTMLButtonElement),
+      //     id: 'comfy-view-queue-button',
+      //     textContent: 'View Queue',
+      //     onclick: () => {
+      //       this.history.hide()
+      //       this.queue.toggle()
+      //     }
+      //   }),
+      //   $el('button', {
+      //     $: (b) => (this.history.button = b as HTMLButtonElement),
+      //     id: 'comfy-view-history-button',
+      //     textContent: 'View History',
+      //     onclick: () => {
+      //       this.queue.hide()
+      //       this.history.toggle()
+      //     }
+      //   })
+      // ]),
+      // this.queue.element,
+      // this.history.element,
+      $el('button', {
+        id: 'diffus-model-gallery-button',
+        textContent: 'Model Gallery',
+        onclick: () => {
+          showGalleryDialog('')
+        }
+      }),
+      $el('button', {
+        id: 'diffus-image-gallery-button',
+        textContent: 'Image Gallery',
+        onclick: () => {
+          showGalleryDialog('images')
+        }
+      }),
       $el('button', {
         id: 'comfy-save-button',
         textContent: 'Save',
@@ -633,6 +651,23 @@ export class ComfyUI {
         textContent: 'Reset View',
         onclick: async () => {
           app.resetView()
+        }
+      }),
+      $el('button', {
+        id: 'comfy-clear-input-folder-button',
+        textContent: 'Clear Input',
+        onclick: async () => {
+          this.confirmDialog.show(
+            'Clear input folder?<br>All files you uploaded before will be deleted.<br>This CAN NOT be undone.',
+            () => {
+              // user clicked OK
+              api.clearInputs()
+              this.confirmDialog.close()
+            },
+            () => {
+              this.confirmDialog.close()
+            }
+          )
         }
       })
     ]) as HTMLDivElement

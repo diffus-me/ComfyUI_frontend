@@ -2,6 +2,7 @@
   <!-- Top menu bar needs to load before the GraphCanvas as it needs to host
   the menu buttons added by legacy extension scripts.-->
   <TopMenubar />
+  <UserCenter />
   <GraphCanvas @ready="onGraphReady" />
   <GlobalToast />
   <UnloadWindowConfirmDialog />
@@ -31,6 +32,7 @@ import GlobalToast from '@/components/toast/GlobalToast.vue'
 import UnloadWindowConfirmDialog from '@/components/dialog/UnloadWindowConfirmDialog.vue'
 import BrowserTabTitle from '@/components/BrowserTabTitle.vue'
 import TopMenubar from '@/components/topbar/TopMenubar.vue'
+import UserCenter from '@/components/userCenter/UserCenter.vue'
 import { setupAutoQueueHandler } from '@/services/autoQueueService'
 import { useKeybindingStore } from '@/stores/keybindingStore'
 import { useSidebarTabStore } from '@/stores/workspace/sidebarTabStore'

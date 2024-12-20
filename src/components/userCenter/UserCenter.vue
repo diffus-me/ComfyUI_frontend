@@ -149,6 +149,7 @@ const onSetupFinished = async ({ detail }: CustomEvent) => {
       redirectToUpgrade()
     }
   }, 10 * 1000)
+  window.parent.postMessage('setupFinished')
 }
 
 onMounted(() => {

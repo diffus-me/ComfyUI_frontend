@@ -17,7 +17,8 @@ import ProgressSpinner from 'primevue/progressspinner'
 import GlobalDialog from '@/components/dialog/GlobalDialog.vue'
 import GalleryDialog from '@/components/dialog/GalleryDialog.vue'
 import { useEventListener } from '@vueuse/core'
-import { app } from '@/scripts/app'
+import { app, ComfyApp } from '@/scripts/app'
+import { api } from '@/scripts/api'
 
 const workspaceStore = useWorkspaceStore()
 
@@ -25,17 +26,31 @@ const isLoading = computed<boolean>(() => workspaceStore.spinner)
 const handleKey = (e: KeyboardEvent) => {
   // workspaceStore.shiftDown = e.shiftKey
 }
-const runImage = (e: string) => {
-  const pnginfo = JSON.parse(e)
-  app.loadGraphData(pnginfo.workflow)
+const handleMessage = (message) => {
+  const { cmd, workflow } = JSON.parse(message.data)
+  if (cmd === 'runImage') {
+    api.dispatchCustomEvent('runWorkflowReceived', workflow)
+  } else {
+    console.warn(`unhandled event ${cmd}`)
+  }
 }
+
+app.api.addEventListener('setupFinished', () => {
+  window.comfyUIApp = app
+})
 
 useEventListener(window, 'keydown', handleKey)
 useEventListener(window, 'keyup', handleKey)
-useEventListener(window, 'runimage', runImage)
+useEventListener(window, 'message', handleMessage)
 
 onMounted(() => {
   window['__COMFYUI_FRONTEND_VERSION__'] = config.app_version
   console.log('ComfyUI Front-end version:', config.app_version)
 })
+
+declare global {
+  interface Window {
+    comfyUIApp?: ComfyApp
+  }
+}
 </script>

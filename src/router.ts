@@ -49,41 +49,6 @@ const router = createRouter({
               next()
             }
           }
-        },
-        {
-          path: 'user-select',
-          name: 'UserSelectView',
-          component: () => import('@/views/UserSelectView.vue')
-        },
-        {
-          path: 'server-start',
-          name: 'ServerStartView',
-          component: () => import('@/views/ServerStartView.vue'),
-          beforeEnter: guardElectronAccess
-        },
-        {
-          path: 'install',
-          name: 'InstallView',
-          component: () => import('@/views/InstallView.vue'),
-          beforeEnter: guardElectronAccess
-        },
-        {
-          path: 'welcome',
-          name: 'WelcomeView',
-          component: () => import('@/views/WelcomeView.vue'),
-          beforeEnter: guardElectronAccess
-        },
-        {
-          path: 'not-supported',
-          name: 'NotSupportedView',
-          component: () => import('@/views/NotSupportedView.vue'),
-          beforeEnter: guardElectronAccess
-        },
-        {
-          path: 'download-git',
-          name: 'DownloadGitView',
-          component: () => import('@/views/DownloadGitView.vue'),
-          beforeEnter: guardElectronAccess
         }
       ]
     }

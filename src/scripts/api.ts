@@ -49,6 +49,7 @@ interface FrontendApiCalls {
   reconnecting: never
   reconnected: never
   setupFinished: never
+  runWorkflowReceived: ComfyWorkflowJSON
 }
 
 /** Dictionary of calls originating from ComfyUI core */

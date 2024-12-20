@@ -1395,7 +1395,8 @@ export class ComfyApp {
       }
 
       if (color) {
-        const shape = node._shape || node.constructor.shape || LiteGraph.ROUND_SHAPE
+        const shape =
+          node._shape || node.constructor.shape || LiteGraph.ROUND_SHAPE
         ctx.lineWidth = lineWidth
         ctx.globalAlpha = 0.8
         ctx.beginPath()
@@ -1581,6 +1582,10 @@ export class ComfyApp {
       const blobUrl = URL.createObjectURL(blob)
       // @ts-expect-error
       this.nodePreviewImages[id] = [blobUrl]
+    })
+
+    api.addEventListener('runWorkflowReceived', ({ detail }) => {
+      this.loadGraphData(detail)
     })
 
     api.init()

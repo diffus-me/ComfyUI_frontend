@@ -120,7 +120,7 @@
     "onChange": "更改时",
     "onChangeTooltip": "一旦进行更改，工作流将被排队",
     "queue": "执行",
-    "queueWorkflow": "执行 (Shift 执行到队列首)",
+    "queueWorkflow": "执行",
     "queueWorkflowFront": "执行到队列首",
     "refresh": "刷新节点",
     "resetView": "重置画布视图",

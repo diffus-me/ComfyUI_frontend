@@ -32,7 +32,7 @@
       </template>
     </SplitButton>
     <BatchCountEdit />
-    <ButtonGroup class="execution-actions flex flex-nowrap">
+    <!-- <ButtonGroup class="execution-actions flex flex-nowrap">
       <Button
         v-tooltip.bottom="$t('menu.interrupt')"
         icon="pi pi-times"
@@ -50,7 +50,7 @@
         text
         @click="() => commandStore.execute('Comfy.ClearPendingTasks')"
       />
-    </ButtonGroup>
+    </ButtonGroup> -->
   </div>
 </template>
 
@@ -58,7 +58,7 @@
 import SplitButton from 'primevue/splitbutton'
 import Button from 'primevue/button'
 import BatchCountEdit from './BatchCountEdit.vue'
-import ButtonGroup from 'primevue/buttongroup'
+// import ButtonGroup from 'primevue/buttongroup'
 import { useI18n } from 'vue-i18n'
 import {
   useQueuePendingTaskCountStore,
@@ -82,23 +82,23 @@ const queueModeMenuItemLookup = computed(() => ({
     command: () => {
       queueMode.value = 'disabled'
     }
-  },
-  instant: {
-    key: 'instant',
-    label: `${t('menu.queue')} (${t('menu.instant')})`,
-    tooltip: t('menu.instantTooltip'),
-    command: () => {
-      queueMode.value = 'instant'
-    }
-  },
-  change: {
-    key: 'change',
-    label: `${t('menu.queue')} (${t('menu.onChange')})`,
-    tooltip: t('menu.onChangeTooltip'),
-    command: () => {
-      queueMode.value = 'change'
-    }
   }
+  // instant: {
+  //   key: 'instant',
+  //   label: `${t('menu.queue')} (${t('menu.instant')})`,
+  //   tooltip: t('menu.instantTooltip'),
+  //   command: () => {
+  //     queueMode.value = 'instant'
+  //   }
+  // },
+  // change: {
+  //   key: 'change',
+  //   label: `${t('menu.queue')} (${t('menu.onChange')})`,
+  //   tooltip: t('menu.onChangeTooltip'),
+  //   command: () => {
+  //     queueMode.value = 'change'
+  //   }
+  // }
 }))
 
 const activeQueueModeMenuItem = computed(

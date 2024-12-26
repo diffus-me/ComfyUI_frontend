@@ -494,7 +494,7 @@
     "instantTooltip": "The workflow will be queued instantly after a generation finishes",
     "onChange": "On Change",
     "onChangeTooltip": "The workflow will be queued once a change is made",
-    "queueWorkflow": "Queue workflow (Shift to queue at front)",
+    "queueWorkflow": "Queue workflow",
     "queueWorkflowFront": "Queue workflow at front",
     "queue": "Queue",
     "execute": "Execute",

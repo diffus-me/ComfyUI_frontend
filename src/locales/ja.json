@@ -120,7 +120,7 @@
     "onChange": "変更時",
     "onChangeTooltip": "変更が行われるとワークフローがキューに追加されます",
     "queue": "実行",
-    "queueWorkflow": "キューに追加 (Shiftで先頭に)",
+    "queueWorkflow": "キューに追加",
     "queueWorkflowFront": "先頭に追加",
     "refresh": "ノードを更新",
     "resetView": "ビューをリセット",

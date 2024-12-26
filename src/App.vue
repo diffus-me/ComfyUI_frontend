@@ -24,7 +24,7 @@ const workspaceStore = useWorkspaceStore()
 
 const isLoading = computed<boolean>(() => workspaceStore.spinner)
 const handleKey = (e: KeyboardEvent) => {
-  workspaceStore.shiftDown = e.shiftKey
+  // workspaceStore.shiftDown = e.shiftKey
 }
 const runImage = (e: string) => {
   const pnginfo = JSON.parse(e)

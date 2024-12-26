@@ -173,15 +173,26 @@ export class ComfyApi extends EventTarget {
     this.initialClientId = sessionStorage.getItem('clientId')
   }
 
+  $nomalizeRoute(route: string): string {
+    if (route.startsWith('/')) {
+      return route
+    } else {
+      return '/' + route
+    }
+  }
+
   internalURL(route: string): string {
+    route = this.$nomalizeRoute(route)
     return this.api_base + '/internal' + route
   }
 
   apiURL(route: string): string {
+    route = this.$nomalizeRoute(route)
     return this.api_base + '/api' + route
   }
 
   fileURL(route: string): string {
+    route = this.$nomalizeRoute(route)
     return this.api_base + route
   }
 
@@ -391,7 +402,7 @@ export class ComfyApi extends EventTarget {
    * Initialises sockets and realtime updates
    */
   init() {
-    this.#createSocket()
+    // this.#createSocket()
   }
 
   /**

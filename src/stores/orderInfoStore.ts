@@ -42,7 +42,7 @@ export const useOrderInfoStore = defineStore('orderInfo', () => {
   const missBundle = computed(() => {
     return (
       !userTier.value ||
-      (!['Plus', 'Pro', 'Api'].includes(userTier.value) && !bundle.value)
+      (!['Pro', 'Api'].includes(userTier.value) && !bundle.value)
     )
   })
 

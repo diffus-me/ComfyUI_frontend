@@ -5,7 +5,6 @@
     class="absolute inset-0 flex justify-center items-center h-screen"
   />
   <GlobalDialog />
-  <GalleryDialog />
   <BlockUI full-screen :blocked="isLoading" />
 </template>
 

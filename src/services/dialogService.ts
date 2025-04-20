@@ -175,7 +175,3 @@ export async function showComfyUIBundleDialog() {
     component: ComfyUIBundleDialogContent
   })
 }
-
-export async function showGalleryDialog(drawer: string) {
-  useDialogStore().showGalleryDialog(drawer)
-}

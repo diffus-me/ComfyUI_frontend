@@ -76,6 +76,8 @@ import { ComfyAppMenu } from './ui/menu/index'
 import { clone } from './utils'
 import { type ComfyWidgetConstructor } from './widgets'
 
+import { checkTierForPrompt } from './diffusApp'
+
 export const ANIM_PREVIEW_WIDGET = '$$comfy_animation_preview'
 
 function sanitizeNodeName(string: string) {
@@ -651,21 +653,22 @@ export class ComfyApp {
 
     api.addEventListener('execution_error', ({ detail }) => {
       // Check if this is an auth-related error or credits-related error
-      if (
-        detail.exception_message ===
-        'Unauthorized: Please login first to use this node.'
-      ) {
-        useDialogService().showApiNodesSignInDialog([detail.node_type])
-      } else if (
-        detail.exception_message ===
-        'Payment Required: Please add credits to your account to use this node.'
-      ) {
-        useDialogService().showTopUpCreditsDialog({
-          isInsufficientCredits: true
-        })
-      } else {
-        useDialogService().showExecutionErrorDialog(detail)
-      }
+      // if (
+      //   detail.exception_message ===
+      //   'Unauthorized: Please login first to use this node.'
+      // ) {
+      //   useDialogService().showApiNodesSignInDialog([detail.node_type])
+      // } else if (
+      //   detail.exception_message ===
+      //   'Payment Required: Please add credits to your account to use this node.'
+      // ) {
+      //   useDialogService().showTopUpCreditsDialog({
+      //     isInsufficientCredits: true
+      //   })
+      // } else {
+      //   useDialogService().showExecutionErrorDialog(detail)
+      // }
+      useDialogService().showExecutionErrorDialog(detail)
       this.canvas.draw(true, true)
     })
 
@@ -678,6 +681,10 @@ export class ComfyApp {
       // Ensure clean up if `executing` event is missed.
       this.revokePreviews(id)
       this.nodePreviewImages[id] = [blobUrl]
+    })
+
+    api.addEventListener('runWorkflowReceived', ({ detail }) => {
+      this.loadGraphData(detail)
     })
 
     api.init()
@@ -785,6 +792,7 @@ export class ComfyApp {
       this.canvasContainer,
       this.canvas
     )
+    api.dispatchCustomEvent('setupFinished')
   }
 
   resizeCanvas() {
@@ -1156,6 +1164,11 @@ export class ComfyApp {
 
   async queuePrompt(number: number, batchCount: number = 1): Promise<boolean> {
     this.#queueItems.push({ number, batchCount })
+
+    // Check if the user tier is allowed to generate
+    if (!this.#checkTier()) {
+      return false
+    }
 
     // Only have one action process the items so each one gets a unique seed correctly
     if (this.#processingQueue) {
@@ -1599,6 +1612,11 @@ export class ComfyApp {
       throw new Error('canvasPosToClientPos called before setup')
     }
     return this.#positionConversion.canvasPosToClientPos(pos)
+  }
+
+  #checkTier() {
+    checkTierForPrompt()
+    return true
   }
 }
 

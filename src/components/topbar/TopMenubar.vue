@@ -12,7 +12,7 @@
     </div>
     <div ref="menuRight" class="comfyui-menu-right flex-shrink-0" />
     <Actionbar />
-    <CurrentUserButton class="flex-shrink-0" />
+    <!-- <CurrentUserButton class="flex-shrink-0" /> -->
     <BottomPanelToggleButton class="flex-shrink-0" />
     <Button
       v-tooltip="{ value: $t('menu.hideMenu'), showDelay: 300 }"
@@ -45,7 +45,7 @@ import { computed, onMounted, provide, ref } from 'vue'
 import Actionbar from '@/components/actionbar/ComfyActionbar.vue'
 import BottomPanelToggleButton from '@/components/topbar/BottomPanelToggleButton.vue'
 import CommandMenubar from '@/components/topbar/CommandMenubar.vue'
-import CurrentUserButton from '@/components/topbar/CurrentUserButton.vue'
+// import CurrentUserButton from '@/components/topbar/CurrentUserButton.vue'
 import WorkflowTabs from '@/components/topbar/WorkflowTabs.vue'
 import { app } from '@/scripts/app'
 import { useSettingStore } from '@/stores/settingStore'

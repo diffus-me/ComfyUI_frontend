@@ -544,56 +544,54 @@ export class ComfyUI {
                   ).value = i.srcElement.value
                 }
               })
-            ]),
-            $el('div', [
-              $el('label', {
-                for: 'autoQueueCheckbox',
-                innerHTML: 'Auto Queue'
-              }),
-              $el('input', {
-                id: 'autoQueueCheckbox',
-                type: 'checkbox',
-                checked: false,
-                title: 'Automatically queue prompt when the queue size hits 0',
-                // @ts-expect-error fixme ts strict error
-                onchange: (e) => {
-                  this.autoQueueEnabled = e.target.checked
-                  autoQueueModeEl.style.display = this.autoQueueEnabled
-                    ? ''
-                    : 'none'
-                }
-              }),
-              autoQueueModeEl
             ])
+            // $el('div', [
+            //   $el('label', {
+            //     for: 'autoQueueCheckbox',
+            //     innerHTML: 'Auto Queue'
+            //   }),
+            //   $el('input', {
+            //     id: 'autoQueueCheckbox',
+            //     type: 'checkbox',
+            //     checked: false,
+            //     title: 'Automatically queue prompt when the queue size hits 0',
+            //     // @ts-expect-error fixme ts strict error
+            //     onchange: (e) => {
+            //       this.autoQueueEnabled = e.target.checked
+            //       autoQueueModeEl.style.display = this.autoQueueEnabled
+            //         ? ''
+            //         : 'none'
+            //     }
+            //   }),
+            //   autoQueueModeEl
+            // ])
           ]
         ),
-        $el('div.comfy-menu-btns', [
-          $el('button', {
-            id: 'queue-front-button',
-            textContent: 'Queue Front',
-            onclick: () => app.queuePrompt(-1, this.batchCount)
-          }),
-          $el('button', {
-            $: (b) => (this.queue.button = b as HTMLButtonElement),
-            id: 'comfy-view-queue-button',
-            textContent: 'View Queue',
-            onclick: () => {
-              this.history.hide()
-              this.queue.toggle()
-            }
-          }),
-          $el('button', {
-            $: (b) => (this.history.button = b as HTMLButtonElement),
-            id: 'comfy-view-history-button',
-            textContent: 'View History',
-            onclick: () => {
-              this.queue.hide()
-              this.history.toggle()
-            }
-          })
-        ]),
-        this.queue.element,
-        this.history.element,
+        // $el('div.comfy-menu-btns', [
+        //   $el('button', {
+        //     id: 'queue-front-button',
+        //     textContent: 'Queue Front',
+        //     onclick: () => app.queuePrompt(-1, this.batchCount)
+        //   }),
+        //   $el('button', {
+        //     $: (b) => (this.queue.button = b as HTMLButtonElement),
+        //     id: 'comfy-view-queue-button',
+        //     textContent: 'View Queue',
+        //     onclick: () => {
+        //       this.history.hide()
+        //       this.queue.toggle()
+        //     }
+        //   }),
+        //   $el('button', {
+        //     $: (b) => (this.history.button = b as HTMLButtonElement),
+        //     id: 'comfy-view-history-button',
+        //     textContent: 'View History',
+        //     onclick: () => {
+        //       this.queue.hide()
+        //       this.history.toggle()
+        //     }
+        //   })
+        // ]),
         $el('button', {
           id: 'comfy-save-button',
           textContent: 'Save',

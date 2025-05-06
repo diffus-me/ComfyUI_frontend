@@ -11,6 +11,7 @@
     <div id="graph-canvas-container" class="graph-canvas-container">
       <GraphCanvas @ready="onGraphReady" />
     </div>
+    <UserCenter />
   </div>
 
   <GlobalToast />
@@ -34,6 +35,7 @@ import GraphCanvas from '@/components/graph/GraphCanvas.vue'
 import GlobalToast from '@/components/toast/GlobalToast.vue'
 import RerouteMigrationToast from '@/components/toast/RerouteMigrationToast.vue'
 import TopMenubar from '@/components/topbar/TopMenubar.vue'
+import UserCenter from '@/components/userCenter/UserCenter.vue'
 import { useCoreCommands } from '@/composables/useCoreCommands'
 import { useErrorHandling } from '@/composables/useErrorHandling'
 import { SERVER_CONFIG_ITEMS } from '@/constants/serverConfig'
@@ -42,7 +44,7 @@ import { StatusWsMessageStatus } from '@/schemas/apiSchema'
 import { api } from '@/scripts/api'
 import { app } from '@/scripts/app'
 import { setupAutoQueueHandler } from '@/services/autoQueueService'
-import { useDialogService } from '@/services/dialogService'
+// import { useDialogService } from '@/services/dialogService'
 import { useKeybindingService } from '@/services/keybindingService'
 import { useCommandStore } from '@/stores/commandStore'
 import { useExecutionStore } from '@/stores/executionStore'
@@ -243,7 +245,7 @@ const onGraphReady = () => {
       // node search is triggered
       useNodeDefStore().nodeSearchService.searchNode('')
 
-      useDialogService().showApiNodesNewsDialog()
+      // useDialogService().showApiNodesNewsDialog()
     },
     { timeout: 1000 }
   )

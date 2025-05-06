@@ -81,13 +81,7 @@ import PanelTemplate from './setting/PanelTemplate.vue'
 import SettingsPanel from './setting/SettingsPanel.vue'
 
 const { defaultPanel } = defineProps<{
-  defaultPanel?:
-    | 'about'
-    | 'keybinding'
-    | 'extension'
-    | 'server-config'
-    | 'user'
-    | 'credits'
+  defaultPanel?: 'about' | 'keybinding'
 }>()
 
 const {

@@ -1,11 +1,14 @@
 import ApiNodesNewsContent from '@/components/dialog/content/ApiNodesNewsContent.vue'
 import ApiNodesSignInContent from '@/components/dialog/content/ApiNodesSignInContent.vue'
+import ComfyUIBundleDialogContent from '@/components/dialog/content/ComfyUIBundleDialogContent.vue'
 import ConfirmationDialogContent from '@/components/dialog/content/ConfirmationDialogContent.vue'
 import ErrorDialogContent from '@/components/dialog/content/ErrorDialogContent.vue'
 import IssueReportDialogContent from '@/components/dialog/content/IssueReportDialogContent.vue'
 import LoadWorkflowWarning from '@/components/dialog/content/LoadWorkflowWarning.vue'
 import ManagerProgressDialogContent from '@/components/dialog/content/ManagerProgressDialogContent.vue'
 import MissingModelsWarning from '@/components/dialog/content/MissingModelsWarning.vue'
+import MonitorErrorDialogContent from '@/components/dialog/content/MonitorErrorDialogContent.vue'
+import NeedUpgradeDialogContent from '@/components/dialog/content/NeedUpgradeDialogContent.vue'
 import PromptDialogContent from '@/components/dialog/content/PromptDialogContent.vue'
 import SettingDialogContent from '@/components/dialog/content/SettingDialogContent.vue'
 import SignInContent from '@/components/dialog/content/SignInContent.vue'
@@ -53,15 +56,7 @@ export const useDialogService = () => {
     })
   }
 
-  function showSettingsDialog(
-    panel?:
-      | 'about'
-      | 'keybinding'
-      | 'extension'
-      | 'server-config'
-      | 'user'
-      | 'credits'
-  ) {
+  function showSettingsDialog(panel?: 'about' | 'keybinding') {
     const props = panel ? { props: { defaultPanel: panel } } : undefined
 
     dialogStore.showDialog({
@@ -406,6 +401,31 @@ export const useDialogService = () => {
     })
   }
 
+  async function showTierNotAllowedDialog() {
+    useDialogStore().showDialog({
+      title: 'Upgrade To Use ComfyUI',
+      component: NeedUpgradeDialogContent
+    })
+  }
+
+  function showMonitorErrorDialog(upgradeReason: string, needUpgrade: boolean) {
+    useDialogStore().showDialog({
+      title: 'Prompt Error',
+      component: MonitorErrorDialogContent,
+      props: {
+        upgradeReason: upgradeReason,
+        needUpgrade: needUpgrade
+      }
+    })
+  }
+
+  async function showComfyUIBundleDialog() {
+    useDialogStore().showDialog({
+      title: "🎉 Congratulations! You've Received the ComfyUI Bundle for free!",
+      component: ComfyUIBundleDialogContent
+    })
+  }
+
   return {
     showLoadWorkflowWarning,
     showMissingModelsWarning,
@@ -423,6 +443,9 @@ export const useDialogService = () => {
     showUpdatePasswordDialog,
     showApiNodesNewsDialog,
     prompt,
-    confirm
+    confirm,
+    showTierNotAllowedDialog,
+    showMonitorErrorDialog,
+    showComfyUIBundleDialog
   }
 }

@@ -22,7 +22,8 @@ import type {
   StatusWsMessageStatus,
   SystemStats,
   User,
-  UserDataFullInfo
+  UserDataFullInfo,
+  MonitorErrorMessage
 } from '@/schemas/apiSchema'
 import type {
   ComfyApiWorkflow,
@@ -70,6 +71,8 @@ interface FrontendApiCalls {
   graphCleared: never
   reconnecting: never
   reconnected: never
+  setupFinished: never
+  runWorkflowReceived: ComfyWorkflowJSON
 }
 
 /** Dictionary of calls originating from ComfyUI core */
@@ -77,6 +80,7 @@ interface BackendApiCalls {
   progress: ProgressWsMessage
   executing: ExecutingWsMessage
   executed: ExecutedWsMessage
+  finished: ExecutedWsMessage
   status: StatusWsMessage
   execution_start: ExecutionStartWsMessage
   execution_success: ExecutionSuccessWsMessage
@@ -84,6 +88,8 @@ interface BackendApiCalls {
   execution_interrupted: ExecutionInterruptedWsMessage
   execution_cached: ExecutionCachedWsMessage
   logs: LogsWsMessage
+  monitor_error: MonitorErrorMessage
+  input_cleared: never
   /** Mr Blob Preview, I presume? */
   b_preview: Blob
 }
@@ -921,6 +927,14 @@ export class ComfyApi extends EventTarget {
    */
   async getCustomNodesI18n(): Promise<Record<string, any>> {
     return (await axios.get(this.apiURL('/i18n'))).data
+  }
+
+  /**
+   * Clear user input folder
+   * @returns { Promise<void> }
+   */
+  async clearInputs() {
+    return this.fetchApi(`/inputs`, { method: 'DELETE' })
   }
 }
 

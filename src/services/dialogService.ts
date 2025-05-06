@@ -1,5 +1,6 @@
-import ApiNodesNewsContent from '@/components/dialog/content/ApiNodesNewsContent.vue'
+// import ApiNodesNewsContent from '@/components/dialog/content/ApiNodesNewsContent.vue'
 import ApiNodesSignInContent from '@/components/dialog/content/ApiNodesSignInContent.vue'
+import ComfyUIBundleDialogContent from '@/components/dialog/content/ComfyUIBundleDialogContent.vue'
 import ConfirmationDialogContent from '@/components/dialog/content/ConfirmationDialogContent.vue'
 import ErrorDialogContent from '@/components/dialog/content/ErrorDialogContent.vue'
 import IssueReportDialogContent from '@/components/dialog/content/IssueReportDialogContent.vue'
@@ -12,7 +13,7 @@ import SignInContent from '@/components/dialog/content/SignInContent.vue'
 import TopUpCreditsDialogContent from '@/components/dialog/content/TopUpCreditsDialogContent.vue'
 import UpdatePasswordContent from '@/components/dialog/content/UpdatePasswordContent.vue'
 import ManagerDialogContent from '@/components/dialog/content/manager/ManagerDialogContent.vue'
-import ManagerHeader from '@/components/dialog/content/manager/ManagerHeader.vue'
+// import ManagerHeader from '@/components/dialog/content/manager/ManagerHeader.vue'
 import ManagerProgressFooter from '@/components/dialog/footer/ManagerProgressFooter.vue'
 import ComfyOrgHeader from '@/components/dialog/header/ComfyOrgHeader.vue'
 import ManagerProgressHeader from '@/components/dialog/header/ManagerProgressHeader.vue'
@@ -53,15 +54,7 @@ export const useDialogService = () => {
     })
   }
 
-  function showSettingsDialog(
-    panel?:
-      | 'about'
-      | 'keybinding'
-      | 'extension'
-      | 'server-config'
-      | 'user'
-      | 'credits'
-  ) {
+  function showSettingsDialog(panel?: 'about' | 'keybinding') {
     const props = panel ? { props: { defaultPanel: panel } } : undefined
 
     dialogStore.showDialog({
@@ -130,23 +123,23 @@ export const useDialogService = () => {
   }
 
   function showManagerDialog(
-    props: InstanceType<typeof ManagerDialogContent>['$props'] = {
+    _: InstanceType<typeof ManagerDialogContent>['$props'] = {
       initialTab: ManagerTab.All
     }
   ) {
-    dialogStore.showDialog({
-      key: 'global-manager',
-      component: ManagerDialogContent,
-      headerComponent: ManagerHeader,
-      dialogComponentProps: {
-        closable: false,
-        pt: {
-          header: { class: '!p-0 !m-0' },
-          content: { class: '!px-0 h-[83vh] w-[90vw] overflow-y-hidden' }
-        }
-      },
-      props
-    })
+    // dialogStore.showDialog({
+    //   key: 'global-manager',
+    //   component: ManagerDialogContent,
+    //   headerComponent: ManagerHeader,
+    //   dialogComponentProps: {
+    //     closable: false,
+    //     pt: {
+    //       header: { class: '!p-0 !m-0' },
+    //       content: { class: '!px-0 h-[83vh] w-[90vw] overflow-y-hidden' }
+    //     }
+    //   },
+    //   props
+    // })
   }
 
   function showManagerProgressDialog(options?: {
@@ -384,25 +377,32 @@ export const useDialogService = () => {
    * Shows a dialog for the API nodes news.
    * TODO: Remove the news dialog on next major feature release.
    */
-  function showApiNodesNewsDialog() {
-    if (localStorage.getItem('api-nodes-news-seen') === 'true') {
-      return
-    }
+  // function showApiNodesNewsDialog() {
+  //   if (localStorage.getItem('api-nodes-news-seen') === 'true') {
+  //     return
+  //   }
 
-    return dialogStore.showDialog({
-      key: 'api-nodes-news',
-      component: ApiNodesNewsContent,
-      props: {
-        onClose: () => {
-          dialogStore.closeDialog({ key: 'api-nodes-news' })
-          localStorage.setItem('api-nodes-news-seen', 'true')
-        }
-      },
-      dialogComponentProps: {
-        closable: false,
-        modal: false,
-        position: 'bottomright'
-      }
+  //   return dialogStore.showDialog({
+  //     key: 'api-nodes-news',
+  //     component: ApiNodesNewsContent,
+  //     props: {
+  //       onClose: () => {
+  //         dialogStore.closeDialog({ key: 'api-nodes-news' })
+  //         localStorage.setItem('api-nodes-news-seen', 'true')
+  //       }
+  //     },
+  //     dialogComponentProps: {
+  //       closable: false,
+  //       modal: false,
+  //       position: 'bottomright'
+  //     }
+  //   })
+  // }
+
+  async function showComfyUIBundleDialog() {
+    useDialogStore().showDialog({
+      title: "🎉 Congratulations! You've Received the ComfyUI Bundle for free!",
+      component: ComfyUIBundleDialogContent
     })
   }
 
@@ -421,8 +421,9 @@ export const useDialogService = () => {
     showSignInDialog,
     showTopUpCreditsDialog,
     showUpdatePasswordDialog,
-    showApiNodesNewsDialog,
+    // showApiNodesNewsDialog,
     prompt,
-    confirm
+    confirm,
+    showComfyUIBundleDialog
   }
 }

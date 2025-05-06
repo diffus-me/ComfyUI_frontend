@@ -20,13 +20,31 @@ import { useWorkspaceStore } from '@/stores/workspaceStore'
 
 import { electronAPI, isElectron } from './utils/envUtil'
 
+import { api } from '@/scripts/api'
+import { app, ComfyApp } from '@/scripts/app'
+
 const workspaceStore = useWorkspaceStore()
 const isLoading = computed<boolean>(() => workspaceStore.spinner)
-const handleKey = (e: KeyboardEvent) => {
-  workspaceStore.shiftDown = e.shiftKey
+// const handleKey = (e: KeyboardEvent) => {
+//   workspaceStore.shiftDown = e.shiftKey
+// }
+
+const handleMessage = (message: any) => {
+  const { cmd, workflow } = JSON.parse(message.data)
+  if (cmd === 'runImage') {
+    api.dispatchCustomEvent('runWorkflowReceived', workflow)
+  } else {
+    console.warn(`unhandled event ${cmd}`)
+  }
 }
-useEventListener(window, 'keydown', handleKey)
-useEventListener(window, 'keyup', handleKey)
+
+app.api.addEventListener('setupFinished', () => {
+  window.comfyUIApp = app
+})
+
+// useEventListener(window, 'keydown', handleKey)
+// useEventListener(window, 'keyup', handleKey)
+useEventListener(window, 'message', handleMessage)
 
 const showContextMenu = (event: MouseEvent) => {
   const { target } = event
@@ -48,4 +66,10 @@ onMounted(() => {
     document.addEventListener('contextmenu', showContextMenu)
   }
 })
+
+declare global {
+  interface Window {
+    comfyUIApp?: ComfyApp
+  }
+}
 </script>

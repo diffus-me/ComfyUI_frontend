@@ -67,7 +67,7 @@ const dialogService = useDialogService()
 const user = computed(() => authStore.currentUser)
 
 const handleOpenUserSettings = () => {
-  dialogService.showSettingsDialog('user')
+  // dialogService.showSettingsDialog('user')
 }
 
 const handleTopUp = () => {

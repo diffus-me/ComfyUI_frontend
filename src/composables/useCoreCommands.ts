@@ -616,15 +616,15 @@ export function useCoreCommands(): ComfyCommand[] {
         app.canvas.setDirty(true, true)
       }
     },
-    {
-      id: 'Comfy.Manager.CustomNodesManager',
-      icon: 'pi pi-puzzle',
-      label: 'Custom Nodes Manager',
-      versionAdded: '1.12.10',
-      function: () => {
-        dialogService.showManagerDialog()
-      }
-    },
+    // {
+    //   id: 'Comfy.Manager.CustomNodesManager',
+    //   icon: 'pi pi-puzzle',
+    //   label: 'Custom Nodes Manager',
+    //   versionAdded: '1.12.10',
+    //   function: () => {
+    //     dialogService.showManagerDialog()
+    //   }
+    // },
     {
       id: 'Comfy.Manager.ToggleManagerProgressDialog',
       icon: 'pi pi-spinner',

@@ -36,7 +36,7 @@
       </template>
     </SplitButton>
     <BatchCountEdit />
-    <ButtonGroup class="execution-actions flex flex-nowrap">
+    <!-- <ButtonGroup class="execution-actions flex flex-nowrap">
       <Button
         v-tooltip.bottom="{
           value: $t('menu.interrupt'),
@@ -68,21 +68,21 @@
           }
         "
       />
-    </ButtonGroup>
+    </ButtonGroup> -->
   </div>
 </template>
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import Button from 'primevue/button'
-import ButtonGroup from 'primevue/buttongroup'
+// import ButtonGroup from 'primevue/buttongroup'
 import SplitButton from 'primevue/splitbutton'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import { useCommandStore } from '@/stores/commandStore'
 import {
-  useQueuePendingTaskCountStore,
+  // useQueuePendingTaskCountStore,
   useQueueSettingsStore
 } from '@/stores/queueStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
@@ -90,7 +90,7 @@ import { useWorkspaceStore } from '@/stores/workspaceStore'
 import BatchCountEdit from './BatchCountEdit.vue'
 
 const workspaceStore = useWorkspaceStore()
-const queueCountStore = storeToRefs(useQueuePendingTaskCountStore())
+// const queueCountStore = storeToRefs(useQueuePendingTaskCountStore())
 const { mode: queueMode } = storeToRefs(useQueueSettingsStore())
 
 const { t } = useI18n()
@@ -102,36 +102,36 @@ const queueModeMenuItemLookup = computed(() => ({
     command: () => {
       queueMode.value = 'disabled'
     }
-  },
-  instant: {
-    key: 'instant',
-    label: `${t('menu.run')} (${t('menu.instant')})`,
-    tooltip: t('menu.instantTooltip'),
-    command: () => {
-      queueMode.value = 'instant'
-    }
-  },
-  change: {
-    key: 'change',
-    label: `${t('menu.run')} (${t('menu.onChange')})`,
-    tooltip: t('menu.onChangeTooltip'),
-    command: () => {
-      queueMode.value = 'change'
-    }
   }
+  // instant: {
+  //   key: 'instant',
+  //   label: `${t('menu.run')} (${t('menu.instant')})`,
+  //   tooltip: t('menu.instantTooltip'),
+  //   command: () => {
+  //     queueMode.value = 'instant'
+  //   }
+  // },
+  // change: {
+  //   key: 'change',
+  //   label: `${t('menu.run')} (${t('menu.onChange')})`,
+  //   tooltip: t('menu.onChangeTooltip'),
+  //   command: () => {
+  //     queueMode.value = 'change'
+  //   }
+  // }
 }))
 
 const activeQueueModeMenuItem = computed(
-  () => queueModeMenuItemLookup.value[queueMode.value]
+  () => queueModeMenuItemLookup.value['disabled']
 )
 const queueModeMenuItems = computed(() =>
   Object.values(queueModeMenuItemLookup.value)
 )
 
-const executingPrompt = computed(() => !!queueCountStore.count.value)
-const hasPendingTasks = computed(
-  () => queueCountStore.count.value > 1 || queueMode.value !== 'disabled'
-)
+// const executingPrompt = computed(() => !!queueCountStore.count.value)
+// const hasPendingTasks = computed(
+//   () => queueCountStore.count.value > 1 || queueMode.value !== 'disabled'
+// )
 
 const commandStore = useCommandStore()
 const queuePrompt = async (e: Event) => {

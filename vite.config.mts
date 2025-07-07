@@ -98,10 +98,10 @@ export default defineConfig({
   },
 
   esbuild: {
-    minifyIdentifiers: false,
-    keepNames: true,
-    minifySyntax: SHOULD_MINIFY,
-    minifyWhitespace: SHOULD_MINIFY
+    minifyIdentifiers: true,
+    keepNames: false,
+    minifySyntax: true,
+    minifyWhitespace: true
   },
 
   test: {

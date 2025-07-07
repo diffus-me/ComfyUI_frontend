@@ -334,7 +334,7 @@ export class ComfyApi extends EventTarget {
       } catch (error) {
         this.dispatchCustomEvent('status', null)
       }
-    }, 1000)
+    }, 10000)
   }
 
   /**

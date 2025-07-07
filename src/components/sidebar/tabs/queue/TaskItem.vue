@@ -58,6 +58,7 @@
           <span v-if="isFlatTask" class="task-prompt-id">
             {{ task.promptId.split('-')[0] }}
           </span>
+          <Button icon="pi pi-ellipsis-h" text rounded @click="handleContextMenu($event)"/>
         </Tag>
       </div>
       <div class="tag-wrapper">

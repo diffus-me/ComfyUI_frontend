@@ -46,7 +46,7 @@
           : $t('manager.installAllMissingNodes')
       "
     />
-    <Button label="Open Manager" size="small" outlined @click="openManager" />
+    <!-- <Button label="Open Manager" size="small" outlined @click="openManager" /> -->
   </div>
 </template>
 
@@ -61,7 +61,7 @@ import { useMissingNodes } from '@/composables/nodePack/useMissingNodes'
 import { useManagerState } from '@/composables/useManagerState'
 import { useComfyManagerStore } from '@/stores/comfyManagerStore'
 import type { MissingNodeType } from '@/types/comfy'
-import { ManagerTab } from '@/types/comfyManagerTypes'
+// import { ManagerTab } from '@/types/comfyManagerTypes'
 
 import PackInstallButton from './manager/button/PackInstallButton.vue'
 
@@ -115,12 +115,12 @@ const showInstallAllButton = computed(() => {
   return managerState.shouldShowInstallButton.value
 })
 
-const openManager = async () => {
-  await managerState.openManager({
-    initialTab: ManagerTab.Missing,
-    showToastOnLegacyError: true
-  })
-}
+// const openManager = async () => {
+//   await managerState.openManager({
+//     initialTab: ManagerTab.Missing,
+//     showToastOnLegacyError: true
+//   })
+// }
 </script>
 
 <style scoped>

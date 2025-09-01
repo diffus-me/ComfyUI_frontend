@@ -37,7 +37,7 @@ import { computed, onMounted, provide, ref } from 'vue'
 
 import Actionbar from '@/components/actionbar/ComfyActionbar.vue'
 import CommandMenubar from '@/components/topbar/CommandMenubar.vue'
-import CurrentUserButton from '@/components/topbar/CurrentUserButton.vue'
+// import CurrentUserButton from '@/components/topbar/CurrentUserButton.vue'
 import WorkflowTabs from '@/components/topbar/WorkflowTabs.vue'
 import { app } from '@/scripts/app'
 import { useSettingStore } from '@/stores/settingStore'

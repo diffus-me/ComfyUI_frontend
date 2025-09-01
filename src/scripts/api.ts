@@ -14,9 +14,11 @@ import type {
   ExecutionSuccessWsMessage,
   ExtensionsResponse,
   FeatureFlagsWsMessage,
+  FinishedMessage,
   HistoryTaskItem,
   LogsRawResponse,
   LogsWsMessage,
+  MonitorErrorMessage,
   PendingTaskItem,
   ProgressStateWsMessage,
   ProgressTextWsMessage,
@@ -103,6 +105,8 @@ interface FrontendApiCalls {
   graphCleared: never
   reconnecting: never
   reconnected: never
+  setupFinished: never
+  runWorkflowReceived: ComfyWorkflowJSON
 }
 
 /** Dictionary of calls originating from ComfyUI core */
@@ -110,6 +114,7 @@ interface BackendApiCalls {
   progress: ProgressWsMessage
   executing: ExecutingWsMessage
   executed: ExecutedWsMessage
+  finished: FinishedMessage
   status: StatusWsMessage
   execution_start: ExecutionStartWsMessage
   execution_success: ExecutionSuccessWsMessage
@@ -117,6 +122,8 @@ interface BackendApiCalls {
   execution_interrupted: ExecutionInterruptedWsMessage
   execution_cached: ExecutionCachedWsMessage
   logs: LogsWsMessage
+  monitor_error: MonitorErrorMessage
+  input_cleared: never
   /** Binary preview/progress data */
   b_preview: Blob
   /** Binary preview with metadata (node_id, prompt_id) */
@@ -391,7 +398,7 @@ export class ComfyApi extends EventTarget {
       } catch (error) {
         this.dispatchCustomEvent('status', null)
       }
-    }, 1000)
+    }, 5000)
   }
 
   /**
@@ -552,6 +559,9 @@ export class ComfyApi extends EventTarget {
                 'Server feature flags received:',
                 this.serverFeatureFlags
               )
+              break
+            case 'finished':
+              this.dispatchCustomEvent('finished', msg.data)
               break
             default:
               if (this.#registered.has(msg.type)) {
@@ -1079,6 +1089,14 @@ export class ComfyApi extends EventTarget {
    */
   async getCustomNodesI18n(): Promise<Record<string, any>> {
     return (await axios.get(this.apiURL('/i18n'))).data
+  }
+
+  /**
+   * Clear user input folder
+   * @returns { Promise<void> }
+   */
+  async clearInputs() {
+    return this.fetchApi(`/inputs`, { method: 'DELETE' })
   }
 
   /**

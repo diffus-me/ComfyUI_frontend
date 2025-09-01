@@ -2,6 +2,7 @@ import { merge } from 'es-toolkit/compat'
 import { Component } from 'vue'
 
 import ApiNodesSignInContent from '@/components/dialog/content/ApiNodesSignInContent.vue'
+import ComfyUIBundleDialogContent from '@/components/dialog/content/ComfyUIBundleDialogContent.vue'
 import ConfirmationDialogContent from '@/components/dialog/content/ConfirmationDialogContent.vue'
 import ErrorDialogContent from '@/components/dialog/content/ErrorDialogContent.vue'
 import LoadWorkflowWarning from '@/components/dialog/content/LoadWorkflowWarning.vue'
@@ -62,15 +63,7 @@ export const useDialogService = () => {
     })
   }
 
-  function showSettingsDialog(
-    panel?:
-      | 'about'
-      | 'keybinding'
-      | 'extension'
-      | 'server-config'
-      | 'user'
-      | 'credits'
-  ) {
+  function showSettingsDialog(panel?: 'about' | 'keybinding') {
     const props = panel ? { props: { defaultPanel: panel } } : undefined
 
     dialogStore.showDialog({
@@ -405,25 +398,25 @@ export const useDialogService = () => {
     }
   }
 
-  function toggleManagerDialog(
-    props?: InstanceType<typeof ManagerDialogContent>['$props']
-  ) {
-    if (dialogStore.isDialogOpen('global-manager')) {
-      dialogStore.closeDialog({ key: 'global-manager' })
-    } else {
-      showManagerDialog(props)
-    }
-  }
+  // function toggleManagerDialog(
+  //   props?: InstanceType<typeof ManagerDialogContent>['$props']
+  // ) {
+  //   if (dialogStore.isDialogOpen('global-manager')) {
+  //     dialogStore.closeDialog({ key: 'global-manager' })
+  //   } else {
+  //     showManagerDialog(props)
+  //   }
+  // }
 
-  function toggleManagerProgressDialog(
-    props?: InstanceType<typeof ManagerProgressDialogContent>['$props']
-  ) {
-    if (dialogStore.isDialogOpen('global-manager-progress-dialog')) {
-      dialogStore.closeDialog({ key: 'global-manager-progress-dialog' })
-    } else {
-      showManagerProgressDialog({ props })
-    }
-  }
+  // function toggleManagerProgressDialog(
+  //   props?: InstanceType<typeof ManagerProgressDialogContent>['$props']
+  // ) {
+  //   if (dialogStore.isDialogOpen('global-manager-progress-dialog')) {
+  //     dialogStore.closeDialog({ key: 'global-manager-progress-dialog' })
+  //   } else {
+  //     showManagerProgressDialog({ props })
+  //   }
+  // }
 
   function showLayoutDialog(options: {
     key: string
@@ -504,7 +497,13 @@ export const useDialogService = () => {
       }
     })
   }
-
+  async function showComfyUIBundleDialog() {
+    useDialogStore().showDialog({
+      title: "🎉 Congratulations! You've Received the ComfyUI Bundle for free!",
+      component: ComfyUIBundleDialogContent
+    })
+  }
+  
   return {
     showLoadWorkflowWarning,
     showMissingModelsWarning,
@@ -522,9 +521,10 @@ export const useDialogService = () => {
     showExtensionDialog,
     prompt,
     confirm,
-    toggleManagerDialog,
-    toggleManagerProgressDialog,
+    // toggleManagerDialog,
+    // toggleManagerProgressDialog,
     showLayoutDialog,
-    showNodeConflictDialog
+    showNodeConflictDialog,
+    showComfyUIBundleDialog
   }
 }

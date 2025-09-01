@@ -58,6 +58,7 @@ export const useMenuItemStore = defineStore('menuItem', () => {
 
   const registerCommands = (path: string[], commandIds: string[]) => {
     const items = commandIds
+      .filter((commandId) => commandStore.getCommand(commandId))
       .map((commandId) => commandStore.getCommand(commandId))
       .map(
         (command) =>

@@ -83,6 +83,7 @@ import { deserialiseAndCreate } from '@/utils/vintageClipboard'
 
 import { type ComfyApi, PromptExecutionError, api } from './api'
 import { defaultGraph } from './defaultGraph'
+import { checkTierForPrompt } from './diffusApp'
 import {
   getAvifMetadata,
   getFlacMetadata,
@@ -881,6 +882,7 @@ export class ComfyApp {
       this.canvasContainer,
       this.canvas
     )
+    api.dispatchCustomEvent('setupFinished')
   }
 
   resizeCanvas() {
@@ -1297,6 +1299,9 @@ export class ComfyApp {
     queueNodeIds?: NodeExecutionId[]
   ): Promise<boolean> {
     this.#queueItems.push({ number, batchCount, queueNodeIds })
+
+    // Check if the user tier is allowed to generate
+    checkTierForPrompt()
 
     // Only have one action process the items so each one gets a unique seed correctly
     if (this.#processingQueue) {

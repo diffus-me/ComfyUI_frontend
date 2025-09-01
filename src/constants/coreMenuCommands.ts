@@ -17,11 +17,7 @@ export const CORE_MENU_COMMANDS = [
   [['Edit'], ['Comfy.RefreshNodeDefinitions']],
   [
     ['Edit'],
-    [
-      'Comfy.RefreshNodeDefinitions',
-      'Comfy.Memory.UnloadModels',
-      'Comfy.Memory.UnloadModelsAndExecutionCache'
-    ]
+    ['Comfy.Memory.UnloadModels', 'Comfy.Memory.UnloadModelsAndExecutionCache']
   ],
   [['View'], []],
   [
@@ -29,9 +25,10 @@ export const CORE_MENU_COMMANDS = [
     [
       'Comfy.Help.OpenComfyUIIssues',
       'Comfy.Help.OpenComfyUIDocs',
-      'Comfy.Help.OpenComfyOrgDiscord',
+      // 'Comfy.Help.OpenComfyOrgDiscord',
+      'Comfy.Help.OpenDiffusDiscord',
       'Comfy.Help.OpenComfyUIForum'
     ]
   ],
-  [['Help'], ['Comfy.Help.AboutComfyUI', 'Comfy.ContactSupport']]
+  [['Help'], ['Comfy.Help.AboutComfyUI']]
 ]

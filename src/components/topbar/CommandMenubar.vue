@@ -83,14 +83,14 @@ import { useI18n } from 'vue-i18n'
 import SubgraphBreadcrumb from '@/components/breadcrumb/SubgraphBreadcrumb.vue'
 import SettingDialogContent from '@/components/dialog/content/SettingDialogContent.vue'
 import SettingDialogHeader from '@/components/dialog/header/SettingDialogHeader.vue'
-import { useManagerState } from '@/composables/useManagerState'
+// import { useManagerState } from '@/composables/useManagerState'
 import { useColorPaletteService } from '@/services/colorPaletteService'
 import { useCommandStore } from '@/stores/commandStore'
 import { useDialogStore } from '@/stores/dialogStore'
 import { useMenuItemStore } from '@/stores/menuItemStore'
 import { useSettingStore } from '@/stores/settingStore'
 import { useColorPaletteStore } from '@/stores/workspace/colorPaletteStore'
-import { ManagerTab } from '@/types/comfyManagerTypes'
+// import { ManagerTab } from '@/types/comfyManagerTypes'
 import { showNativeSystemMenu } from '@/utils/envUtil'
 import { normalizeI18nKey } from '@/utils/formatUtil'
 import { whileMouseDown } from '@/utils/mouseDownUtil'
@@ -103,7 +103,7 @@ const dialogStore = useDialogStore()
 const settingStore = useSettingStore()
 const { t } = useI18n()
 
-const managerState = useManagerState()
+// const managerState = useManagerState()
 
 const menuRef = ref<
   ({ dirty: boolean } & TieredMenuMethods & TieredMenuState) | null
@@ -137,12 +137,12 @@ const showSettings = (defaultPanel?: string) => {
   })
 }
 
-const showManageExtensions = async () => {
-  await managerState.openManager({
-    initialTab: ManagerTab.All,
-    showToastOnLegacyError: false
-  })
-}
+// const showManageExtensions = async () => {
+//   await managerState.openManager({
+//     initialTab: ManagerTab.All,
+//     showToastOnLegacyError: false
+//   })
+// }
 
 const themeMenuItems = computed(() => {
   return colorPaletteStore.palettes.map((palette) => ({
@@ -177,13 +177,13 @@ const extraMenuItems = computed(() => [
     label: t('g.settings'),
     icon: 'mdi mdi-cog-outline',
     command: () => showSettings()
-  },
-  {
-    key: 'manage-extensions',
-    label: t('menu.manageExtensions'),
-    icon: 'mdi mdi-puzzle-outline',
-    command: showManageExtensions
   }
+  // {
+  //   key: 'manage-extensions',
+  //   label: t('menu.manageExtensions'),
+  //   icon: 'mdi mdi-puzzle-outline',
+  //   command: showManageExtensions
+  // }
 ])
 
 const translatedItems = computed(() => {

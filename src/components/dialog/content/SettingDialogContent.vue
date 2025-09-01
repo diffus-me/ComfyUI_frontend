@@ -63,10 +63,10 @@ import Listbox from 'primevue/listbox'
 import ScrollPanel from 'primevue/scrollpanel'
 import TabPanels from 'primevue/tabpanels'
 import Tabs from 'primevue/tabs'
-import { computed, watch } from 'vue'
+import { computed } from 'vue'
 
 import SearchBox from '@/components/common/SearchBox.vue'
-import { useFirebaseAuthActions } from '@/composables/auth/useFirebaseAuthActions'
+// import { useFirebaseAuthActions } from '@/composables/auth/useFirebaseAuthActions'
 import { useSettingSearch } from '@/composables/setting/useSettingSearch'
 import { useSettingUI } from '@/composables/setting/useSettingUI'
 import { SettingTreeNode } from '@/stores/settingStore'
@@ -79,13 +79,12 @@ import PanelTemplate from './setting/PanelTemplate.vue'
 import SettingsPanel from './setting/SettingsPanel.vue'
 
 const { defaultPanel } = defineProps<{
-  defaultPanel?:
-    | 'about'
-    | 'keybinding'
-    | 'extension'
+  defaultPanel?: // | 'about'
+  | 'keybinding'
+    // | 'extension'
     | 'server-config'
-    | 'user'
-    | 'credits'
+  // | 'user'
+  // | 'credits'
 }>()
 
 const {
@@ -105,7 +104,7 @@ const {
   getSearchResults
 } = useSettingSearch()
 
-const authActions = useFirebaseAuthActions()
+// const authActions = useFirebaseAuthActions()
 
 // Sort groups for a category
 const sortedGroups = (category: SettingTreeNode): ISettingGroup[] => {
@@ -133,14 +132,14 @@ const tabValue = computed<string>(() =>
 
 // Don't allow null category to be set outside of search.
 // In search mode, the active category can be null to show all search results.
-watch(activeCategory, (_, oldValue) => {
-  if (!tabValue.value) {
-    activeCategory.value = oldValue
-  }
-  if (activeCategory.value?.key === 'credits') {
-    void authActions.fetchBalance()
-  }
-})
+// watch(activeCategory, (_, oldValue) => {
+//   if (!tabValue.value) {
+//     activeCategory.value = oldValue
+//   }
+//   if (activeCategory.value?.key === 'credits') {
+//     void authActions.fetchBalance()
+//   }
+// })
 </script>
 
 <style>

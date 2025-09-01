@@ -1,4 +1,4 @@
-import { useFirebaseAuthActions } from '@/composables/auth/useFirebaseAuthActions'
+// import { useFirebaseAuthActions } from '@/composables/auth/useFirebaseAuthActions'
 import { useSelectedLiteGraphItems } from '@/composables/canvas/useSelectedLiteGraphItems'
 import { ManagerUIState, useManagerState } from '@/composables/useManagerState'
 import { useModelSelectorDialog } from '@/composables/useModelSelectorDialog'
@@ -21,11 +21,11 @@ import { useDialogService } from '@/services/dialogService'
 import { useLitegraphService } from '@/services/litegraphService'
 import { useWorkflowService } from '@/services/workflowService'
 import type { ComfyCommand } from '@/stores/commandStore'
-import { useExecutionStore } from '@/stores/executionStore'
+// import { useExecutionStore } from '@/stores/executionStore'
 import { useCanvasStore, useTitleEditorStore } from '@/stores/graphStore'
-import { useHelpCenterStore } from '@/stores/helpCenterStore'
+// import { useHelpCenterStore } from '@/stores/helpCenterStore'
 import { useNodeOutputStore } from '@/stores/imagePreviewStore'
-import { useQueueSettingsStore, useQueueStore } from '@/stores/queueStore'
+import { useQueueSettingsStore } from '@/stores/queueStore'
 import { useSettingStore } from '@/stores/settingStore'
 import { useSubgraphNavigationStore } from '@/stores/subgraphNavigationStore'
 import { useSubgraphStore } from '@/stores/subgraphStore'
@@ -37,10 +37,11 @@ import { useSearchBoxStore } from '@/stores/workspace/searchBoxStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { ManagerTab } from '@/types/comfyManagerTypes'
 import {
-  getAllNonIoNodesInSubgraph,
-  getExecutionIdsForSelectedNodes
+  getAllNonIoNodesInSubgraph
+  // getExecutionIdsForSelectedNodes
 } from '@/utils/graphTraversalUtil'
-import { filterOutputNodes } from '@/utils/nodeFilterUtil'
+
+// import { filterOutputNodes } from '@/utils/nodeFilterUtil'
 
 const moveSelectedNodesVersionAdded = '1.22.2'
 
@@ -49,10 +50,10 @@ export function useCoreCommands(): ComfyCommand[] {
   const workflowStore = useWorkflowStore()
   const dialogService = useDialogService()
   const colorPaletteStore = useColorPaletteStore()
-  const firebaseAuthActions = useFirebaseAuthActions()
+  // const firebaseAuthActions = useFirebaseAuthActions()
   const toastStore = useToastStore()
   const canvasStore = useCanvasStore()
-  const executionStore = useExecutionStore()
+  // const executionStore = useExecutionStore()
 
   const bottomPanelStore = useBottomPanelStore()
 
@@ -220,36 +221,36 @@ export function useCoreCommands(): ComfyCommand[] {
         await app.refreshComboInNodes()
       }
     },
-    {
-      id: 'Comfy.Interrupt',
-      icon: 'pi pi-stop',
-      label: 'Interrupt',
-      category: 'essentials' as const,
-      function: async () => {
-        await api.interrupt(executionStore.activePromptId)
-        toastStore.add({
-          severity: 'info',
-          summary: t('g.interrupted'),
-          detail: t('toastMessages.interrupted'),
-          life: 1000
-        })
-      }
-    },
-    {
-      id: 'Comfy.ClearPendingTasks',
-      icon: 'pi pi-stop',
-      label: 'Clear Pending Tasks',
-      category: 'essentials' as const,
-      function: async () => {
-        await useQueueStore().clear(['queue'])
-        toastStore.add({
-          severity: 'info',
-          summary: t('g.confirmed'),
-          detail: t('toastMessages.pendingTasksDeleted'),
-          life: 3000
-        })
-      }
-    },
+    // {
+    //   id: 'Comfy.Interrupt',
+    //   icon: 'pi pi-stop',
+    //   label: 'Interrupt',
+    //   category: 'essentials' as const,
+    //   function: async () => {
+    //     await api.interrupt(executionStore.activePromptId)
+    //     toastStore.add({
+    //       severity: 'info',
+    //       summary: t('g.interrupted'),
+    //       detail: t('toastMessages.interrupted'),
+    //       life: 1000
+    //     })
+    //   }
+    // },
+    // {
+    //   id: 'Comfy.ClearPendingTasks',
+    //   icon: 'pi pi-stop',
+    //   label: 'Clear Pending Tasks',
+    //   category: 'essentials' as const,
+    //   function: async () => {
+    //     await useQueueStore().clear(['queue'])
+    //     toastStore.add({
+    //       severity: 'info',
+    //       summary: t('g.confirmed'),
+    //       detail: t('toastMessages.pendingTasksDeleted'),
+    //       life: 3000
+    //     })
+    //   }
+    // },
     {
       id: 'Comfy.BrowseTemplates',
       icon: 'pi pi-folder-open',
@@ -398,43 +399,43 @@ export function useCoreCommands(): ComfyCommand[] {
         await app.queuePrompt(0, batchCount)
       }
     },
-    {
-      id: 'Comfy.QueuePromptFront',
-      icon: 'pi pi-play',
-      label: 'Queue Prompt (Front)',
-      versionAdded: '1.3.7',
-      category: 'essentials' as const,
-      function: async () => {
-        const batchCount = useQueueSettingsStore().batchCount
-        await app.queuePrompt(-1, batchCount)
-      }
-    },
-    {
-      id: 'Comfy.QueueSelectedOutputNodes',
-      icon: 'pi pi-play',
-      label: 'Queue Selected Output Nodes',
-      versionAdded: '1.19.6',
-      function: async () => {
-        const batchCount = useQueueSettingsStore().batchCount
-        const selectedNodes = getSelectedNodes()
-        const selectedOutputNodes = filterOutputNodes(selectedNodes)
+    // {
+    //   id: 'Comfy.QueuePromptFront',
+    //   icon: 'pi pi-play',
+    //   label: 'Queue Prompt (Front)',
+    //   versionAdded: '1.3.7',
+    //   category: 'essentials' as const,
+    //   function: async () => {
+    //     const batchCount = useQueueSettingsStore().batchCount
+    //     await app.queuePrompt(-1, batchCount)
+    //   }
+    // },
+    // {
+    //   id: 'Comfy.QueueSelectedOutputNodes',
+    //   icon: 'pi pi-play',
+    //   label: 'Queue Selected Output Nodes',
+    //   versionAdded: '1.19.6',
+    //   function: async () => {
+    //     const batchCount = useQueueSettingsStore().batchCount
+    //     const selectedNodes = getSelectedNodes()
+    //     const selectedOutputNodes = filterOutputNodes(selectedNodes)
 
-        if (selectedOutputNodes.length === 0) {
-          toastStore.add({
-            severity: 'error',
-            summary: t('toastMessages.nothingToQueue'),
-            detail: t('toastMessages.pleaseSelectOutputNodes'),
-            life: 3000
-          })
-          return
-        }
+    //     if (selectedOutputNodes.length === 0) {
+    //       toastStore.add({
+    //         severity: 'error',
+    //         summary: t('toastMessages.nothingToQueue'),
+    //         detail: t('toastMessages.pleaseSelectOutputNodes'),
+    //         life: 3000
+    //       })
+    //       return
+    //     }
 
-        // Get execution IDs for all selected output nodes and their descendants
-        const executionIds =
-          getExecutionIdsForSelectedNodes(selectedOutputNodes)
-        await app.queuePrompt(0, batchCount, executionIds)
-      }
-    },
+    //     // Get execution IDs for all selected output nodes and their descendants
+    //     const executionIds =
+    //       getExecutionIdsForSelectedNodes(selectedOutputNodes)
+    //     await app.queuePrompt(0, batchCount, executionIds)
+    //   }
+    // },
     {
       id: 'Comfy.ShowSettingsDialog',
       icon: 'pi pi-cog',
@@ -654,15 +655,25 @@ export function useCoreCommands(): ComfyCommand[] {
       }
     },
     {
-      id: 'Comfy.Help.OpenComfyOrgDiscord',
+      id: 'Comfy.Help.OpenDiffusDiscord',
       icon: 'pi pi-discord',
-      label: 'Open Comfy-Org Discord',
-      menubarLabel: 'Comfy-Org Discord',
+      label: 'Open Diffus Discord',
+      menubarLabel: 'Diffus Discord',
       versionAdded: '1.5.5',
       function: () => {
-        window.open('https://www.comfy.org/discord', '_blank')
+        window.open('https://discord.com/invite/V5Xq6fHUtj', '_blank')
       }
     },
+    // {
+    //   id: 'Comfy.Help.OpenComfyOrgDiscord',
+    //   icon: 'pi pi-discord',
+    //   label: 'Open Comfy-Org Discord',
+    //   menubarLabel: 'Comfy-Org Discord',
+    //   versionAdded: '1.5.5',
+    //   function: () => {
+    //     window.open('https://www.comfy.org/discord', '_blank')
+    //   }
+    // },
     {
       id: 'Workspace.SearchBox.Toggle',
       icon: 'pi pi-search',
@@ -779,15 +790,15 @@ export function useCoreCommands(): ComfyCommand[] {
         })
       }
     },
-    {
-      id: 'Comfy.Manager.ToggleManagerProgressDialog',
-      icon: 'pi pi-spinner',
-      label: 'Toggle the Custom Nodes Manager Progress Bar',
-      versionAdded: '1.13.9',
-      function: () => {
-        dialogService.toggleManagerProgressDialog()
-      }
-    },
+    // {
+    //   id: 'Comfy.Manager.ToggleManagerProgressDialog',
+    //   icon: 'pi pi-spinner',
+    //   label: 'Toggle the Custom Nodes Manager Progress Bar',
+    //   versionAdded: '1.13.9',
+    //   function: () => {
+    //     dialogService.toggleManagerProgressDialog()
+    //   }
+    // },
     {
       id: 'Comfy.User.OpenSignInDialog',
       icon: 'pi pi-user',
@@ -797,15 +808,15 @@ export function useCoreCommands(): ComfyCommand[] {
         await dialogService.showSignInDialog()
       }
     },
-    {
-      id: 'Comfy.User.SignOut',
-      icon: 'pi pi-sign-out',
-      label: 'Sign Out',
-      versionAdded: '1.18.1',
-      function: async () => {
-        await firebaseAuthActions.logout()
-      }
-    },
+    // {
+    //   id: 'Comfy.User.SignOut',
+    //   icon: 'pi pi-sign-out',
+    //   label: 'Sign Out',
+    //   versionAdded: '1.18.1',
+    //   function: async () => {
+    //     await firebaseAuthActions.logout()
+    //   }
+    // },
     {
       id: 'Comfy.Canvas.MoveSelectedNodes.Up',
       icon: 'pi pi-arrow-up',
@@ -889,15 +900,15 @@ export function useCoreCommands(): ComfyCommand[] {
         })
       }
     },
-    {
-      id: 'Comfy.ToggleHelpCenter',
-      icon: 'pi pi-question-circle',
-      label: 'Help Center',
-      function: () => {
-        useHelpCenterStore().toggle()
-      },
-      active: () => useHelpCenterStore().isVisible
-    },
+    // {
+    //   id: 'Comfy.ToggleHelpCenter',
+    //   icon: 'pi pi-question-circle',
+    //   label: 'Help Center',
+    //   function: () => {
+    //     useHelpCenterStore().toggle()
+    //   },
+    //   active: () => useHelpCenterStore().isVisible
+    // },
     {
       id: 'Comfy.ToggleCanvasInfo',
       icon: 'pi pi-info-circle',

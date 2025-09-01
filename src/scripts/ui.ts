@@ -545,35 +545,35 @@ export class ComfyUI {
                   ).value = i.srcElement.value
                 }
               })
-            ]),
-            $el('div', [
-              $el('label', {
-                for: 'autoQueueCheckbox',
-                innerHTML: 'Auto Queue'
-              }),
-              $el('input', {
-                id: 'autoQueueCheckbox',
-                type: 'checkbox',
-                checked: false,
-                title: 'Automatically queue prompt when the queue size hits 0',
-                // @ts-expect-error fixme ts strict error
-                onchange: (e) => {
-                  this.autoQueueEnabled = e.target.checked
-                  autoQueueModeEl.style.display = this.autoQueueEnabled
-                    ? ''
-                    : 'none'
-                }
-              }),
-              autoQueueModeEl
             ])
+            // $el('div', [
+            //   $el('label', {
+            //     for: 'autoQueueCheckbox',
+            //     innerHTML: 'Auto Queue'
+            //   }),
+            //   $el('input', {
+            //     id: 'autoQueueCheckbox',
+            //     type: 'checkbox',
+            //     checked: false,
+            //     title: 'Automatically queue prompt when the queue size hits 0',
+            //     // @ts-expect-error fixme ts strict error
+            //     onchange: (e) => {
+            //       this.autoQueueEnabled = e.target.checked
+            //       autoQueueModeEl.style.display = this.autoQueueEnabled
+            //         ? ''
+            //         : 'none'
+            //     }
+            //   }),
+            //   autoQueueModeEl
+            // ])
           ]
         ),
         $el('div.comfy-menu-btns', [
-          $el('button', {
-            id: 'queue-front-button',
-            textContent: 'Queue Front',
-            onclick: () => app.queuePrompt(-1, this.batchCount)
-          }),
+          // $el('button', {
+          //   id: 'queue-front-button',
+          //   textContent: 'Queue Front',
+          //   onclick: () => app.queuePrompt(-1, this.batchCount)
+          // }),
           $el('button', {
             $: (b) => (this.queue.button = b as HTMLButtonElement),
             id: 'comfy-view-queue-button',

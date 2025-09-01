@@ -146,7 +146,7 @@ export function useManagerState() {
 
     switch (state) {
       case ManagerUIState.DISABLED:
-        dialogService.showSettingsDialog('extension')
+        dialogService.showSettingsDialog('about')
         break
 
       case ManagerUIState.LEGACY_UI: {
@@ -166,7 +166,7 @@ export function useManagerState() {
           }
           // Fallback to extensions panel if not showing toast
           if (options?.showToastOnLegacyError === false) {
-            dialogService.showSettingsDialog('extension')
+            dialogService.showSettingsDialog('about')
           }
         }
         break

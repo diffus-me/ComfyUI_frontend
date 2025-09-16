@@ -31,7 +31,7 @@
       </div>
     </template>
   </ListBox>
-  <div v-if="showManagerButtons" class="flex justify-end py-3">
+  <!-- <div v-if="showManagerButtons" class="flex justify-end py-3">
     <PackInstallButton
       v-if="showInstallAllButton"
       size="md"
@@ -46,8 +46,8 @@
           : $t('manager.installAllMissingNodes')
       "
     />
-    <!-- <Button label="Open Manager" size="small" outlined @click="openManager" /> -->
-  </div>
+    <Button label="Open Manager" size="small" outlined @click="openManager" />
+  </div> -->
 </template>
 
 <script setup lang="ts">
@@ -58,31 +58,31 @@ import { computed } from 'vue'
 import NoResultsPlaceholder from '@/components/common/NoResultsPlaceholder.vue'
 import MissingCoreNodesMessage from '@/components/dialog/content/MissingCoreNodesMessage.vue'
 import { useMissingNodes } from '@/composables/nodePack/useMissingNodes'
-import { useManagerState } from '@/composables/useManagerState'
-import { useComfyManagerStore } from '@/stores/comfyManagerStore'
+// import { useManagerState } from '@/composables/useManagerState'
+// import { useComfyManagerStore } from '@/stores/comfyManagerStore'
 import type { MissingNodeType } from '@/types/comfy'
+
 // import { ManagerTab } from '@/types/comfyManagerTypes'
 
-import PackInstallButton from './manager/button/PackInstallButton.vue'
+// import PackInstallButton from './manager/button/PackInstallButton.vue'
 
 const props = defineProps<{
   missingNodeTypes: MissingNodeType[]
 }>()
 
 // Get missing node packs from workflow with loading and error states
-const { missingNodePacks, isLoading, error, missingCoreNodes } =
-  useMissingNodes()
+const { missingCoreNodes } = useMissingNodes()
 
-const comfyManagerStore = useComfyManagerStore()
-const managerState = useManagerState()
+// const comfyManagerStore = useComfyManagerStore()
+// const managerState = useManagerState()
 
 // Check if any of the missing packs are currently being installed
-const isInstalling = computed(() => {
-  if (!missingNodePacks.value?.length) return false
-  return missingNodePacks.value.some((pack) =>
-    comfyManagerStore.isPackInstalling(pack.id)
-  )
-})
+// const isInstalling = computed(() => {
+//   if (!missingNodePacks.value?.length) return false
+//   return missingNodePacks.value.some((pack) =>
+//     comfyManagerStore.isPackInstalling(pack.id)
+//   )
+// })
 
 const uniqueNodes = computed(() => {
   const seenTypes = new Set()
@@ -106,14 +106,14 @@ const uniqueNodes = computed(() => {
 })
 
 // Show manager buttons unless manager is disabled
-const showManagerButtons = computed(() => {
-  return managerState.shouldShowManagerButtons.value
-})
+// const showManagerButtons = computed(() => {
+//   return managerState.shouldShowManagerButtons.value
+// })
 
 // Only show Install All button for NEW_UI (new manager with v4 support)
-const showInstallAllButton = computed(() => {
-  return managerState.shouldShowInstallButton.value
-})
+// const showInstallAllButton = computed(() => {
+//   return managerState.shouldShowInstallButton.value
+// })
 
 // const openManager = async () => {
 //   await managerState.openManager({

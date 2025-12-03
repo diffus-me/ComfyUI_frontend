@@ -5,6 +5,7 @@ import ApiNodesSignInContent from '@/components/dialog/content/ApiNodesSignInCon
 import MissingNodesContent from '@/components/dialog/content/MissingNodesContent.vue'
 import MissingNodesFooter from '@/components/dialog/content/MissingNodesFooter.vue'
 import MissingNodesHeader from '@/components/dialog/content/MissingNodesHeader.vue'
+import ComfyUIBundleDialogContent from '@/components/dialog/content/ComfyUIBundleDialogContent.vue'
 import ConfirmationDialogContent from '@/components/dialog/content/ConfirmationDialogContent.vue'
 import ErrorDialogContent from '@/components/dialog/content/ErrorDialogContent.vue'
 import MissingModelsWarning from '@/components/dialog/content/MissingModelsWarning.vue'
@@ -83,16 +84,7 @@ export const useDialogService = () => {
     })
   }
 
-  function showSettingsDialog(
-    panel?:
-      | 'about'
-      | 'keybinding'
-      | 'extension'
-      | 'server-config'
-      | 'user'
-      | 'credits'
-      | 'subscription'
-  ) {
+  function showSettingsDialog(panel?: 'about' | 'keybinding') {
     const props = panel ? { props: { defaultPanel: panel } } : undefined
 
     dialogStore.showDialog({
@@ -541,6 +533,13 @@ export const useDialogService = () => {
     show()
   }
 
+  async function showComfyUIBundleDialog() {
+    useDialogStore().showDialog({
+      title: "🎉 Congratulations! You've Received the ComfyUI Bundle for free!",
+      component: ComfyUIBundleDialogContent
+    })
+  }
+
   return {
     showLoadWorkflowWarning,
     showMissingModelsWarning,
@@ -561,6 +560,7 @@ export const useDialogService = () => {
     toggleManagerDialog,
     toggleManagerProgressDialog,
     showLayoutDialog,
-    showNodeConflictDialog
+    showNodeConflictDialog,
+    showComfyUIBundleDialog
   }
 }

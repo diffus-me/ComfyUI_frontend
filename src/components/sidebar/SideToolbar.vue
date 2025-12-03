@@ -41,9 +41,9 @@
           v-if="userStore.isMultiUserServer"
           :is-small="isSmall"
         />
-        <SidebarHelpCenterIcon :is-small="isSmall" />
-        <SidebarBottomPanelToggleButton :is-small="isSmall" />
-        <SidebarShortcutsToggleButton :is-small="isSmall" />
+        <!-- <SidebarHelpCenterIcon :is-small="isSmall" /> -->
+        <!-- <SidebarBottomPanelToggleButton :is-small="isSmall" /> -->
+        <!-- <SidebarShortcutsToggleButton :is-small="isSmall" /> -->
         <SidebarSettingsButton :is-small="isSmall" />
       </div>
     </div>
@@ -56,9 +56,9 @@ import { debounce } from 'es-toolkit/compat'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 import ComfyMenuButton from '@/components/sidebar/ComfyMenuButton.vue'
-import SidebarBottomPanelToggleButton from '@/components/sidebar/SidebarBottomPanelToggleButton.vue'
+// import SidebarBottomPanelToggleButton from '@/components/sidebar/SidebarBottomPanelToggleButton.vue'
 import SidebarSettingsButton from '@/components/sidebar/SidebarSettingsButton.vue'
-import SidebarShortcutsToggleButton from '@/components/sidebar/SidebarShortcutsToggleButton.vue'
+// import SidebarShortcutsToggleButton from '@/components/sidebar/SidebarShortcutsToggleButton.vue'
 import { useSettingStore } from '@/platform/settings/settingStore'
 import { useTelemetry } from '@/platform/telemetry'
 import { useCanvasStore } from '@/renderer/core/canvas/canvasStore'
@@ -69,7 +69,7 @@ import { useWorkspaceStore } from '@/stores/workspaceStore'
 import type { SidebarTabExtension } from '@/types/extensionTypes'
 import { cn } from '@/utils/tailwindUtil'
 
-import SidebarHelpCenterIcon from './SidebarHelpCenterIcon.vue'
+// import SidebarHelpCenterIcon from './SidebarHelpCenterIcon.vue'
 import SidebarIcon from './SidebarIcon.vue'
 import SidebarLogoutIcon from './SidebarLogoutIcon.vue'
 import SidebarTemplatesButton from './SidebarTemplatesButton.vue'

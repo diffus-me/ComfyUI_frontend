@@ -120,7 +120,7 @@ import { useChainCallback } from '@/composables/functional/useChainCallback'
 import type { VueNodeData } from '@/composables/graph/useGraphNodeManager'
 import { useViewportCulling } from '@/composables/graph/useViewportCulling'
 import { useVueNodeLifecycle } from '@/composables/graph/useVueNodeLifecycle'
-import { useNodeBadge } from '@/composables/node/useNodeBadge'
+// import { useNodeBadge } from '@/composables/node/useNodeBadge'
 import { useCanvasDrop } from '@/composables/useCanvasDrop'
 import { useContextMenuTranslation } from '@/composables/useContextMenuTranslation'
 import { useCopy } from '@/composables/useCopy'
@@ -398,7 +398,7 @@ const comfyAppReady = ref(false)
 const workflowPersistence = useWorkflowPersistence()
 useCanvasDrop(canvasRef)
 useLitegraphSettings()
-useNodeBadge()
+// useNodeBadge()
 
 onMounted(async () => {
   useGlobalLitegraph()

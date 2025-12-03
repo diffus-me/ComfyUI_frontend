@@ -13,6 +13,7 @@
       <GraphCanvas @ready="onGraphReady" />
     </div>
     <LinearView v-if="linearMode" />
+    <UserCenter />
   </div>
 
   <GlobalToast />
@@ -45,6 +46,7 @@ import GraphCanvas from '@/components/graph/GraphCanvas.vue'
 import GlobalToast from '@/components/toast/GlobalToast.vue'
 import RerouteMigrationToast from '@/components/toast/RerouteMigrationToast.vue'
 import VueNodesMigrationToast from '@/components/toast/VueNodesMigrationToast.vue'
+import UserCenter from '@/components/userCenter/UserCenter.vue'
 import { useBrowserTabTitle } from '@/composables/useBrowserTabTitle'
 import { useCoreCommands } from '@/composables/useCoreCommands'
 import { useErrorHandling } from '@/composables/useErrorHandling'

@@ -130,6 +130,21 @@ const zLogRawResponse = z.object({
   entries: z.array(zLogEntry)
 })
 
+const zMonitorErrorMessage = z.object({
+  reason: z.string(),
+  need_upgrade: z.boolean()
+})
+
+const zSubscriptionConsumption = z.object({
+  credit_consumption: z.number(),
+  discount: z.number()
+})
+
+const zFinishedMessage = z.object({
+  subscription_consumption: zSubscriptionConsumption,
+  used_time: z.number()
+})
+
 const zFeatureFlagsWsMessage = z.record(z.string(), z.any())
 
 export type StatusWsMessageStatus = z.infer<typeof zStatusWsMessageStatus>
@@ -147,6 +162,8 @@ export type ExecutionInterruptedWsMessage = z.infer<
 >
 export type ExecutionErrorWsMessage = z.infer<typeof zExecutionErrorWsMessage>
 export type LogsWsMessage = z.infer<typeof zLogsWsMessage>
+export type MonitorErrorMessage = z.infer<typeof zMonitorErrorMessage>
+export type FinishedMessage = z.infer<typeof zFinishedMessage>
 export type ProgressTextWsMessage = z.infer<typeof zProgressTextWsMessage>
 export type NodeProgressState = z.infer<typeof zNodeProgressState>
 export type ProgressStateWsMessage = z.infer<typeof zProgressStateWsMessage>

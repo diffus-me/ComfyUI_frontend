@@ -2,12 +2,12 @@ import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
 import type { Component } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { useCurrentUser } from '@/composables/auth/useCurrentUser'
-import { isCloud } from '@/platform/distribution/types'
+// import { useCurrentUser } from '@/composables/auth/useCurrentUser'
+// import { isCloud } from '@/platform/distribution/types'
 import type { SettingTreeNode } from '@/platform/settings/settingStore'
 import { useSettingStore } from '@/platform/settings/settingStore'
 import type { SettingParams } from '@/platform/settings/types'
-import { isElectron } from '@/utils/envUtil'
+// import { isElectron } from '@/utils/envUtil'
 import { normalizeI18nKey } from '@/utils/formatUtil'
 import { buildTree } from '@/utils/treeUtil'
 import { useVueFeatureFlags } from '@/composables/useVueFeatureFlags'
@@ -28,7 +28,7 @@ export function useSettingUI(
     | 'subscription'
 ) {
   const { t } = useI18n()
-  const { isLoggedIn } = useCurrentUser()
+  // const { isLoggedIn } = useCurrentUser()
   const settingStore = useSettingStore()
   const activeCategory = ref<SettingTreeNode | null>(null)
 
@@ -74,44 +74,44 @@ export function useSettingUI(
     )
   }
 
-  const creditsPanel: SettingPanelItem = {
-    node: {
-      key: 'credits',
-      label: 'Credits',
-      children: []
-    },
-    component: defineAsyncComponent(
-      () => import('@/components/dialog/content/setting/CreditsPanel.vue')
-    )
-  }
+  // const creditsPanel: SettingPanelItem = {
+  //   node: {
+  //     key: 'credits',
+  //     label: 'Credits',
+  //     children: []
+  //   },
+  //   component: defineAsyncComponent(
+  //     () => import('@/components/dialog/content/setting/CreditsPanel.vue')
+  //   )
+  // }
 
-  const subscriptionPanel: SettingPanelItem | null =
-    !isCloud || !window.__CONFIG__?.subscription_required
-      ? null
-      : {
-          node: {
-            key: 'subscription',
-            label: 'PlanCredits',
-            children: []
-          },
-          component: defineAsyncComponent(
-            () =>
-              import(
-                '@/platform/cloud/subscription/components/SubscriptionPanel.vue'
-              )
-          )
-        }
+  // const subscriptionPanel: SettingPanelItem | null =
+  //   !isCloud || !window.__CONFIG__?.subscription_required
+  //     ? null
+  //     : {
+  //         node: {
+  //           key: 'subscription',
+  //           label: 'PlanCredits',
+  //           children: []
+  //         },
+  //         component: defineAsyncComponent(
+  //           () =>
+  //             import(
+  //               '@/platform/cloud/subscription/components/SubscriptionPanel.vue'
+  //             )
+  //         )
+  //       }
 
-  const userPanel: SettingPanelItem = {
-    node: {
-      key: 'user',
-      label: 'User',
-      children: []
-    },
-    component: defineAsyncComponent(
-      () => import('@/components/dialog/content/setting/UserPanel.vue')
-    )
-  }
+  // const userPanel: SettingPanelItem = {
+  //   node: {
+  //     key: 'user',
+  //     label: 'User',
+  //     children: []
+  //   },
+  //   component: defineAsyncComponent(
+  //     () => import('@/components/dialog/content/setting/UserPanel.vue')
+  //   )
+  // }
 
   const keybindingPanel: SettingPanelItem = {
     node: {
@@ -124,42 +124,30 @@ export function useSettingUI(
     )
   }
 
-  const extensionPanel: SettingPanelItem = {
-    node: {
-      key: 'extension',
-      label: 'Extension',
-      children: []
-    },
-    component: defineAsyncComponent(
-      () => import('@/platform/settings/components/ExtensionPanel.vue')
-    )
-  }
+  // const extensionPanel: SettingPanelItem = {
+  //   node: {
+  //     key: 'extension',
+  //     label: 'Extension',
+  //     children: []
+  //   },
+  //   component: defineAsyncComponent(
+  //     () => import('@/platform/settings/components/ExtensionPanel.vue')
+  //   )
+  // }
 
-  const serverConfigPanel: SettingPanelItem = {
-    node: {
-      key: 'server-config',
-      label: 'Server-Config',
-      children: []
-    },
-    component: defineAsyncComponent(
-      () => import('@/platform/settings/components/ServerConfigPanel.vue')
-    )
-  }
+  // const serverConfigPanel: SettingPanelItem = {
+  //   node: {
+  //     key: 'server-config',
+  //     label: 'Server-Config',
+  //     children: []
+  //   },
+  //   component: defineAsyncComponent(
+  //     () => import('@/platform/settings/components/ServerConfigPanel.vue')
+  //   )
+  // }
 
   const panels = computed<SettingPanelItem[]>(() =>
-    [
-      aboutPanel,
-      creditsPanel,
-      userPanel,
-      keybindingPanel,
-      extensionPanel,
-      ...(isElectron() ? [serverConfigPanel] : []),
-      ...(isCloud &&
-      window.__CONFIG__?.subscription_required &&
-      subscriptionPanel
-        ? [subscriptionPanel]
-        : [])
-    ].filter((panel) => panel.component)
+    [aboutPanel, keybindingPanel].filter((panel) => panel.component)
   )
 
   /**
@@ -185,23 +173,23 @@ export function useSettingUI(
 
   const groupedMenuTreeNodes = computed<SettingTreeNode[]>(() => [
     // Account settings - show different panels based on distribution and auth state
-    {
-      key: 'account',
-      label: 'Account',
-      children: [
-        userPanel.node,
-        ...(isLoggedIn.value &&
-        isCloud &&
-        window.__CONFIG__?.subscription_required &&
-        subscriptionPanel
-          ? [subscriptionPanel.node]
-          : []),
-        ...(isLoggedIn.value &&
-        !(isCloud && window.__CONFIG__?.subscription_required)
-          ? [creditsPanel.node]
-          : [])
-      ].map(translateCategory)
-    },
+    // {
+    //   key: 'account',
+    //   label: 'Account',
+    //   children: [
+    //     userPanel.node,
+    //     ...(isLoggedIn.value &&
+    //     isCloud &&
+    //     window.__CONFIG__?.subscription_required &&
+    //     subscriptionPanel
+    //       ? [subscriptionPanel.node]
+    //       : []),
+    //     ...(isLoggedIn.value &&
+    //     !(isCloud && window.__CONFIG__?.subscription_required)
+    //       ? [creditsPanel.node]
+    //       : [])
+    //   ].map(translateCategory)
+    // },
     // Normal settings stored in the settingStore
     {
       key: 'settings',
@@ -214,9 +202,8 @@ export function useSettingUI(
       label: 'Special Settings',
       children: [
         keybindingPanel.node,
-        extensionPanel.node,
-        aboutPanel.node,
-        ...(isElectron() ? [serverConfigPanel.node] : [])
+        // extensionPanel.node,
+        aboutPanel.node
       ].map(translateCategory)
     }
   ])

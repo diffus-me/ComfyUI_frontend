@@ -18,9 +18,7 @@ export const useCurrentUser = () => {
 
   const firebaseUser = computed(() => authStore.currentUser)
   const isApiKeyLogin = computed(() => apiKeyStore.isAuthenticated)
-  const isLoggedIn = computed(
-    () => !!isApiKeyLogin.value || firebaseUser.value !== null
-  )
+  const isLoggedIn = computed(() => false) // !!isApiKeyLogin.value || firebaseUser.value !== null
 
   const resolvedUserInfo = computed<AuthUserInfo | null>(() => {
     if (isApiKeyLogin.value && apiKeyStore.currentUser) {

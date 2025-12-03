@@ -37,17 +37,15 @@ import { storeToRefs } from 'pinia'
 import InputNumber from 'primevue/inputnumber'
 import { computed } from 'vue'
 
-import { useSettingStore } from '@/platform/settings/settingStore'
+// import { useSettingStore } from '@/platform/settings/settingStore'
 import { useQueueSettingsStore } from '@/stores/queueStore'
 
 const queueSettingsStore = useQueueSettingsStore()
 const { batchCount } = storeToRefs(queueSettingsStore)
 const minQueueCount = 1
 
-const settingStore = useSettingStore()
-const maxQueueCount = computed(() =>
-  settingStore.get('Comfy.QueueButton.BatchCountLimit')
-)
+// const settingStore = useSettingStore()
+const maxQueueCount = computed(() => 8)
 
 const handleClick = (increment: boolean) => {
   let newCount: number

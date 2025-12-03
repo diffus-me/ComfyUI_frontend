@@ -42,8 +42,8 @@
             {{ queuedCount }}
           </span>
         </IconButton>
-        <CurrentUserButton v-if="isLoggedIn" class="shrink-0" />
-        <LoginButton v-else-if="isDesktop" />
+        <!-- <CurrentUserButton v-if="isLoggedIn" class="shrink-0" /> -->
+        <!-- <LoginButton v-else-if="isDesktop" /> -->
       </div>
       <QueueProgressOverlay
         v-model:expanded="isQueueOverlayExpanded"
@@ -62,18 +62,19 @@ import SubgraphBreadcrumb from '@/components/breadcrumb/SubgraphBreadcrumb.vue'
 import IconButton from '@/components/button/IconButton.vue'
 import QueueProgressOverlay from '@/components/queue/QueueProgressOverlay.vue'
 import ActionBarButtons from '@/components/topbar/ActionBarButtons.vue'
-import CurrentUserButton from '@/components/topbar/CurrentUserButton.vue'
-import LoginButton from '@/components/topbar/LoginButton.vue'
-import { useCurrentUser } from '@/composables/auth/useCurrentUser'
+// import CurrentUserButton from '@/components/topbar/CurrentUserButton.vue'
+// import LoginButton from '@/components/topbar/LoginButton.vue'
+// import { useCurrentUser } from '@/composables/auth/useCurrentUser'
 import { buildTooltipConfig } from '@/composables/useTooltipConfig'
 import { app } from '@/scripts/app'
 import { useQueueStore } from '@/stores/queueStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
-import { isElectron } from '@/utils/envUtil'
+
+// import { isElectron } from '@/utils/envUtil'
 
 const workspaceStore = useWorkspaceStore()
-const { isLoggedIn } = useCurrentUser()
-const isDesktop = isElectron()
+// const { isLoggedIn } = useCurrentUser()
+// const isDesktop = isElectron()
 const { t } = useI18n()
 const isQueueOverlayExpanded = ref(false)
 const queueStore = useQueueStore()

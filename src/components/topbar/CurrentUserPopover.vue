@@ -125,15 +125,15 @@ const dialogService = useDialogService()
 const { isActiveSubscription, fetchStatus } = useSubscription()
 
 const handleOpenUserSettings = () => {
-  dialogService.showSettingsDialog('user')
+  dialogService.showSettingsDialog('about')
   emit('close')
 }
 
 const handleOpenPlanAndCreditsSettings = () => {
   if (isCloud) {
-    dialogService.showSettingsDialog('subscription')
+    dialogService.showSettingsDialog('about')
   } else {
-    dialogService.showSettingsDialog('credits')
+    dialogService.showSettingsDialog('about')
   }
 
   emit('close')

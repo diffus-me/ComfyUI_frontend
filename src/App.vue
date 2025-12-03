@@ -18,7 +18,9 @@ import GlobalDialog from '@/components/dialog/GlobalDialog.vue'
 import config from '@/config'
 import { t } from '@/i18n'
 import { useWorkflowStore } from '@/platform/workflow/management/stores/workflowStore'
+import { api } from '@/scripts/api'
 import { app } from '@/scripts/app'
+import type { ComfyApp } from '@/scripts/app'
 import { useDialogService } from '@/services/dialogService'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { useConflictDetection } from '@/workbench/extensions/manager/composables/useConflictDetection'
@@ -78,4 +80,30 @@ onMounted(() => {
   // This runs async and doesn't block UI setup
   void conflictDetection.initializeConflictDetection()
 })
+
+const handleMessage = (message: any) => {
+  if (typeof message === 'string') {
+    try {
+      const { cmd, workflow } = JSON.parse(message)
+      if (cmd === 'runImage') {
+        api.dispatchCustomEvent('runWorkflowReceived', workflow)
+      } else {
+        console.warn(`unhandled event ${cmd}`)
+      }
+    } catch (error) {
+      console.warn('error handling message:', message, error)
+    }
+  }
+}
+
+app.api.addEventListener('setupFinished', () => {
+  window.comfyUIApp = app
+})
+useEventListener(window, 'message', handleMessage)
+
+declare global {
+  interface Window {
+    comfyUIApp?: ComfyApp
+  }
+}
 </script>

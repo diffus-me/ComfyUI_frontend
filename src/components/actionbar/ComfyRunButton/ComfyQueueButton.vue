@@ -42,7 +42,7 @@ import SplitButton from 'primevue/splitbutton'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { isCloud } from '@/platform/distribution/types'
+// import { isCloud } from '@/platform/distribution/types'
 import { useTelemetry } from '@/platform/telemetry'
 import { app } from '@/scripts/app'
 import { useCommandStore } from '@/stores/commandStore'
@@ -71,32 +71,32 @@ const queueModeMenuItemLookup = computed(() => {
       command: () => {
         queueMode.value = 'disabled'
       }
-    },
-    change: {
-      key: 'change',
-      label: `${t('menu.run')} (${t('menu.onChange')})`,
-      tooltip: t('menu.onChangeTooltip'),
-      command: () => {
-        useTelemetry()?.trackUiButtonClicked({
-          button_id: 'queue_mode_option_run_on_change_selected'
-        })
-        queueMode.value = 'change'
-      }
     }
+    // change: {
+    //   key: 'change',
+    //   label: `${t('menu.run')} (${t('menu.onChange')})`,
+    //   tooltip: t('menu.onChangeTooltip'),
+    //   command: () => {
+    //     useTelemetry()?.trackUiButtonClicked({
+    //       button_id: 'queue_mode_option_run_on_change_selected'
+    //     })
+    //     queueMode.value = 'change'
+    //   }
+    // }
   }
-  if (!isCloud) {
-    items.instant = {
-      key: 'instant',
-      label: `${t('menu.run')} (${t('menu.instant')})`,
-      tooltip: t('menu.instantTooltip'),
-      command: () => {
-        useTelemetry()?.trackUiButtonClicked({
-          button_id: 'queue_mode_option_run_instant_selected'
-        })
-        queueMode.value = 'instant'
-      }
-    }
-  }
+  // if (!isCloud) {
+  //   items.instant = {
+  //     key: 'instant',
+  //     label: `${t('menu.run')} (${t('menu.instant')})`,
+  //     tooltip: t('menu.instantTooltip'),
+  //     command: () => {
+  //       useTelemetry()?.trackUiButtonClicked({
+  //         button_id: 'queue_mode_option_run_instant_selected'
+  //       })
+  //       queueMode.value = 'instant'
+  //     }
+  //   }
+  // }
   return items
 })
 
@@ -141,11 +141,8 @@ const queueButtonTooltip = computed(() => {
 })
 
 const commandStore = useCommandStore()
-const queuePrompt = async (e: Event) => {
-  const isShiftPressed = 'shiftKey' in e && e.shiftKey
-  const commandId = isShiftPressed
-    ? 'Comfy.QueuePromptFront'
-    : 'Comfy.QueuePrompt'
+const queuePrompt = async () => {
+  const commandId = 'Comfy.QueuePrompt'
 
   if (batchCount.value > 1) {
     useTelemetry()?.trackUiButtonClicked({

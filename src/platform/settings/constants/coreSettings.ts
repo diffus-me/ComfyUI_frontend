@@ -445,22 +445,22 @@ export const CORE_SETTINGS: SettingParams[] = [
     options: [NodeBadgeMode.None, NodeBadgeMode.ShowAll],
     defaultValue: NodeBadgeMode.ShowAll
   },
-  {
-    id: 'Comfy.NodeBadge.ShowApiPricing',
-    category: ['Comfy', 'API Nodes'],
-    name: 'Show API node pricing badge',
-    type: 'boolean',
-    defaultValue: true,
-    versionAdded: '1.20.3'
-  },
-  {
-    id: 'Comfy.Notification.ShowVersionUpdates',
-    category: ['Comfy', 'Notification Preferences'],
-    name: 'Show version updates',
-    tooltip: 'Show updates for new models, and major new features.',
-    type: 'boolean',
-    defaultValue: true
-  },
+  // {
+  //   id: 'Comfy.NodeBadge.ShowApiPricing',
+  //   category: ['Comfy', 'API Nodes'],
+  //   name: 'Show API node pricing badge',
+  //   type: 'boolean',
+  //   defaultValue: true,
+  //   versionAdded: '1.20.3'
+  // },
+  // {
+  //   id: 'Comfy.Notification.ShowVersionUpdates',
+  //   category: ['Comfy', 'Notification Preferences'],
+  //   name: 'Show version updates',
+  //   tooltip: 'Show updates for new models, and major new features.',
+  //   type: 'boolean',
+  //   defaultValue: true
+  // },
   {
     id: 'Comfy.ConfirmClear',
     category: ['Comfy', 'Workflow', 'ConfirmClear'],
@@ -543,18 +543,18 @@ export const CORE_SETTINGS: SettingParams[] = [
     type: 'boolean',
     defaultValue: true
   },
-  {
-    id: 'Comfy.DevMode',
-    name: 'Enable dev mode options (API save, etc.)',
-    type: 'boolean',
-    defaultValue: false,
-    onChange: (value) => {
-      const element = document.getElementById('comfy-dev-save-api-button')
-      if (element) {
-        element.style.display = value ? 'flex' : 'none'
-      }
-    }
-  },
+  // {
+  //   id: 'Comfy.DevMode',
+  //   name: 'Enable dev mode options (API save, etc.)',
+  //   type: 'boolean',
+  //   defaultValue: false,
+  //   onChange: (value) => {
+  //     const element = document.getElementById('comfy-dev-save-api-button')
+  //     if (element) {
+  //       element.style.display = value ? 'flex' : 'none'
+  //     }
+  //   }
+  // },
   {
     id: 'Comfy.UseNewMenu',
     category: ['Comfy', 'Menu', 'UseNewMenu'],
@@ -600,7 +600,7 @@ export const CORE_SETTINGS: SettingParams[] = [
     tooltip:
       'The maximum number of tasks added to the queue at one button click',
     type: 'number',
-    defaultValue: isCloud ? 4 : 100,
+    defaultValue: 8,
     versionAdded: '1.3.5'
   },
   {

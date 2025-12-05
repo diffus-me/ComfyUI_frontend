@@ -20,7 +20,7 @@
           :error="option.error"
         />
       </Suspense>
-      <FileDownload
+      <AddModelFavorite
         v-else
         :url="option.url"
         :label="option.label"
@@ -36,8 +36,9 @@ import ListBox from 'primevue/listbox'
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
+import AddModelFavorite from '@/components/common/AddModelFavorite.vue'
 import ElectronFileDownload from '@/components/common/ElectronFileDownload.vue'
-import FileDownload from '@/components/common/FileDownload.vue'
+// import FileDownload from '@/components/common/FileDownload.vue'
 import NoResultsPlaceholder from '@/components/common/NoResultsPlaceholder.vue'
 import { useSettingStore } from '@/platform/settings/settingStore'
 import { isElectron } from '@/utils/envUtil'

@@ -1250,7 +1250,13 @@
   "missingModelsDialog": {
     "doNotAskAgain": "عدم العرض مرة أخرى",
     "missingModels": "نماذج مفقودة",
-    "missingModelsMessage": "عند تحميل الرسم البياني، لم يتم العثور على النماذج التالية"
+    "missingModelsMessage": "عند تحميل الرسم البياني، لم يتم العثور على النماذج التالية",
+    "copyModelName": "نسخ اسم النموذج",
+    "addToFavorites": "إضافة إلى المفضلة",
+    "goToModelGallery": "الذهاب إلى مكتبة النماذج",
+    "addModelToFavoritesPrompt": "لم يتم العثور على النموذج، يرجى إضافته إلى مفضلاتك في مكتبة النماذج قبل استخدامه، أو تغييره إلى نموذج آخر.",
+    "contactSupportPrompt": "لم يتم العثور على النموذج، يرجى الاتصال بالدعم لتثبيته.",
+    "contactSupport": "اتصل بالدعم"
   },
   "nodeCategories": {
     "3d": "ثلاثي الأبعاد",

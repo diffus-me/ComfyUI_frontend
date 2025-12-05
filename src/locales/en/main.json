@@ -1517,7 +1517,13 @@
   "missingModelsDialog": {
     "doNotAskAgain": "Don't show this again",
     "missingModels": "Missing Models",
-    "missingModelsMessage": "When loading the graph, the following models were not found"
+    "missingModelsMessage": "When loading the graph, the following models were not found",
+    "copyModelName": "Copy model name",
+    "addToFavorites": "Add to favorites",
+    "goToModelGallery": "Go to model gallery",
+    "addModelToFavoritesPrompt": "Model is not found, please add it to your favorites in Diffus Model Gallery before using it, or change to a different one.",
+    "contactSupportPrompt": "Model is not found, please contact support to install it.",
+    "contactSupport": "Contact Support"
   },
   "versionMismatchWarning": {
     "title": "Version Compatibility Warning",

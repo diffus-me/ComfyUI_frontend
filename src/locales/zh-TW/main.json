@@ -1250,7 +1250,13 @@
   "missingModelsDialog": {
     "doNotAskAgain": "不要再顯示此訊息",
     "missingModels": "缺少模型",
-    "missingModelsMessage": "載入圖形時，找不到以下模型"
+    "missingModelsMessage": "載入圖形時，找不到以下模型",
+    "copyModelName": "複製模型名稱",
+    "addToFavorites": "添加到收藏夾",
+    "goToModelGallery": "前往模型庫",
+    "addModelToFavoritesPrompt": "模型未找到，請在 Diffus Model Gallery 中添加到收藏夾後再使用，或選擇其他模型。",
+    "contactSupportPrompt": "模型未找到，請聯繫支持以安裝。",
+    "contactSupport": "聯繫支持"
   },
   "nodeCategories": {
     "3d": "3D",

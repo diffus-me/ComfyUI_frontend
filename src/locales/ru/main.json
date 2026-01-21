@@ -1601,7 +1601,13 @@
   "missingModelsDialog": {
     "doNotAskAgain": "Больше не показывать это",
     "missingModels": "Отсутствующие модели",
-    "missingModelsMessage": "При загрузке графа следующие модели не были найдены"
+    "missingModelsMessage": "При загрузке графа следующие модели не были найдены",
+    "copyModelName": "Копировать название модели",
+    "addToFavorites": "Добавить в избранное",
+    "goToModelGallery": "Перейти в галерею моделей",
+    "addModelToFavoritesPrompt": "Модель не найдена. Добавьте её в избранное в Diffus Model Gallery перед использованием, или выберите другую модель.",
+    "contactSupportPrompt": "Модель не найдена. Свяжитесь с поддержкой для установки.",
+    "contactSupport": "Связаться с поддержкой"
   },
   "missingNodes": {
     "cloud": {

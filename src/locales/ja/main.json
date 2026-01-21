@@ -1601,7 +1601,13 @@
   "missingModelsDialog": {
     "doNotAskAgain": "再度表示しない",
     "missingModels": "モデルが見つかりません",
-    "missingModelsMessage": "グラフを読み込む際に、次のモデルが見つかりませんでした"
+    "missingModelsMessage": "グラフを読み込む際に、次のモデルが見つかりませんでした",
+    "copyModelName": "モデル名をコピー",
+    "addToFavorites": "お気に入りに追加",
+    "goToModelGallery": "モデルギャラリーに移動",
+    "addModelToFavoritesPrompt": "モデルが見つかりませんでした。使用する前に、Diffus Model Galleryでお気に入りに追加してください。または、別のモデルに変更してください。",
+    "contactSupportPrompt": "モデルが見つかりませんでした。サポートに連絡してインストールしてください。",
+    "contactSupport": "サポートに連絡"
   },
   "missingNodes": {
     "cloud": {

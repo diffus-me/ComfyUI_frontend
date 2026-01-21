@@ -9,7 +9,6 @@ import { isCloud } from '@/platform/distribution/types'
 import { useSubscription } from '@/platform/cloud/subscription/composables/useSubscription'
 import { useTelemetry } from '@/platform/telemetry'
 import { useToastStore } from '@/platform/updates/common/toastStore'
-import { useDialogService } from '@/services/dialogService'
 import { useFirebaseAuthStore } from '@/stores/firebaseAuthStore'
 import type { BillingPortalTargetTier } from '@/stores/firebaseAuthStore'
 import { usdToMicros } from '@/utils/formatUtil'
@@ -158,36 +157,12 @@ export const useFirebaseAuthActions = () => {
     TArgs extends unknown[],
     TReturn
   >(): ErrorRecoveryStrategy<TArgs, TReturn> => {
-    const dialogService = useDialogService()
-
     return {
       shouldHandle: (error: unknown) =>
         error instanceof FirebaseError &&
         error.code === AuthErrorCodes.CREDENTIAL_TOO_OLD_LOGIN_AGAIN,
 
-      recover: async (
-        _error: unknown,
-        retry: (...args: TArgs) => Promise<TReturn> | TReturn,
-        args: TArgs
-      ) => {
-        const confirmed = await dialogService.confirm({
-          title: t('auth.reauthRequired.title'),
-          message: t('auth.reauthRequired.message'),
-          type: 'default'
-        })
-
-        if (!confirmed) {
-          return
-        }
-
-        await authStore.logout()
-
-        const signedIn = await dialogService.showSignInDialog()
-
-        if (signedIn) {
-          await retry(...args)
-        }
-      }
+      recover: async (_error: unknown) => {}
     }
   }
 

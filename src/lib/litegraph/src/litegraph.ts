@@ -110,7 +110,6 @@ export {
   type LGraphTriggerParam
 } from './LGraph'
 export type { LGraphTriggerEvent } from './types/graphTriggers'
-export { BadgePosition, LGraphBadge } from './LGraphBadge'
 export { LGraphCanvas } from './LGraphCanvas'
 export { LGraphGroup } from './LGraphGroup'
 export { LGraphNode, type NodeId } from './LGraphNode'

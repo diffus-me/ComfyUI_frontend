@@ -1601,7 +1601,13 @@
   "missingModelsDialog": {
     "doNotAskAgain": "No mostrar esto de nuevo",
     "missingModels": "Modelos faltantes",
-    "missingModelsMessage": "Al cargar el gráfico, no se encontraron los siguientes modelos"
+    "missingModelsMessage": "Al cargar el gráfico, no se encontraron los siguientes modelos",
+    "copyModelName": "Copiar nombre del modelo",
+    "addToFavorites": "Agregar a favoritos",
+    "goToModelGallery": "Ir a la galería de modelos",
+    "addModelToFavoritesPrompt": "El modelo no se encontró, por favor agréguelo a sus favoritos en Diffus Model Gallery antes de usarlo, o cambie a uno diferente.",
+    "contactSupportPrompt": "El modelo no se encontró, por favor contacte al soporte para instalarlo.",
+    "contactSupport": "Contactar soporte"
   },
   "missingNodes": {
     "cloud": {

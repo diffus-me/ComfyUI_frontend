@@ -198,7 +198,7 @@ const canUpgrade = computed(() => {
 })
 
 const handleOpenUserSettings = () => {
-  dialogService.showSettingsDialog('user')
+  dialogService.showSettingsDialog('about')
   emit('close')
 }
 
@@ -209,9 +209,9 @@ const handleOpenPlansAndPricing = () => {
 
 const handleOpenPlanAndCreditsSettings = () => {
   if (isCloud) {
-    dialogService.showSettingsDialog('subscription')
+    dialogService.showSettingsDialog('about')
   } else {
-    dialogService.showSettingsDialog('credits')
+    dialogService.showSettingsDialog('about')
   }
 
   emit('close')
@@ -220,7 +220,6 @@ const handleOpenPlanAndCreditsSettings = () => {
 const handleTopUp = () => {
   // Track purchase credits entry from avatar popover
   useTelemetry()?.trackAddApiCreditButtonClicked()
-  dialogService.showTopUpCreditsDialog()
   emit('close')
 }
 

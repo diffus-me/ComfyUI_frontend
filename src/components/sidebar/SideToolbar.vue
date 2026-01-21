@@ -40,16 +40,13 @@
           v-if="userStore.isMultiUserServer"
           :is-small="isSmall"
         />
-        <SidebarHelpCenterIcon v-if="!isIntegratedTabBar" :is-small="isSmall" />
-        <SidebarBottomPanelToggleButton :is-small="isSmall" />
-        <SidebarShortcutsToggleButton :is-small="isSmall" />
+
         <SidebarSettingsButton :is-small="isSmall" />
         <ModeToggle
           v-if="menuItemStore.hasSeenLinear || flags.linearToggleEnabled"
         />
       </div>
     </div>
-    <HelpCenterPopups :is-small="isSmall" />
   </nav>
 </template>
 
@@ -58,12 +55,9 @@ import { useResizeObserver } from '@vueuse/core'
 import { debounce } from 'es-toolkit/compat'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
-import HelpCenterPopups from '@/components/helpcenter/HelpCenterPopups.vue'
 import ComfyMenuButton from '@/components/sidebar/ComfyMenuButton.vue'
 import ModeToggle from '@/components/sidebar/ModeToggle.vue'
-import SidebarBottomPanelToggleButton from '@/components/sidebar/SidebarBottomPanelToggleButton.vue'
 import SidebarSettingsButton from '@/components/sidebar/SidebarSettingsButton.vue'
-import SidebarShortcutsToggleButton from '@/components/sidebar/SidebarShortcutsToggleButton.vue'
 import { useFeatureFlags } from '@/composables/useFeatureFlags'
 import { useSettingStore } from '@/platform/settings/settingStore'
 import { useTelemetry } from '@/platform/telemetry'
@@ -76,7 +70,7 @@ import { useWorkspaceStore } from '@/stores/workspaceStore'
 import type { SidebarTabExtension } from '@/types/extensionTypes'
 import { cn } from '@/utils/tailwindUtil'
 
-import SidebarHelpCenterIcon from './SidebarHelpCenterIcon.vue'
+// import SidebarHelpCenterIcon from './SidebarHelpCenterIcon.vue'
 import SidebarIcon from './SidebarIcon.vue'
 import SidebarLogoutIcon from './SidebarLogoutIcon.vue'
 import SidebarTemplatesButton from './SidebarTemplatesButton.vue'
@@ -99,9 +93,6 @@ const sidebarLocation = computed<'left' | 'right'>(() =>
   settingStore.get('Comfy.Sidebar.Location')
 )
 const sidebarStyle = computed(() => settingStore.get('Comfy.Sidebar.Style'))
-const isIntegratedTabBar = computed(
-  () => settingStore.get('Comfy.UI.TabBarLayout') === 'Integrated'
-)
 const isConnected = computed(
   () =>
     selectedTab.value ||

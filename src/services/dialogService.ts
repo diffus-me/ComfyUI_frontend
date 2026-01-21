@@ -1,23 +1,17 @@
 import { merge } from 'es-toolkit/compat'
 import type { Component } from 'vue'
 
-import ApiNodesSignInContent from '@/components/dialog/content/ApiNodesSignInContent.vue'
 import MissingNodesContent from '@/components/dialog/content/MissingNodesContent.vue'
 import MissingNodesFooter from '@/components/dialog/content/MissingNodesFooter.vue'
 import MissingNodesHeader from '@/components/dialog/content/MissingNodesHeader.vue'
+import ComfyUIBundleDialogContent from '@/components/dialog/content/ComfyUIBundleDialogContent.vue'
 import ConfirmationDialogContent from '@/components/dialog/content/ConfirmationDialogContent.vue'
 import ErrorDialogContent from '@/components/dialog/content/ErrorDialogContent.vue'
 import MissingModelsWarning from '@/components/dialog/content/MissingModelsWarning.vue'
 import PromptDialogContent from '@/components/dialog/content/PromptDialogContent.vue'
-import SignInContent from '@/components/dialog/content/SignInContent.vue'
-import TopUpCreditsDialogContent from '@/components/dialog/content/TopUpCreditsDialogContent.vue'
-import UpdatePasswordContent from '@/components/dialog/content/UpdatePasswordContent.vue'
-import ComfyOrgHeader from '@/components/dialog/header/ComfyOrgHeader.vue'
 import SettingDialogHeader from '@/components/dialog/header/SettingDialogHeader.vue'
 import { t } from '@/i18n'
 import { useTelemetry } from '@/platform/telemetry'
-import { isCloud } from '@/platform/distribution/types'
-import { useSubscription } from '@/platform/cloud/subscription/composables/useSubscription'
 import SettingDialogContent from '@/platform/settings/components/SettingDialogContent.vue'
 import { useDialogStore } from '@/stores/dialogStore'
 import type {
@@ -93,16 +87,7 @@ export const useDialogService = () => {
     })
   }
 
-  function showSettingsDialog(
-    panel?:
-      | 'about'
-      | 'keybinding'
-      | 'extension'
-      | 'server-config'
-      | 'user'
-      | 'credits'
-      | 'subscription'
-  ) {
+  function showSettingsDialog(panel?: 'about' | 'keybinding') {
     const props = panel ? { props: { defaultPanel: panel } } : undefined
 
     dialogStore.showDialog({
@@ -213,54 +198,6 @@ export const useDialogService = () => {
     })
   }
 
-  /**
-   * Shows a dialog requiring sign in for API nodes
-   * @returns Promise that resolves to true if user clicks login, false if cancelled
-   */
-  async function showApiNodesSignInDialog(
-    apiNodeNames: string[]
-  ): Promise<boolean> {
-    return new Promise<boolean>((resolve) => {
-      dialogStore.showDialog({
-        key: 'api-nodes-signin',
-        component: ApiNodesSignInContent,
-        props: {
-          apiNodeNames,
-          onLogin: () => showSignInDialog().then((result) => resolve(result)),
-          onCancel: () => resolve(false)
-        },
-        headerComponent: ComfyOrgHeader,
-        dialogComponentProps: {
-          closable: false,
-          onClose: () => resolve(false)
-        }
-      })
-    }).then((result) => {
-      dialogStore.closeDialog({ key: 'api-nodes-signin' })
-      return result
-    })
-  }
-
-  async function showSignInDialog(): Promise<boolean> {
-    return new Promise<boolean>((resolve) => {
-      dialogStore.showDialog({
-        key: 'global-signin',
-        component: SignInContent,
-        headerComponent: ComfyOrgHeader,
-        props: {
-          onSuccess: () => resolve(true)
-        },
-        dialogComponentProps: {
-          closable: true,
-          onClose: () => resolve(false)
-        }
-      })
-    }).then((result) => {
-      dialogStore.closeDialog({ key: 'global-signin' })
-      return result
-    })
-  }
-
   async function prompt({
     title,
     message,
@@ -334,42 +271,6 @@ export const useDialogService = () => {
       }
 
       dialogStore.showDialog(options)
-    })
-  }
-
-  function showTopUpCreditsDialog(options?: {
-    isInsufficientCredits?: boolean
-  }) {
-    const { isActiveSubscription } = useSubscription()
-    if (!isActiveSubscription.value) return
-
-    return dialogStore.showDialog({
-      key: 'top-up-credits',
-      component: TopUpCreditsDialogContent,
-      props: options,
-      dialogComponentProps: {
-        headless: true,
-        pt: {
-          header: { class: 'p-0! hidden' },
-          content: { class: 'p-0! m-0! rounded-2xl' },
-          root: { class: 'rounded-2xl' }
-        }
-      }
-    })
-  }
-
-  /**
-   * Shows a dialog for updating the current user's password.
-   */
-  function showUpdatePasswordDialog() {
-    return dialogStore.showDialog({
-      key: 'global-update-password',
-      component: UpdatePasswordContent,
-      headerComponent: ComfyOrgHeader,
-      props: {
-        onSuccess: () =>
-          dialogStore.closeDialog({ key: 'global-update-password' })
-      }
     })
   }
 
@@ -508,15 +409,11 @@ export const useDialogService = () => {
     })
   }
 
-  async function showSubscriptionRequiredDialog() {
-    if (!isCloud || !window.__CONFIG__?.subscription_required) {
-      return
-    }
-
-    const { useSubscriptionDialog } =
-      await import('@/platform/cloud/subscription/composables/useSubscriptionDialog')
-    const { show } = useSubscriptionDialog()
-    show()
+  async function showComfyUIBundleDialog() {
+    useDialogStore().showDialog({
+      title: "🎉 Congratulations! You've Received the ComfyUI Bundle for free!",
+      component: ComfyUIBundleDialogContent
+    })
   }
 
   return {
@@ -525,17 +422,13 @@ export const useDialogService = () => {
     showSettingsDialog,
     showAboutDialog,
     showExecutionErrorDialog,
-    showApiNodesSignInDialog,
-    showSignInDialog,
-    showSubscriptionRequiredDialog,
-    showTopUpCreditsDialog,
-    showUpdatePasswordDialog,
     showExtensionDialog,
     prompt,
     showErrorDialog,
     confirm,
     showLayoutDialog,
     showImportFailedNodeDialog,
-    showNodeConflictDialog
+    showNodeConflictDialog,
+    showComfyUIBundleDialog
   }
 }

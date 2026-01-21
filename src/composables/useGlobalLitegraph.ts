@@ -2,13 +2,13 @@ import {
   ContextMenu,
   DragAndScale,
   LGraph,
-  LGraphBadge,
   LGraphCanvas,
   LGraphGroup,
   LGraphNode,
   LLink,
   LiteGraph
 } from '@/lib/litegraph/src/litegraph'
+import { LGraphBadge } from '@/lib/litegraph/src/LGraphBadge'
 
 /**
  * Assign all properties of LiteGraph to window to make it backward compatible.

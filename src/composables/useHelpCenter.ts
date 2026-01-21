@@ -5,19 +5,12 @@ import { useSettingStore } from '@/platform/settings/settingStore'
 import { useTelemetry } from '@/platform/telemetry'
 import { useReleaseStore } from '@/platform/updates/common/releaseStore'
 import { useDialogService } from '@/services/dialogService'
-import { useHelpCenterStore } from '@/stores/helpCenterStore'
-import type { HelpCenterTriggerLocation } from '@/stores/helpCenterStore'
 import { useConflictAcknowledgment } from '@/workbench/extensions/manager/composables/useConflictAcknowledgment'
 import { useConflictDetection } from '@/workbench/extensions/manager/composables/useConflictDetection'
 
-export function useHelpCenter(
-  triggerFrom: HelpCenterTriggerLocation = 'sidebar'
-) {
+export function useHelpCenter(triggerFrom = 'sidebar') {
   const settingStore = useSettingStore()
   const releaseStore = useReleaseStore()
-  const helpCenterStore = useHelpCenterStore()
-  const { isVisible: isHelpCenterVisible, triggerLocation } =
-    storeToRefs(helpCenterStore)
   const { shouldShowRedDot: showReleaseRedDot } = storeToRefs(releaseStore)
 
   const conflictDetection = useConflictDetection()
@@ -44,12 +37,9 @@ export function useHelpCenter(
     useTelemetry()?.trackUiButtonClicked({
       button_id: `${triggerFrom}_help_center_toggled`
     })
-    helpCenterStore.toggle(triggerFrom)
   }
 
-  const closeHelpCenter = () => {
-    helpCenterStore.hide()
-  }
+  const closeHelpCenter = () => {}
 
   /**
    * Handle What's New popup dismissal
@@ -89,8 +79,6 @@ export function useHelpCenter(
   })
 
   return {
-    isHelpCenterVisible,
-    triggerLocation,
     shouldShowRedDot,
     sidebarLocation,
     toggleHelpCenter,

@@ -1601,7 +1601,13 @@
   "missingModelsDialog": {
     "doNotAskAgain": "Bunu bir daha gösterme",
     "missingModels": "Eksik Modeller",
-    "missingModelsMessage": "Grafik yüklenirken aşağıdaki modeller bulunamadı"
+    "missingModelsMessage": "Grafik yüklenirken aşağıdaki modeller bulunamadı",
+    "copyModelName": "Model Adını Kopyala",
+    "addToFavorites": "Favorilere Ekle",
+    "goToModelGallery": "Model Galerisine Git",
+    "addModelToFavoritesPrompt": "Model bulunamadı. Kullanmadan önce Diffus Model Gallery'de favorilere ekleyin veya başka bir model seçin.",
+    "contactSupportPrompt": "Model bulunamadı. Destek ile iletişime geçerek kurulum yapın.",
+    "contactSupport": "Destek ile iletişime geç"
   },
   "missingNodes": {
     "cloud": {

@@ -4,14 +4,12 @@ import { useFirebaseAuthActions } from '@/composables/auth/useFirebaseAuthAction
 import { useSubscription } from '@/platform/cloud/subscription/composables/useSubscription'
 import { isCloud } from '@/platform/distribution/types'
 import { useTelemetry } from '@/platform/telemetry'
-import { useDialogService } from '@/services/dialogService'
 import { useCommandStore } from '@/stores/commandStore'
 
 /**
  * Composable for handling subscription panel actions and loading states
  */
 export function useSubscriptionActions() {
-  const dialogService = useDialogService()
   const authActions = useFirebaseAuthActions()
   const commandStore = useCommandStore()
   const telemetry = useTelemetry()
@@ -23,9 +21,7 @@ export function useSubscriptionActions() {
     void handleRefresh()
   })
 
-  const handleAddApiCredits = () => {
-    dialogService.showTopUpCreditsDialog()
-  }
+  const handleAddApiCredits = () => {}
 
   const handleMessageSupport = async () => {
     try {
@@ -49,7 +45,7 @@ export function useSubscriptionActions() {
     try {
       await Promise.all([authActions.fetchBalance(), fetchStatus()])
     } catch (error) {
-      console.error('[useSubscriptionActions] Error refreshing data:', error)
+      // Ignore errors
     }
   }
 

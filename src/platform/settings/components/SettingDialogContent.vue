@@ -64,12 +64,12 @@ import Listbox from 'primevue/listbox'
 import ScrollPanel from 'primevue/scrollpanel'
 import TabPanels from 'primevue/tabpanels'
 import Tabs from 'primevue/tabs'
-import { computed, watch } from 'vue'
+import { computed } from 'vue'
 
 import SearchBox from '@/components/common/SearchBox.vue'
 import CurrentUserMessage from '@/components/dialog/content/setting/CurrentUserMessage.vue'
 import PanelTemplate from '@/components/dialog/content/setting/PanelTemplate.vue'
-import { useFirebaseAuthActions } from '@/composables/auth/useFirebaseAuthActions'
+// import { useFirebaseAuthActions } from '@/composables/auth/useFirebaseAuthActions'
 import ColorPaletteMessage from '@/platform/settings/components/ColorPaletteMessage.vue'
 import SettingsPanel from '@/platform/settings/components/SettingsPanel.vue'
 import { useSettingSearch } from '@/platform/settings/composables/useSettingSearch'
@@ -79,13 +79,11 @@ import type { ISettingGroup, SettingParams } from '@/platform/settings/types'
 import { flattenTree } from '@/utils/treeUtil'
 
 const { defaultPanel } = defineProps<{
-  defaultPanel?:
-    | 'about'
-    | 'keybinding'
-    | 'extension'
-    | 'server-config'
-    | 'user'
-    | 'credits'
+  defaultPanel?: 'about' | 'keybinding'
+  // | 'extension'
+  // | 'server-config'
+  // | 'user'
+  // | 'credits'
 }>()
 
 const {
@@ -105,7 +103,7 @@ const {
   getSearchResults
 } = useSettingSearch()
 
-const authActions = useFirebaseAuthActions()
+// const authActions = useFirebaseAuthActions()
 
 // Get max sortOrder from settings in a group
 const getGroupSortOrder = (group: SettingTreeNode): number =>
@@ -145,14 +143,14 @@ const tabValue = computed<string>(() =>
 
 // Don't allow null category to be set outside of search.
 // In search mode, the active category can be null to show all search results.
-watch(activeCategory, (_, oldValue) => {
-  if (!tabValue.value) {
-    activeCategory.value = oldValue
-  }
-  if (activeCategory.value?.key === 'credits') {
-    void authActions.fetchBalance()
-  }
-})
+// watch(activeCategory, (_, oldValue) => {
+//   if (!tabValue.value) {
+//     activeCategory.value = oldValue
+//   }
+//   if (activeCategory.value?.key === 'credits') {
+//     void authActions.fetchBalance()
+//   }
+// })
 </script>
 
 <style>

@@ -89,6 +89,7 @@ import { deserialiseAndCreate } from '@/utils/vintageClipboard'
 
 import { type ComfyApi, PromptExecutionError, api } from './api'
 import { defaultGraph } from './defaultGraph'
+import { checkTierForPrompt } from './diffusApp'
 import { importA1111 } from './pnginfo'
 import { $el, ComfyUI } from './ui'
 import { ComfyAppMenu } from './ui/menu/index'
@@ -675,7 +676,7 @@ export class ComfyApp {
           'Unauthorized: Please login first to use this node.'
         )
       ) {
-        useDialogService().showApiNodesSignInDialog([detail.node_type])
+        console.log('Unauthorized: Please login first to use this node.')
       } else if (
         detail.exception_message?.includes(
           'Payment Required: Please add credits to your account to use this node.'
@@ -683,9 +684,9 @@ export class ComfyApp {
       ) {
         const { isActiveSubscription } = useSubscription()
         if (isActiveSubscription.value) {
-          useDialogService().showTopUpCreditsDialog({
-            isInsufficientCredits: true
-          })
+          console.log(
+            'Payment Required: Please add credits to your account to use this node.'
+          )
         }
       } else {
         useDialogService().showExecutionErrorDialog(detail)
@@ -866,6 +867,7 @@ export class ComfyApp {
       this.canvasContainer,
       this.canvas
     )
+    api.dispatchCustomEvent('setupFinished')
   }
 
   private resizeCanvas(canvas: HTMLCanvasElement) {
@@ -1339,6 +1341,9 @@ export class ComfyApp {
     queueNodeIds?: NodeExecutionId[]
   ): Promise<boolean> {
     this.queueItems.push({ number, batchCount, queueNodeIds })
+
+    // Check if the user tier is allowed to generate
+    checkTierForPrompt()
 
     // Only have one action process the items so each one gets a unique seed correctly
     if (this.processingQueue) {

@@ -13,6 +13,7 @@
       <GraphCanvas @ready="onGraphReady" />
     </div>
     <LinearView v-if="linearMode" />
+    <UserCenter />
   </div>
 
   <GlobalToast />
@@ -45,6 +46,7 @@ import UnloadWindowConfirmDialog from '@/components/dialog/UnloadWindowConfirmDi
 import GraphCanvas from '@/components/graph/GraphCanvas.vue'
 import GlobalToast from '@/components/toast/GlobalToast.vue'
 import RerouteMigrationToast from '@/components/toast/RerouteMigrationToast.vue'
+import UserCenter from '@/components/userCenter/UserCenter.vue'
 import { useBrowserTabTitle } from '@/composables/useBrowserTabTitle'
 import { useCoreCommands } from '@/composables/useCoreCommands'
 import { useErrorHandling } from '@/composables/useErrorHandling'
@@ -198,13 +200,37 @@ watchEffect(() => {
 })
 
 const init = () => {
-  const coreCommands = useCoreCommands()
-  useCommandStore().registerCommands(coreCommands)
-  useMenuItemStore().registerCoreMenuCommands()
-  useKeybindingService().registerCoreKeybindings()
-  useSidebarTabStore().registerCoreSidebarTabs()
-  useBottomPanelStore().registerCoreBottomPanelTabs()
-  app.extensionManager = useWorkspaceStore()
+  try {
+    const coreCommands = useCoreCommands()
+    useCommandStore().registerCommands(coreCommands)
+  } catch (e) {
+    console.error('Failed to register core commands', e)
+  }
+  try {
+    useMenuItemStore().registerCoreMenuCommands()
+  } catch (e) {
+    console.error('Failed to register core menu commands', e)
+  }
+  try {
+    useKeybindingService().registerCoreKeybindings()
+  } catch (e) {
+    console.error('Failed to register core keybindings', e)
+  }
+  try {
+    useSidebarTabStore().registerCoreSidebarTabs()
+  } catch (e) {
+    console.error('Failed to register core sidebar tabs', e)
+  }
+  try {
+    useBottomPanelStore().registerCoreBottomPanelTabs()
+  } catch (e) {
+    console.error('Failed to register core bottom panel tabs', e)
+  }
+  try {
+    app.extensionManager = useWorkspaceStore()
+  } catch (e) {
+    console.error('Failed to register workspace store', e)
+  }
 }
 
 const queuePendingTaskCountStore = useQueuePendingTaskCountStore()

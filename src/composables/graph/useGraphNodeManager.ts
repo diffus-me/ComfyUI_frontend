@@ -26,12 +26,12 @@ import { normalizeControlOption } from '@/types/simplifiedWidget'
 
 import type {
   LGraph,
-  LGraphBadge,
   LGraphNode,
   LGraphTriggerAction,
   LGraphTriggerEvent,
   LGraphTriggerParam
 } from '@/lib/litegraph/src/litegraph'
+import type { LGraphBadge } from '@/lib/litegraph/src/LGraphBadge'
 import type { TitleMode } from '@/lib/litegraph/src/types/globalEnums'
 import { NodeSlotType } from '@/lib/litegraph/src/types/globalEnums'
 import { app } from '@/scripts/app'

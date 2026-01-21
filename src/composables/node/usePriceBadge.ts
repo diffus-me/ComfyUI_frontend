@@ -1,5 +1,5 @@
 import type { LGraph, LGraphNode } from '@/lib/litegraph/src/litegraph'
-import { LGraphBadge } from '@/lib/litegraph/src/litegraph'
+import { LGraphBadge } from '@/lib/litegraph/src/LGraphBadge'
 
 import { useColorPaletteStore } from '@/stores/workspace/colorPaletteStore'
 import { adjustColor } from '@/utils/colorUtil'

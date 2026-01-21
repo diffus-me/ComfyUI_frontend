@@ -4,7 +4,7 @@ import { computed, ref, watchEffect } from 'vue'
 import type { User as UserConfig } from '@/schemas/apiSchema'
 import { api } from '@/scripts/api'
 
-export interface User {
+interface User {
   userId: string
   username: string
 }

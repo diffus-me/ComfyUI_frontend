@@ -12,7 +12,6 @@ import {
   FirebaseAuthStoreError,
   useFirebaseAuthStore
 } from '@/stores/firebaseAuthStore'
-import { useDialogService } from '@/services/dialogService'
 import { TIER_TO_KEY } from '@/platform/cloud/subscription/constants/tierPricing'
 import type { operations } from '@/types/comfyRegistryTypes'
 import { useSubscriptionCancellationWatcher } from './useSubscriptionCancellationWatcher'
@@ -36,7 +35,6 @@ function useSubscriptionInternal() {
     return subscriptionStatus.value?.is_active ?? false
   })
   const { reportError, accessBillingPortal } = useFirebaseAuthActions()
-  const { showSubscriptionRequiredDialog } = useDialogService()
 
   const { getAuthHeader } = useFirebaseAuthStore()
   const { wrapWithErrorHandlingAsync } = useErrorHandling()
@@ -118,8 +116,6 @@ function useSubscriptionInternal() {
     if (isCloud) {
       useTelemetry()?.trackSubscription('modal_opened')
     }
-
-    void showSubscriptionRequiredDialog()
   }
 
   /**

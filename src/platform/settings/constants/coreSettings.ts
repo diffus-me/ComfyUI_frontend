@@ -439,22 +439,22 @@ export const CORE_SETTINGS: SettingParams[] = [
     options: [NodeBadgeMode.None, NodeBadgeMode.ShowAll],
     defaultValue: NodeBadgeMode.ShowAll
   },
-  {
-    id: 'Comfy.NodeBadge.ShowApiPricing',
-    category: ['Comfy', 'API Nodes'],
-    name: 'Show API node pricing badge',
-    type: 'boolean',
-    defaultValue: true,
-    versionAdded: '1.20.3'
-  },
-  {
-    id: 'Comfy.Notification.ShowVersionUpdates',
-    category: ['Comfy', 'Notification Preferences'],
-    name: 'Show version updates',
-    tooltip: 'Show updates for new models, and major new features.',
-    type: 'boolean',
-    defaultValue: true
-  },
+  // {
+  //   id: 'Comfy.NodeBadge.ShowApiPricing',
+  //   category: ['Comfy', 'API Nodes'],
+  //   name: 'Show API node pricing badge',
+  //   type: 'boolean',
+  //   defaultValue: true,
+  //   versionAdded: '1.20.3'
+  // },
+  // {
+  //   id: 'Comfy.Notification.ShowVersionUpdates',
+  //   category: ['Comfy', 'Notification Preferences'],
+  //   name: 'Show version updates',
+  //   tooltip: 'Show updates for new models, and major new features.',
+  //   type: 'boolean',
+  //   defaultValue: true
+  // },
   {
     id: 'Comfy.ConfirmClear',
     category: ['Comfy', 'Workflow', 'ConfirmClear'],
@@ -537,18 +537,18 @@ export const CORE_SETTINGS: SettingParams[] = [
     type: 'boolean',
     defaultValue: true
   },
-  {
-    id: 'Comfy.DevMode',
-    name: 'Enable dev mode options (API save, etc.)',
-    type: 'boolean',
-    defaultValue: false,
-    onChange: (value) => {
-      const element = document.getElementById('comfy-dev-save-api-button')
-      if (element) {
-        element.style.display = value ? 'flex' : 'none'
-      }
-    }
-  },
+  // {
+  //   id: 'Comfy.DevMode',
+  //   name: 'Enable dev mode options (API save, etc.)',
+  //   type: 'boolean',
+  //   defaultValue: false,
+  //   onChange: (value) => {
+  //     const element = document.getElementById('comfy-dev-save-api-button')
+  //     if (element) {
+  //       element.style.display = value ? 'flex' : 'none'
+  //     }
+  //   }
+  // },
   {
     id: 'Comfy.UI.TabBarLayout',
     category: ['Appearance', 'General'],
@@ -603,7 +603,7 @@ export const CORE_SETTINGS: SettingParams[] = [
     tooltip:
       'The maximum number of tasks added to the queue at one button click',
     type: 'number',
-    defaultValue: isCloud ? 4 : 100,
+    defaultValue: 8,
     versionAdded: '1.3.5'
   },
   {
@@ -835,17 +835,17 @@ export const CORE_SETTINGS: SettingParams[] = [
     defaultValue: false,
     versionAdded: '1.37.0'
   },
-  {
-    id: 'Comfy.Execution.PreviewMethod',
-    category: ['Comfy', 'Execution', 'PreviewMethod'],
-    name: 'Live preview method',
-    tooltip:
-      'Live preview method during image generation. "default" uses the server CLI setting.',
-    type: 'combo',
-    options: ['default', 'none', 'auto', 'latent2rgb', 'taesd'],
-    defaultValue: 'default',
-    versionAdded: '1.36.0'
-  },
+  // {
+  //   id: 'Comfy.Execution.PreviewMethod',
+  //   category: ['Comfy', 'Execution', 'PreviewMethod'],
+  //   name: 'Live preview method',
+  //   tooltip:
+  //     'Live preview method during image generation. "default" uses the server CLI setting.',
+  //   type: 'combo',
+  //   options: ['default', 'none', 'auto', 'latent2rgb', 'taesd'],
+  //   defaultValue: 'default',
+  //   versionAdded: '1.36.0'
+  // },
   {
     id: 'LiteGraph.Canvas.MaximumFps',
     name: 'Maximum FPS',

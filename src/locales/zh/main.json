@@ -1601,7 +1601,13 @@
   "missingModelsDialog": {
     "doNotAskAgain": "不再显示此消息",
     "missingModels": "缺少模型",
-    "missingModelsMessage": "加载工作流时，未找到以下模型"
+    "missingModelsMessage": "加载工作流时，未找到以下模型",
+    "copyModelName": "复制模型名称",
+    "addToFavorites": "添加到收藏夹",
+    "goToModelGallery": "前往模型库",
+    "addModelToFavoritesPrompt": "模型未找到，请在 Diffus Model Gallery 中添加到收藏夹后再使用，或选择其他模型。",
+    "contactSupportPrompt": "模型未找到，请联系支持以安装。",
+    "contactSupport": "联系支持"
   },
   "missingNodes": {
     "cloud": {

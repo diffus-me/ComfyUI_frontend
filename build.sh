@@ -1,7 +1,7 @@
 #!/bin/bash
 echo "Starting build process for ComfyUI frontend..."
-pnpm install
-pnpm run build
+pnpm install || exit 1
+pnpm run build || exit 1
 echo "Build completed successfully."
 
 echo "Copying build result from ${BUILD_RESULT} to ${OUTPUT_DIR}..."

@@ -10,6 +10,7 @@
       severity="primary"
       size="small"
       :model="queueModeMenuItems"
+      :disabled="sendingPromptRequest"
       data-testid="queue-button"
       @click="queuePrompt"
     >
@@ -39,7 +40,7 @@
 import { storeToRefs } from 'pinia'
 import type { MenuItem } from 'primevue/menuitem'
 import SplitButton from 'primevue/splitbutton'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import Button from '@/components/ui/button/Button.vue'
@@ -60,6 +61,8 @@ const nodeDefStore = useNodeDefStore()
 const hasMissingNodes = computed(() =>
   graphHasMissingNodes(app.rootGraph, nodeDefStore.nodeDefsByName)
 )
+
+const sendingPromptRequest = ref(false)
 
 const { t } = useI18n()
 const queueModeMenuItemLookup = computed(() => {
@@ -112,6 +115,9 @@ const queueModeMenuItems = computed(() =>
 )
 
 const iconClass = computed(() => {
+  if (sendingPromptRequest.value) {
+    return 'icon-[lucide--loader-circle] animate-spin'
+  }
   if (hasMissingNodes.value) {
     return 'icon-[lucide--triangle-alert]'
   }
@@ -150,12 +156,22 @@ const queuePrompt = async () => {
     })
   }
 
-  await commandStore.execute(commandId, {
-    metadata: {
-      subscribe_to_run: false,
-      trigger_source: 'button'
-    }
-  })
+  try {
+    sendingPromptRequest.value = true
+    await commandStore.execute(commandId, {
+      metadata: {
+        subscribe_to_run: false,
+        trigger_source: 'button'
+      }
+    })
+  } finally {
+    await sleep(1000)
+    sendingPromptRequest.value = false
+  }
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 </script>
 

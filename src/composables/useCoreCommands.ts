@@ -36,7 +36,11 @@ import { app } from '@/scripts/app'
 import { useDialogService } from '@/services/dialogService'
 import { useLitegraphService } from '@/services/litegraphService'
 import type { ComfyCommand } from '@/stores/commandStore'
-import { useQueueSettingsStore } from '@/stores/queueStore'
+import {
+  useQueueSettingsStore,
+  useQueueUIStore,
+  useQueueStore
+} from '@/stores/queueStore'
 import { useSubgraphNavigationStore } from '@/stores/subgraphNavigationStore'
 import { useSubgraphStore } from '@/stores/subgraphStore'
 import { useBottomPanelStore } from '@/stores/workspace/bottomPanelStore'
@@ -309,21 +313,21 @@ export function useCoreCommands(): ComfyCommand[] {
     //     })
     //   }
     // },
-    // {
-    //   id: 'Comfy.ClearPendingTasks',
-    //   icon: 'pi pi-stop',
-    //   label: 'Clear Pending Tasks',
-    //   category: 'essentials' as const,
-    //   function: async () => {
-    //     await useQueueStore().clear(['queue'])
-    //     toastStore.add({
-    //       severity: 'info',
-    //       summary: t('g.confirmed'),
-    //       detail: t('toastMessages.pendingTasksDeleted'),
-    //       life: 3000
-    //     })
-    //   }
-    // },
+    {
+      id: 'Comfy.ClearPendingTasks',
+      icon: 'pi pi-stop',
+      label: 'Clear Pending Tasks',
+      category: 'essentials' as const,
+      function: async () => {
+        await useQueueStore().clear(['queue'])
+        toastStore.add({
+          severity: 'info',
+          summary: t('g.confirmed'),
+          detail: t('toastMessages.pendingTasksDeleted'),
+          life: 3000
+        })
+      }
+    },
     {
       id: 'Comfy.BrowseTemplates',
       icon: 'pi pi-folder-open',
@@ -461,18 +465,18 @@ export function useCoreCommands(): ComfyCommand[] {
       },
       active: () => useSettingStore().get('Comfy.Minimap.Visible')
     },
-    // {
-    //   id: 'Comfy.Queue.ToggleOverlay',
-    //   icon: 'pi pi-history',
-    //   label: () => t('queue.toggleJobHistory'),
-    //   menubarLabel: () => t('queue.jobHistory'),
-    //   versionAdded: '1.37.0',
-    //   category: 'view-controls' as const,
-    //   function: () => {
-    //     useQueueUIStore().toggleOverlay()
-    //   },
-    //   active: () => useQueueUIStore().isOverlayExpanded
-    // },
+    {
+      id: 'Comfy.Queue.ToggleOverlay',
+      icon: 'pi pi-history',
+      label: () => t('queue.toggleJobHistory'),
+      menubarLabel: () => t('queue.jobHistory'),
+      versionAdded: '1.37.0',
+      category: 'view-controls' as const,
+      function: () => {
+        useQueueUIStore().toggleOverlay()
+      },
+      active: () => useQueueUIStore().isOverlayExpanded
+    },
     {
       id: 'Comfy.QueuePrompt',
       icon: 'pi pi-play',

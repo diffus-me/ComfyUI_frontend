@@ -85,10 +85,13 @@ const copyModelName = async () => {
 }
 
 const goToModelGallery = () => {
-  const url = `/app/gallery/models/`
-  const link = document.createElement('a')
-  link.href = url
-  link.click()
+  const url = '/app/gallery/models'
+  try {
+    const target = window.top ?? window.parent
+    target.location.assign(url)
+  } catch {
+    window.location.assign(url)
+  }
 }
 
 const contactSupport = () => {

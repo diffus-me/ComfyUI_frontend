@@ -3,11 +3,9 @@ import { onMounted, onUnmounted } from 'vue'
 
 import { isDesktop } from '@/platform/distribution/types'
 import { useSettingStore } from '@/platform/settings/settingStore'
-import { useDialogService } from '@/services/dialogService'
 import { electronAPI } from '@/utils/envUtil'
 
 const settingStore = useSettingStore()
-const dialogService = useDialogService()
 
 let isDisposed = false
 let cloudNotificationTimer: ReturnType<typeof setTimeout> | undefined
@@ -31,7 +29,6 @@ async function scheduleCloudNotification() {
     try {
       await settingStore.set('Comfy.Desktop.CloudNotificationShown', true)
       if (isDisposed) return
-      await dialogService.showCloudNotification()
     } catch (error) {
       console.warn('[CloudNotification] Failed to show', error)
       await settingStore

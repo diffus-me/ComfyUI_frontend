@@ -2,8 +2,8 @@ import { onMounted, ref } from 'vue'
 
 import { useBillingContext } from '@/composables/billing/useBillingContext'
 import { useTelemetry } from '@/platform/telemetry'
-import { useDialogService } from '@/services/dialogService'
 import { useCommandStore } from '@/stores/commandStore'
+import { useDialogService } from '@/services/dialogService'
 
 /**
  * Composable for handling subscription panel actions and loading states
@@ -47,7 +47,7 @@ export function useSubscriptionActions() {
     try {
       await Promise.all([fetchBalance(), fetchStatus()])
     } catch (error) {
-      console.error('[useSubscriptionActions] Error refreshing data:', error)
+      // Ignore errors
     }
   }
 

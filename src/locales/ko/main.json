@@ -2777,7 +2777,13 @@
     "reEnableInSettings": "{link}에서 다시 활성화",
     "reEnableInSettingsLink": "설정",
     "title": "이 워크플로우에 모델이 누락되었습니다",
-    "totalSize": "총 다운로드 크기:"
+    "totalSize": "총 다운로드 크기:",
+    "copyModelName": "모델 이름 복사",
+    "addToFavorites": "즐겨찾기에 추가",
+    "goToModelGallery": "모델 갤러리로 이동",
+    "addModelToFavoritesPrompt": "모델을 찾을 수 없습니다. 사용하기 전에 Diffus Model Gallery에 즐겨찾기에 추가하세요. 또는 다른 모델로 변경하세요.",
+    "contactSupportPrompt": "모델을 찾을 수 없습니다. 컨택트 센터에 문의하여 설치하세요.",
+    "contactSupport": "컨택트 센터에 문의"
   },
   "missingNodes": {
     "cloud": {

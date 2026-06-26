@@ -2,7 +2,7 @@ import { createSharedComposable } from '@vueuse/core'
 import { computed, toValue } from 'vue'
 
 import type { LGraph, LGraphNode } from '@/lib/litegraph/src/litegraph'
-import { LGraphBadge } from '@/lib/litegraph/src/litegraph'
+import { LGraphBadge } from '@/lib/litegraph/src/LGraphBadge'
 
 import { useVueNodeLifecycle } from '@/composables/graph/useVueNodeLifecycle'
 import { useNodePricing } from '@/composables/node/useNodePricing'

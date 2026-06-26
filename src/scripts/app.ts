@@ -72,8 +72,6 @@ import {
   ComponentWidgetImpl,
   DOMWidgetImpl
 } from '@/scripts/domWidget'
-import { useAccountPreconditionDialog } from '@/platform/cloud/subscription/composables/useAccountPreconditionDialog'
-import { resolveAccountPrecondition } from '@/platform/errorCatalog/accountPreconditionRouting'
 import { useDialogService } from '@/services/dialogService'
 import { useExtensionService } from '@/services/extensionService'
 import { useLitegraphService } from '@/services/litegraphService'
@@ -152,6 +150,7 @@ import { deserialiseAndCreate } from '@/utils/vintageClipboard'
 
 import { type ComfyApi, PromptExecutionError, api } from './api'
 import { defaultGraph } from './defaultGraph'
+import { checkTierForPrompt } from './diffusApp'
 import { importA1111 } from './pnginfo'
 import { applyPromotedWidgetControl } from './promotedWidgetControl'
 import { $el, ComfyUI } from './ui'
@@ -830,15 +829,7 @@ export class ComfyApp {
     })
 
     api.addEventListener('execution_error', ({ detail }) => {
-      const precondition = resolveAccountPrecondition({
-        exceptionType: detail.exception_type ?? '',
-        exceptionMessage: detail.exception_message ?? ''
-      })
-      if (precondition) {
-        useAccountPreconditionDialog().open(precondition, {
-          nodeType: detail.node_type
-        })
-      } else if (useSettingStore().get('Comfy.RightSidePanel.ShowErrorsTab')) {
+      if (useSettingStore().get('Comfy.RightSidePanel.ShowErrorsTab')) {
         useExecutionErrorStore().showErrorOverlay()
       } else {
         useDialogService().showExecutionErrorDialog(detail)
@@ -1039,6 +1030,7 @@ export class ComfyApp {
       this.canvasContainer,
       this.canvas
     )
+    api.dispatchCustomEvent('setupFinished')
   }
 
   private resizeCanvas(canvas: HTMLCanvasElement) {
@@ -1676,6 +1668,9 @@ export class ComfyApp {
       batchCount
     })
 
+    // Check if the user tier is allowed to generate
+    checkTierForPrompt()
+
     // Only have one action process the items so each one gets a unique seed correctly
     if (this.processingQueue) {
       return false
@@ -1821,27 +1816,27 @@ export class ComfyApp {
               ...workflowExecutionIntent,
               ...(workflowContext && { workflowContext })
             })
-            const hasPromptNodeErrors =
-              error instanceof PromptExecutionError &&
-              Object.keys(error.response.node_errors ?? {}).length > 0
-            const preconditionResponseError =
-              error instanceof PromptExecutionError &&
-              typeof error.response.error === 'object'
-                ? error.response.error
-                : undefined
-            const promptPrecondition = preconditionResponseError
-              ? resolveAccountPrecondition({
-                  exceptionType: preconditionResponseError.type,
-                  exceptionMessage: preconditionResponseError.message
-                })
-              : undefined
+            // const hasPromptNodeErrors =
+            //   error instanceof PromptExecutionError &&
+            //   Object.keys(error.response.node_errors ?? {}).length > 0
+            // const preconditionResponseError =
+            //   error instanceof PromptExecutionError &&
+            //   typeof error.response.error === 'object'
+            //     ? error.response.error
+            //     : undefined
+            // const promptPrecondition = preconditionResponseError
+            //   ? resolveAccountPrecondition({
+            //       exceptionType: preconditionResponseError.type,
+            //       exceptionMessage: preconditionResponseError.message
+            //     })
+            //   : undefined
             // Account preconditions (sign-in, subscription, credits) open their
             // own modal and must stay out of the error panel and error count.
-            if (promptPrecondition) {
-              useAccountPreconditionDialog().open(promptPrecondition)
-              console.error(error)
-              break
-            }
+            // if (promptPrecondition) {
+            //   useAccountPreconditionDialog().open(promptPrecondition)
+            //   console.error(error)
+            //   break
+            // }
             if (
               error instanceof PromptExecutionError &&
               typeof error.response.error === 'object' &&
@@ -1851,8 +1846,7 @@ export class ComfyApp {
               rescanAndSurfaceMissingNodes(this.rootGraph)
             } else if (
               error instanceof PromptExecutionError &&
-              error.status === 403 &&
-              !hasPromptNodeErrors
+              error.status === 403
             ) {
               // User is authenticated but not authorized (e.g. not whitelisted).
               // Show a clear message instead of a generic error or sign-in prompt.

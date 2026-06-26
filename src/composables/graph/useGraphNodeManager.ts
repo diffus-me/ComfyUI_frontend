@@ -32,13 +32,13 @@ import type { WidgetId } from '@/types/widgetId'
 
 import type {
   LGraph,
-  LGraphBadge,
   LGraphNode,
   LGraphTriggerAction,
   LGraphTriggerEvent,
   LGraphTriggerParam,
   SubgraphNode
 } from '@/lib/litegraph/src/litegraph'
+import type { LGraphBadge } from '@/lib/litegraph/src/LGraphBadge'
 import type { TitleMode } from '@/lib/litegraph/src/types/globalEnums'
 import { NodeSlotType } from '@/lib/litegraph/src/types/globalEnums'
 import { app } from '@/scripts/app'

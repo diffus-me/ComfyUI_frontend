@@ -2777,7 +2777,13 @@
     "reEnableInSettings": "{link} içinde tekrar etkinleştir",
     "reEnableInSettingsLink": "Ayarlar",
     "title": "Bu iş akışında eksik modeller var",
-    "totalSize": "Toplam indirme boyutu:"
+    "totalSize": "Toplam indirme boyutu:",
+    "copyModelName": "Model Adını Kopyala",
+    "addToFavorites": "Favorilere Ekle",
+    "goToModelGallery": "Model Galerisine Git",
+    "addModelToFavoritesPrompt": "Model bulunamadı. Kullanmadan önce Diffus Model Gallery'de favorilere ekleyin veya başka bir model seçin.",
+    "contactSupportPrompt": "Model bulunamadı. Destek ile iletişime geçerek kurulum yapın.",
+    "contactSupport": "Destek ile iletişime geç"
   },
   "missingNodes": {
     "cloud": {

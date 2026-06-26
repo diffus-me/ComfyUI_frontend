@@ -2777,7 +2777,13 @@
     "reEnableInSettings": "Réactiver dans {link}",
     "reEnableInSettingsLink": "Paramètres",
     "title": "Ce workflow est incomplet : modèles manquants",
-    "totalSize": "Taille totale du téléchargement :"
+    "totalSize": "Taille totale du téléchargement :",
+    "copyModelName": "Copier le nom du modèle",
+    "addToFavorites": "Ajouter aux favoris",
+    "goToModelGallery": "Aller à la galerie de modèles",
+    "addModelToFavoritesPrompt": "Le modèle n'a pas été trouvé, veuillez l'ajouter aux favoris dans Diffus Model Gallery avant de l'utiliser, ou changer pour un autre.",
+    "contactSupportPrompt": "Le modèle n'a pas été trouvé, veuillez contacter le support pour l'installer.",
+    "contactSupport": "Contacter le support"
   },
   "missingNodes": {
     "cloud": {

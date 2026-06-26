@@ -1,8 +1,5 @@
-import { useCurrentUser } from '@/composables/auth/useCurrentUser'
-import { useAuthActions } from '@/composables/auth/useAuthActions'
 import { useSelectedLiteGraphItems } from '@/composables/canvas/useSelectedLiteGraphItems'
 import { useSubgraphOperations } from '@/composables/graph/useSubgraphOperations'
-import { startModelNodeDragFromAsset } from '@/composables/node/startModelNodeDragFromAsset'
 import { useExternalLink } from '@/composables/useExternalLink'
 import { useModelSelectorDialog } from '@/composables/useModelSelectorDialog'
 import { useRunButtonTelemetry } from '@/composables/useRunButtonTelemetry'
@@ -20,12 +17,8 @@ import {
   LiteGraph
 } from '@/lib/litegraph/src/litegraph'
 import type { Point } from '@/lib/litegraph/src/litegraph'
-import { useBillingContext } from '@/composables/billing/useBillingContext'
-import { useAssetBrowserDialog } from '@/platform/assets/composables/useAssetBrowserDialog'
-import { isCloud } from '@/platform/distribution/types'
 import { useMissingModelStore } from '@/platform/missingModel/missingModelStore'
 import { useSettingStore } from '@/platform/settings/settingStore'
-import { buildSupportUrl } from '@/platform/support/config'
 import { useTelemetry } from '@/platform/telemetry'
 import type { ExecutionTriggerSource } from '@/platform/telemetry/types'
 import { useToastStore } from '@/platform/updates/common/toastStore'
@@ -42,13 +35,11 @@ import { useSettingsDialog } from '@/platform/settings/composables/useSettingsDi
 import { useDialogService } from '@/services/dialogService'
 import { useLitegraphService } from '@/services/litegraphService'
 import type { ComfyCommand } from '@/stores/commandStore'
-import { useExecutionStore } from '@/stores/executionStore'
 import { useModelStore } from '@/stores/modelStore'
-import { useHelpCenterStore } from '@/stores/helpCenterStore'
 import {
   useQueueSettingsStore,
-  useQueueStore,
-  useQueueUIStore
+  useQueueUIStore,
+  useQueueStore
 } from '@/stores/queueStore'
 import { useSubgraphNavigationStore } from '@/stores/subgraphNavigationStore'
 import { useSubgraphStore } from '@/stores/subgraphStore'
@@ -58,16 +49,7 @@ import { useRightSidePanelStore } from '@/stores/workspace/rightSidePanelStore'
 import { useSearchBoxStore } from '@/stores/workspace/searchBoxStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { ensureWorkflowSuffix, getWorkflowSuffix } from '@/utils/formatUtil'
-import {
-  getAllNonIoNodesInSubgraph,
-  getExecutionIdsForSelectedNodes
-} from '@/utils/graphTraversalUtil'
-import { filterOutputNodes } from '@/utils/nodeFilterUtil'
-import {
-  ManagerUIState,
-  useManagerState
-} from '@/workbench/extensions/manager/composables/useManagerState'
-import { ManagerTab } from '@/workbench/extensions/manager/types/comfyManagerTypes'
+import { getAllNonIoNodesInSubgraph } from '@/utils/graphTraversalUtil'
 
 import { useWorkflowTemplateSelectorDialog } from './useWorkflowTemplateSelectorDialog'
 
@@ -76,16 +58,13 @@ import { useDialogStore } from '@/stores/dialogStore'
 
 const moveSelectedNodesVersionAdded = '1.22.2'
 export function useCoreCommands(): ComfyCommand[] {
-  const { isActiveSubscription, showSubscriptionDialog } = useBillingContext()
   const workflowService = useWorkflowService()
   const workflowStore = useWorkflowStore()
   const settingsDialog = useSettingsDialog()
   const dialogService = useDialogService()
   const colorPaletteStore = useColorPaletteStore()
-  const authActions = useAuthActions()
   const toastStore = useToastStore()
   const canvasStore = useCanvasStore()
-  const executionStore = useExecutionStore()
   const modelStore = useModelStore()
   const missingModelStore = useMissingModelStore()
   const telemetry = useTelemetry()
@@ -314,26 +293,24 @@ export function useCoreCommands(): ComfyCommand[] {
       category: 'essentials' as const,
       function: async () => {
         await Promise.all([app.refreshComboInNodes(), modelStore.refresh()])
-        if (!isCloud) {
-          await missingModelStore.refreshMissingModels({ reloadDefs: false })
-        }
+        await missingModelStore.refreshMissingModels({ reloadDefs: false })
       }
     },
-    {
-      id: 'Comfy.Interrupt',
-      icon: 'pi pi-stop',
-      label: 'Interrupt',
-      category: 'essentials' as const,
-      function: async () => {
-        await api.interrupt(executionStore.activeJobId)
-        toastStore.add({
-          severity: 'info',
-          summary: t('g.interrupted'),
-          detail: t('toastMessages.interrupted'),
-          life: 1000
-        })
-      }
-    },
+    // {
+    //   id: 'Comfy.Interrupt',
+    //   icon: 'pi pi-stop',
+    //   label: 'Interrupt',
+    //   category: 'essentials' as const,
+    //   function: async () => {
+    //     await api.interrupt(executionStore.activeJobId)
+    //     toastStore.add({
+    //       severity: 'info',
+    //       summary: t('g.interrupted'),
+    //       detail: t('toastMessages.interrupted'),
+    //       life: 1000
+    //     })
+    //   }
+    // },
     {
       id: 'Comfy.ClearPendingTasks',
       icon: 'pi pi-stop',
@@ -508,10 +485,10 @@ export function useCoreCommands(): ComfyCommand[] {
         trigger_source?: ExecutionTriggerSource
       }) => {
         trackRunButton(metadata)
-        if (!isActiveSubscription.value) {
-          showSubscriptionDialog({ reason: 'subscribe_to_run' })
-          return
-        }
+        //    if (!isActiveSubscription.value) {
+        //      showSubscriptionDialog({ reason: 'subscribe_to_run' })
+        //      return
+        //    }
 
         const batchCount = useQueueSettingsStore().batchCount
 
@@ -520,76 +497,76 @@ export function useCoreCommands(): ComfyCommand[] {
         await app.queuePrompt(0, batchCount, { intent: metadata })
       }
     },
-    {
-      id: 'Comfy.QueuePromptFront',
-      icon: 'pi pi-play',
-      label: 'Queue Prompt (Front)',
-      versionAdded: '1.3.7',
-      category: 'essentials' as const,
-      function: async (metadata?: {
-        subscribe_to_run?: boolean
-        trigger_source?: ExecutionTriggerSource
-      }) => {
-        trackRunButton(metadata)
-        if (!isActiveSubscription.value) {
-          showSubscriptionDialog({ reason: 'subscribe_to_run' })
-          return
-        }
-
-        const batchCount = useQueueSettingsStore().batchCount
-
-        useTelemetry()?.trackWorkflowExecution()
-
-        await app.queuePrompt(-1, batchCount, { intent: metadata })
-      }
-    },
-    {
-      id: 'Comfy.QueueSelectedOutputNodes',
-      icon: 'pi pi-play',
-      label: 'Queue Selected Output Nodes',
-      versionAdded: '1.19.6',
-      function: async (metadata?: {
-        subscribe_to_run?: boolean
-        trigger_source?: ExecutionTriggerSource
-      }) => {
-        trackRunButton(metadata)
-        if (!isActiveSubscription.value) {
-          showSubscriptionDialog({ reason: 'subscribe_to_run' })
-          return
-        }
-
-        const batchCount = useQueueSettingsStore().batchCount
-        const selectedNodes = getSelectedNodes()
-        const selectedOutputNodes = filterOutputNodes(selectedNodes)
-
-        if (selectedOutputNodes.length === 0) {
-          toastStore.add({
-            severity: 'error',
-            summary: t('toastMessages.nothingToQueue'),
-            detail: t('toastMessages.pleaseSelectOutputNodes')
-          })
-          return
-        }
-
-        // Get execution IDs for all selected output nodes and their descendants
-        const executionIds =
-          getExecutionIdsForSelectedNodes(selectedOutputNodes)
-
-        if (executionIds.length === 0) {
-          toastStore.add({
-            severity: 'error',
-            summary: t('toastMessages.failedToQueue'),
-            detail: t('toastMessages.failedExecutionPathResolution')
-          })
-          return
-        }
-        useTelemetry()?.trackWorkflowExecution()
-        await app.queuePrompt(0, batchCount, {
-          queueNodeIds: executionIds,
-          intent: metadata
-        })
-      }
-    },
+    // {
+    //   id: 'Comfy.QueuePromptFront',
+    //   icon: 'pi pi-play',
+    //   label: 'Queue Prompt (Front)',
+    //   versionAdded: '1.3.7',
+    //   category: 'essentials' as const,
+    //   function: async (metadata?: {
+    //     subscribe_to_run?: boolean
+    //     trigger_source?: ExecutionTriggerSource
+    //   }) => {
+    //     trackRunButton(metadata)
+    //     if (!isActiveSubscription.value) {
+    //       showSubscriptionDialog({ reason: 'subscribe_to_run' })
+    //       return
+    //     }
+    //
+    //     const batchCount = useQueueSettingsStore().batchCount
+    //
+    //     useTelemetry()?.trackWorkflowExecution()
+    //
+    //     await app.queuePrompt(-1, batchCount, { intent: metadata })
+    //   }
+    // },
+    // {
+    //   id: 'Comfy.QueueSelectedOutputNodes',
+    //   icon: 'pi pi-play',
+    //   label: 'Queue Selected Output Nodes',
+    //   versionAdded: '1.19.6',
+    //   function: async (metadata?: {
+    //     subscribe_to_run?: boolean
+    //     trigger_source?: ExecutionTriggerSource
+    //   }) => {
+    //     trackRunButton(metadata)
+    //     if (!isActiveSubscription.value) {
+    //       showSubscriptionDialog({ reason: 'subscribe_to_run' })
+    //       return
+    //     }
+    //
+    //     const batchCount = useQueueSettingsStore().batchCount
+    //     const selectedNodes = getSelectedNodes()
+    //     const selectedOutputNodes = filterOutputNodes(selectedNodes)
+    //
+    //     if (selectedOutputNodes.length === 0) {
+    //       toastStore.add({
+    //         severity: 'error',
+    //         summary: t('toastMessages.nothingToQueue'),
+    //         detail: t('toastMessages.pleaseSelectOutputNodes')
+    //       })
+    //       return
+    //     }
+    //
+    //     // Get execution IDs for all selected output nodes and their descendants
+    //     const executionIds =
+    //       getExecutionIdsForSelectedNodes(selectedOutputNodes)
+    //
+    //     if (executionIds.length === 0) {
+    //       toastStore.add({
+    //         severity: 'error',
+    //         summary: t('toastMessages.failedToQueue'),
+    //         detail: t('toastMessages.failedExecutionPathResolution')
+    //       })
+    //       return
+    //     }
+    //     useTelemetry()?.trackWorkflowExecution()
+    //     await app.queuePrompt(0, batchCount, {
+    //       queueNodeIds: executionIds,
+    //       intent: metadata
+    //     })
+    //   }
+    // },
     {
       id: 'Comfy.ShowSettingsDialog',
       icon: 'pi pi-cog',
@@ -742,18 +719,18 @@ export function useCoreCommands(): ComfyCommand[] {
         }
       })()
     },
-    {
-      id: 'Workspace.ToggleBottomPanel',
-      icon: 'pi pi-list',
-      label: 'Toggle Bottom Panel',
-      menubarLabel: 'Bottom Panel',
-      versionAdded: '1.3.22',
-      category: 'view-controls' as const,
-      function: () => {
-        bottomPanelStore.toggleBottomPanel()
-      },
-      active: () => bottomPanelStore.bottomPanelVisible
-    },
+    // {
+    //   id: 'Workspace.ToggleBottomPanel',
+    //   icon: 'pi pi-list',
+    //   label: 'Toggle Bottom Panel',
+    //   menubarLabel: 'Bottom Panel',
+    //   versionAdded: '1.3.22',
+    //   category: 'view-controls' as const,
+    //   function: () => {
+    //     bottomPanelStore.toggleBottomPanel()
+    //   },
+    //   active: () => bottomPanelStore.bottomPanelVisible
+    // },
     {
       id: 'Workspace.ToggleFocusMode',
       icon: 'pi pi-eye',
@@ -867,20 +844,20 @@ export function useCoreCommands(): ComfyCommand[] {
           await workflowService.closeWorkflow(workflowStore.activeWorkflow)
       }
     },
-    {
-      id: 'Comfy.ContactSupport',
-      icon: 'pi pi-question',
-      label: 'Contact Support',
-      versionAdded: '1.17.8',
-      function: () => {
-        const { userEmail, resolvedUserInfo } = useCurrentUser()
-        const supportUrl = buildSupportUrl({
-          userEmail: userEmail.value,
-          userId: resolvedUserInfo.value?.id
-        })
-        window.open(supportUrl, '_blank', 'noopener,noreferrer')
-      }
-    },
+    // {
+    //   id: 'Comfy.ContactSupport',
+    //   icon: 'pi pi-question',
+    //   label: 'Contact Support',
+    //   versionAdded: '1.17.8',
+    //   function: () => {
+    //     const { userEmail, resolvedUserInfo } = useCurrentUser()
+    //     const supportUrl = buildSupportUrl({
+    //       userEmail: userEmail.value,
+    //       userId: resolvedUserInfo.value?.id
+    //     })
+    //     window.open(supportUrl, '_blank', 'noopener,noreferrer')
+    //   }
+    // },
     {
       id: 'Comfy.Help.OpenComfyUIForum',
       icon: 'pi pi-comments',
@@ -946,72 +923,72 @@ export function useCoreCommands(): ComfyCommand[] {
         app.canvas.setDirty(true, true)
       }
     },
-    {
-      id: 'Comfy.Manager.CustomNodesManager.ShowCustomNodesMenu',
-      icon: 'pi pi-puzzle',
-      label: 'Custom Nodes Manager',
-      versionAdded: '1.12.10',
-      function: async () => {
-        await useManagerState().openManager({
-          showToastOnLegacyError: true
-        })
-      }
-    },
-    {
-      id: 'Comfy.Manager.ShowUpdateAvailablePacks',
-      icon: 'pi pi-sync',
-      label: 'Check for Custom Node Updates',
-      versionAdded: '1.17.0',
-      function: async () => {
-        const managerState = useManagerState()
-        const state = managerState.managerUIState.value
+    // {
+    //   id: 'Comfy.Manager.CustomNodesManager.ShowCustomNodesMenu',
+    //   icon: 'pi pi-puzzle',
+    //   label: 'Custom Nodes Manager',
+    //   versionAdded: '1.12.10',
+    //   function: async () => {
+    //     await useManagerState().openManager({
+    //       showToastOnLegacyError: true
+    //     })
+    //   }
+    // },
+    // {
+    //   id: 'Comfy.Manager.ShowUpdateAvailablePacks',
+    //   icon: 'pi pi-sync',
+    //   label: 'Check for Custom Node Updates',
+    //   versionAdded: '1.17.0',
+    //   function: async () => {
+    //     const managerState = useManagerState()
+    //     const state = managerState.managerUIState.value
 
-        // For DISABLED state, show error toast instead of opening settings
-        if (state === ManagerUIState.DISABLED) {
-          toastStore.add({
-            severity: 'error',
-            summary: t('g.error'),
-            detail: t('manager.notAvailable')
-          })
-          return
-        }
-
-        await managerState.openManager({
-          initialTab: ManagerTab.UpdateAvailable,
-          showToastOnLegacyError: false
-        })
-      }
-    },
-    {
-      id: 'Comfy.Manager.ShowMissingPacks',
-      icon: 'pi pi-exclamation-circle',
-      label: 'Install Missing Custom Nodes',
-      versionAdded: '1.17.0',
-      function: async () => {
-        await useManagerState().openManager({
-          initialTab: ManagerTab.Missing,
-          showToastOnLegacyError: false
-        })
-      }
-    },
-    {
-      id: 'Comfy.User.OpenSignInDialog',
-      icon: 'pi pi-user',
-      label: 'Open Sign In Dialog',
-      versionAdded: '1.17.6',
-      function: async () => {
-        await dialogService.showSignInDialog()
-      }
-    },
-    {
-      id: 'Comfy.User.SignOut',
-      icon: 'pi pi-sign-out',
-      label: 'Sign Out',
-      versionAdded: '1.18.1',
-      function: async () => {
-        await authActions.logout()
-      }
-    },
+    //     // For DISABLED state, show error toast instead of opening settings
+    //     if (state === ManagerUIState.DISABLED) {
+    //       toastStore.add({
+    //         severity: 'error',
+    //         summary: t('g.error'),
+    //         detail: t('manager.notAvailable')
+    //       })
+    //       return
+    //     }
+    //
+    //     await managerState.openManager({
+    //       initialTab: ManagerTab.UpdateAvailable,
+    //       showToastOnLegacyError: false
+    //     })
+    //   }
+    // },
+    // {
+    //   id: 'Comfy.Manager.ShowMissingPacks',
+    //   icon: 'pi pi-exclamation-circle',
+    //   label: 'Install Missing Custom Nodes',
+    //   versionAdded: '1.17.0',
+    //   function: async () => {
+    //     await useManagerState().openManager({
+    //       initialTab: ManagerTab.Missing,
+    //       showToastOnLegacyError: false
+    //     })
+    //   }
+    // },
+    // {
+    //   id: 'Comfy.User.OpenSignInDialog',
+    //   icon: 'pi pi-user',
+    //   label: 'Open Sign In Dialog',
+    //   versionAdded: '1.17.6',
+    //   function: async () => {
+    //     await dialogService.showSignInDialog()
+    //   }
+    // },
+    // {
+    //   id: 'Comfy.User.SignOut',
+    //   icon: 'pi pi-sign-out',
+    //   label: 'Sign Out',
+    //   versionAdded: '1.18.1',
+    //   function: async () => {
+    //     await authActions.logout()
+    //   }
+    // },
     {
       id: 'Comfy.Canvas.MoveSelectedNodes.Up',
       icon: 'pi pi-arrow-up',
@@ -1092,26 +1069,26 @@ export function useCoreCommands(): ComfyCommand[] {
       versionAdded: '1.30.1',
       function: tryToggleWidgetPromotion
     },
-    {
-      id: 'Comfy.OpenManagerDialog',
-      icon: 'mdi mdi-puzzle-outline',
-      label: 'Manager',
-      function: async () => {
-        await useManagerState().openManager({
-          initialTab: ManagerTab.All,
-          showToastOnLegacyError: false
-        })
-      }
-    },
-    {
-      id: 'Comfy.ToggleHelpCenter',
-      icon: 'pi pi-question-circle',
-      label: 'Help Center',
-      function: () => {
-        useHelpCenterStore().toggle()
-      },
-      active: () => useHelpCenterStore().isVisible
-    },
+    // {
+    //   id: 'Comfy.OpenManagerDialog',
+    //   icon: 'mdi mdi-puzzle-outline',
+    //   label: 'Manager',
+    //   function: async () => {
+    //     await useManagerState().openManager({
+    //       initialTab: ManagerTab.All,
+    //       showToastOnLegacyError: false
+    //     })
+    //   }
+    // },
+    // {
+    //   id: 'Comfy.ToggleHelpCenter',
+    //   icon: 'pi pi-question-circle',
+    //   label: 'Help Center',
+    //   function: () => {
+    //     useHelpCenterStore().toggle()
+    //   },
+    //   active: () => useHelpCenterStore().isVisible
+    // },
     {
       id: 'Comfy.ToggleCanvasInfo',
       icon: 'pi pi-info-circle',
@@ -1228,31 +1205,31 @@ export function useCoreCommands(): ComfyCommand[] {
         modelSelectorDialog.show()
       }
     },
-    {
-      id: 'Comfy.Manager.CustomNodesManager.ShowLegacyCustomNodesMenu',
-      icon: 'pi pi-bars',
-      label: 'Custom Nodes (Legacy)',
-      versionAdded: '1.16.4',
-      function: async () => {
-        await useManagerState().openManager({
-          legacyCommand: 'Comfy.Manager.CustomNodesManager.ToggleVisibility',
-          showToastOnLegacyError: true,
-          isLegacyOnly: true
-        })
-      }
-    },
-    {
-      id: 'Comfy.Manager.ShowLegacyManagerMenu',
-      icon: 'mdi mdi-puzzle',
-      label: 'Manager Menu (Legacy)',
-      versionAdded: '1.16.4',
-      function: async () => {
-        await useManagerState().openManager({
-          showToastOnLegacyError: true,
-          isLegacyOnly: true
-        })
-      }
-    },
+    // {
+    //   id: 'Comfy.Manager.CustomNodesManager.ShowLegacyCustomNodesMenu',
+    //   icon: 'pi pi-bars',
+    //   label: 'Custom Nodes (Legacy)',
+    //   versionAdded: '1.16.4',
+    //   function: async () => {
+    //     await useManagerState().openManager({
+    //       legacyCommand: 'Comfy.Manager.CustomNodesManager.ToggleVisibility',
+    //       showToastOnLegacyError: true,
+    //       isLegacyOnly: true
+    //     })
+    //   }
+    // },
+    // {
+    //   id: 'Comfy.Manager.ShowLegacyManagerMenu',
+    //   icon: 'mdi mdi-puzzle',
+    //   label: 'Manager Menu (Legacy)',
+    //   versionAdded: '1.16.4',
+    //   function: async () => {
+    //     await useManagerState().openManager({
+    //       showToastOnLegacyError: true,
+    //       isLegacyOnly: true
+    //     })
+    //   }
+    // },
     {
       id: 'Comfy.Memory.UnloadModels',
       icon: 'mdi mdi-vacuum-outline',
@@ -1291,60 +1268,60 @@ export function useCoreCommands(): ComfyCommand[] {
         await api.freeMemory({ freeExecutionCache: true })
       }
     },
-    {
-      id: 'Comfy.BrowseModelAssets',
-      icon: 'pi pi-folder-open',
-      label: 'Experimental: Browse Model Assets',
-      versionAdded: '1.28.3',
-      function: async () => {
-        if (!useSettingStore().get('Comfy.Assets.UseAssetAPI')) {
-          const confirmed = await dialogService.confirm({
-            title: 'Enable Asset API',
-            message:
-              'The Asset API is currently disabled. Would you like to enable it?',
-            type: 'default'
-          })
+    // {
+    //   id: 'Comfy.BrowseModelAssets',
+    //   icon: 'pi pi-folder-open',
+    //   label: 'Experimental: Browse Model Assets',
+    //   versionAdded: '1.28.3',
+    //   function: async () => {
+    //     if (!useSettingStore().get('Comfy.Assets.UseAssetAPI')) {
+    //       const confirmed = await dialogService.confirm({
+    //         title: 'Enable Asset API',
+    //         message:
+    //           'The Asset API is currently disabled. Would you like to enable it?',
+    //         type: 'default'
+    //       })
 
-          if (!confirmed) return
+    //       if (!confirmed) return
 
-          const settingStore = useSettingStore()
-          await settingStore.set('Comfy.Assets.UseAssetAPI', true)
-          await workflowService.reloadCurrentWorkflow()
-        }
-        const assetBrowserDialog = useAssetBrowserDialog()
-        await assetBrowserDialog.browse({
-          assetType: 'models',
-          title: t('sideToolbar.modelLibrary'),
-          onAssetSelected: (asset) => {
-            const error = startModelNodeDragFromAsset(asset, 'asset_browser')
-            if (error) {
-              toastStore.add({
-                severity: 'error',
-                summary: t('g.error'),
-                detail: t('assetBrowser.failedToCreateNode')
-              })
-              console.error('Node creation failed:', error)
-            }
-          }
-        })
-      }
-    },
-    {
-      id: 'Comfy.ToggleAssetAPI',
-      icon: 'pi pi-database',
-      label: () =>
-        `Experimental: ${
-          useSettingStore().get('Comfy.Assets.UseAssetAPI')
-            ? 'Disable'
-            : 'Enable'
-        } AssetAPI`,
-      function: async () => {
-        const settingStore = useSettingStore()
-        const current = settingStore.get('Comfy.Assets.UseAssetAPI') ?? false
-        await settingStore.set('Comfy.Assets.UseAssetAPI', !current)
-        await useWorkflowService().reloadCurrentWorkflow() // ensure changes take effect immediately
-      }
-    },
+    //       const settingStore = useSettingStore()
+    //       await settingStore.set('Comfy.Assets.UseAssetAPI', true)
+    //       await workflowService.reloadCurrentWorkflow()
+    //     }
+    //     const assetBrowserDialog = useAssetBrowserDialog()
+    //     await assetBrowserDialog.browse({
+    //       assetType: 'models',
+    //       title: t('sideToolbar.modelLibrary'),
+    //       onAssetSelected: (asset) => {
+    //         const error = startModelNodeDragFromAsset(asset, 'asset_browser')
+    //         if (error) {
+    //           toastStore.add({
+    //             severity: 'error',
+    //             summary: t('g.error'),
+    //             detail: t('assetBrowser.failedToCreateNode')
+    //           })
+    //           console.error('Node creation failed:', error)
+    //         }
+    //       }
+    //     })
+    //   }
+    // },
+    // {
+    //   id: 'Comfy.ToggleAssetAPI',
+    //   icon: 'pi pi-database',
+    //   label: () =>
+    //     `Experimental: ${
+    //       useSettingStore().get('Comfy.Assets.UseAssetAPI')
+    //         ? 'Disable'
+    //         : 'Enable'
+    //     } AssetAPI`,
+    //   function: async () => {
+    //     const settingStore = useSettingStore()
+    //     const current = settingStore.get('Comfy.Assets.UseAssetAPI') ?? false
+    //     await settingStore.set('Comfy.Assets.UseAssetAPI', !current)
+    //     await useWorkflowService().reloadCurrentWorkflow() // ensure changes take effect immediately
+    //   }
+    // },
     {
       id: 'Comfy.ToggleQPOV2',
       icon: 'pi pi-list',

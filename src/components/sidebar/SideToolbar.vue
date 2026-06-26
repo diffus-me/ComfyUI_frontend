@@ -41,11 +41,6 @@
           v-if="userStore.isMultiUserServer"
           :is-small="isSmall"
         />
-        <SidebarHelpCenterIcon :is-small="isSmall" />
-        <SidebarBottomPanelToggleButton
-          v-if="!isCloud && !hideWorkspaceToggles"
-          :is-small="isSmall"
-        />
         <SidebarShortcutsToggleButton
           v-if="!hideWorkspaceToggles"
           :is-small="isSmall"
@@ -53,33 +48,17 @@
         <SidebarSettingsButton :is-small="isSmall" />
       </div>
     </div>
-    <HelpCenterPopups :is-small="isSmall" />
-    <Suspense v-if="NightlySurveyController">
-      <component :is="NightlySurveyController" />
-    </Suspense>
   </nav>
 </template>
 
 <script setup lang="ts">
 import { useResizeObserver } from '@vueuse/core'
 import { debounce } from 'es-toolkit/compat'
-import {
-  computed,
-  defineAsyncComponent,
-  nextTick,
-  onBeforeUnmount,
-  onMounted,
-  ref,
-  watch
-} from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import HelpCenterPopups from '@/components/helpcenter/HelpCenterPopups.vue'
 import ComfyMenuButton from '@/components/sidebar/ComfyMenuButton.vue'
-import SidebarBottomPanelToggleButton from '@/components/sidebar/SidebarBottomPanelToggleButton.vue'
 import SidebarSettingsButton from '@/components/sidebar/SidebarSettingsButton.vue'
-import SidebarShortcutsToggleButton from '@/components/sidebar/SidebarShortcutsToggleButton.vue'
-import { isCloud, isDesktop, isNightly } from '@/platform/distribution/types'
 import { useSettingStore } from '@/platform/settings/settingStore'
 import { useTelemetry } from '@/platform/telemetry'
 import { useCanvasStore } from '@/renderer/core/canvas/canvasStore'
@@ -90,27 +69,13 @@ import { useWorkspaceStore } from '@/stores/workspaceStore'
 import type { SidebarTabExtension } from '@/types/extensionTypes'
 import { cn } from '@comfyorg/tailwind-utils'
 
-import SidebarHelpCenterIcon from './SidebarHelpCenterIcon.vue'
 import SidebarIcon from './SidebarIcon.vue'
 import SidebarLogoutIcon from './SidebarLogoutIcon.vue'
 import SidebarTemplatesButton from './SidebarTemplatesButton.vue'
-
-const {
-  visibleTabIds,
-  forceConnected = false,
-  hideWorkspaceToggles = false
-} = defineProps<{
+const { visibleTabIds, hideWorkspaceToggles = false } = defineProps<{
   visibleTabIds?: string[]
-  forceConnected?: boolean
   hideWorkspaceToggles?: boolean
 }>()
-
-const NightlySurveyController =
-  isNightly && !isCloud && !isDesktop
-    ? defineAsyncComponent(
-        () => import('@/platform/surveys/NightlySurveyController.vue')
-      )
-    : undefined
 
 const { t } = useI18n()
 const workspaceStore = useWorkspaceStore()
@@ -131,7 +96,6 @@ const sidebarLocation = computed<'left' | 'right'>(() =>
 const sidebarStyle = computed(() => settingStore.get('Comfy.Sidebar.Style'))
 const isConnected = computed(
   () =>
-    forceConnected ||
     selectedTab.value ||
     isOverflowing.value ||
     sidebarStyle.value === 'connected'

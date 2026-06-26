@@ -9,7 +9,6 @@ import { useAppMode } from '@/composables/useAppMode'
 import { useCopyToClipboard } from '@/composables/useCopyToClipboard'
 import { useExternalLink } from '@/composables/useExternalLink'
 import { resolveRunErrorMessage } from '@/platform/errorCatalog/errorMessageResolver'
-import { buildSupportUrl } from '@/platform/support/config'
 import { useAppModeStore } from '@/stores/appModeStore'
 import { useExecutionErrorStore } from '@/stores/executionErrorStore'
 
@@ -26,7 +25,7 @@ const { copyToClipboard } = useCopyToClipboard()
 const guideUrl = buildDocsUrl('troubleshooting/overview', {
   includeLocale: true
 })
-const supportUrl = buildSupportUrl()
+const supportUrl = 'https://discord.gg/wz2UsQDtEM'
 
 const inputNodeIds = computed(() => {
   const ids = new Set()

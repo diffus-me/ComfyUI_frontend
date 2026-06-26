@@ -55,7 +55,9 @@ import type {
   StatusWsMessageStatus,
   SystemStats,
   User,
-  UserDataFullInfo
+  UserDataFullInfo,
+  FinishedMessage,
+  MonitorErrorMessage
 } from '@/schemas/apiSchema'
 import type {
   JobDetail,
@@ -150,6 +152,8 @@ interface FrontendApiCalls {
   graphCleared: never
   reconnecting: never
   reconnected: never
+  setupFinished: never
+  runWorkflowReceived: ComfyWorkflowJSON
 }
 
 export type PromptQueueingEventPayload = FrontendApiCalls['promptQueueing']
@@ -160,6 +164,7 @@ interface BackendApiCalls {
   progress: ProgressWsMessage
   executing: ExecutingWsMessage
   executed: ExecutedWsMessage
+  finished: FinishedMessage
   status: StatusWsMessage
   notification: NotificationWsMessage
   execution_start: ExecutionStartWsMessage
@@ -168,6 +173,8 @@ interface BackendApiCalls {
   execution_interrupted: ExecutionInterruptedWsMessage
   execution_cached: ExecutionCachedWsMessage
   logs: LogsWsMessage
+  monitor_error: MonitorErrorMessage
+  input_cleared: string
   /** Binary preview/progress data */
   b_preview: Blob
   /** Binary preview with metadata (node_id, job_id) */
@@ -870,7 +877,11 @@ export class ComfyApi extends EventTarget {
             case 'logs':
             case 'b_preview':
             case 'notification':
+            case 'monitor_error':
               this.dispatchCustomEvent(msg.type, msg.data)
+              break
+            case 'input_cleared':
+              this.dispatchCustomEvent('input_cleared', msg.data)
               break
             case 'feature_flags':
               // Store server feature flags
@@ -880,6 +891,9 @@ export class ComfyApi extends EventTarget {
                 this.serverFeatureFlags.value
               )
               this.dispatchCustomEvent('feature_flags', msg.data)
+              break
+            case 'finished':
+              this.dispatchCustomEvent('finished', msg.data)
               break
             default:
               if (this._registered.has(msg.type)) {
@@ -1569,6 +1583,14 @@ export class ComfyApi extends EventTarget {
    */
   async getCustomNodesI18n(): Promise<CustomNodesI18n> {
     return (await axios.get(this.apiURL('/i18n'))).data
+  }
+
+  /**
+   * Clear user input folder
+   * @returns { Promise<void> }
+   */
+  async clearInputs() {
+    return this.fetchApi(`/inputs`, { method: 'DELETE' })
   }
 
   /**

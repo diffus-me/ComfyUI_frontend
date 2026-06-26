@@ -2777,7 +2777,13 @@
     "reEnableInSettings": "Включить снова в {link}",
     "reEnableInSettingsLink": "Настройки",
     "title": "В этом рабочем процессе отсутствуют модели",
-    "totalSize": "Общий размер загрузки:"
+    "totalSize": "Общий размер загрузки:",
+    "copyModelName": "Копировать название модели",
+    "addToFavorites": "Добавить в избранное",
+    "goToModelGallery": "Перейти в галерею моделей",
+    "addModelToFavoritesPrompt": "Модель не найдена. Добавьте её в избранное в Diffus Model Gallery перед использованием, или выберите другую модель.",
+    "contactSupportPrompt": "Модель не найдена. Свяжитесь с поддержкой для установки.",
+    "contactSupport": "Связаться с поддержкой"
   },
   "missingNodes": {
     "cloud": {

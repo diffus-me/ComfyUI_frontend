@@ -2777,7 +2777,13 @@
     "reEnableInSettings": "{link}で再有効化",
     "reEnableInSettingsLink": "設定",
     "title": "このワークフローにはモデルが不足しています",
-    "totalSize": "合計ダウンロードサイズ："
+    "totalSize": "合計ダウンロードサイズ：",
+    "copyModelName": "モデル名をコピー",
+    "addToFavorites": "お気に入りに追加",
+    "goToModelGallery": "モデルギャラリーに移動",
+    "addModelToFavoritesPrompt": "モデルが見つかりませんでした。使用する前に、Diffus Model Galleryでお気に入りに追加してください。または、別のモデルに変更してください。",
+    "contactSupportPrompt": "モデルが見つかりませんでした。サポートに連絡してインストールしてください。",
+    "contactSupport": "サポートに連絡"
   },
   "missingNodes": {
     "cloud": {

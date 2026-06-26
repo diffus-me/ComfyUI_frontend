@@ -2,19 +2,13 @@ import { computed, defineAsyncComponent, onMounted, ref } from 'vue'
 import type { Component } from 'vue'
 import { useI18n } from 'vue-i18n'
 
-import { useCurrentUser } from '@/composables/auth/useCurrentUser'
-import { useBillingContext } from '@/composables/billing/useBillingContext'
-import { useFeatureFlags } from '@/composables/useFeatureFlags'
 import { useVueFeatureFlags } from '@/composables/useVueFeatureFlags'
-import { isCloud, isDesktop } from '@/platform/distribution/types'
-import { isAuthenticatedConfigLoaded } from '@/platform/remoteConfig/remoteConfig'
 import {
   getSettingInfo,
   useSettingStore
 } from '@/platform/settings/settingStore'
 import type { SettingTreeNode } from '@/platform/settings/settingStore'
 import type { SettingPanelType, SettingParams } from '@/platform/settings/types'
-import { useWorkspaceUI } from '@/platform/workspace/composables/useWorkspaceUI'
 import type { NavGroupData } from '@/types/navTypes'
 import { normalizeI18nKey } from '@/utils/formatUtil'
 import { buildTree } from '@/utils/treeUtil'
@@ -52,18 +46,13 @@ export function useSettingUI(
   scrollToSettingId?: string
 ) {
   const { t } = useI18n()
-  const { isLoggedIn } = useCurrentUser()
+  // const { isLoggedIn } = useCurrentUser()
   const settingStore = useSettingStore()
   const activeCategory = ref<SettingTreeNode | null>(null)
 
-  const { flags } = useFeatureFlags()
   const { shouldRenderVueNodes } = useVueFeatureFlags()
-  const { isActiveSubscription, type: billingType } = useBillingContext()
-  const { workspaceRole } = useWorkspaceUI()
 
-  const teamWorkspacesEnabled = computed(
-    () => isCloud && flags.teamWorkspacesEnabled
-  )
+  const teamWorkspacesEnabled = computed(() => false)
 
   const settingRoot = computed<SettingTreeNode>(() => {
     const root = buildTree(
@@ -132,140 +121,146 @@ export function useSettingUI(
     )
   }
 
-  const creditsPanel: SettingPanelItem = {
-    node: {
-      key: 'credits',
-      label: 'Credits',
-      children: []
-    },
-    component: defineAsyncComponent(
-      () => import('@/components/dialog/content/setting/CreditsPanel.vue')
-    )
-  }
+  // const creditsPanel: SettingPanelItem = {
+  //   node: {
+  //     key: 'credits',
+  //     label: 'Credits',
+  //     children: []
+  //   },
+  //   component: defineAsyncComponent(
+  //     () => import('@/components/dialog/content/setting/CreditsPanel.vue')
+  //   )
+  // }
 
-  const subscriptionPanel: SettingPanelItem | null =
-    !isCloud || !window.__CONFIG__?.subscription_required
-      ? null
-      : {
-          node: {
-            key: 'subscription',
-            label: 'PlanCredits',
-            children: []
-          },
-          component: defineAsyncComponent(
-            () =>
-              import('@/platform/cloud/subscription/components/SubscriptionPanel.vue')
-          )
-        }
+  // const subscriptionPanel: SettingPanelItem | null =
+  //   !isCloud || !window.__CONFIG__?.subscription_required
+  //     ? null
+  //     : {
+  //         node: {
+  //           key: 'subscription',
+  //           label: 'PlanCredits',
+  //           children: []
+  //         },
+  //         component: defineAsyncComponent(
+  //           () =>
+  //             import('@/platform/cloud/subscription/components/SubscriptionPanel.vue')
+  //         )
+  //       }
 
-  const shouldShowPlanCreditsPanel = computed(() => {
-    if (!subscriptionPanel) return false
-    return isActiveSubscription.value
-  })
+  // const secretsPanel: SettingPanelItem = {
+  //   node: {
+  //     key: 'secrets',
+  //     label: 'Secrets',
+  //     children: []
+  //   },
+  //   component: defineAsyncComponent(
+  //     () => import('@/platform/secrets/components/SecretsPanel.vue')
+  //   )
+  // }
 
-  const shouldShowLegacyPlanCreditsPanel = computed(
-    () =>
-      isLoggedIn.value &&
-      billingType.value === 'legacy' &&
-      shouldShowPlanCreditsPanel.value
-  )
+  // const shouldShowLegacyPlanCreditsPanel = computed(
+  //   () =>
+  //     isLoggedIn.value &&
+  //     billingType.value === 'legacy' &&
+  //     shouldShowPlanCreditsPanel.value
+  // )
 
-  const userPanel: SettingPanelItem = {
-    node: {
-      key: 'user',
-      label: 'User',
-      children: []
-    },
-    component: defineAsyncComponent(
-      () => import('@/components/dialog/content/setting/UserPanel.vue')
-    )
-  }
+  // const userPanel: SettingPanelItem = {
+  //   node: {
+  //     key: 'user',
+  //     label: 'User',
+  //     children: []
+  //   },
+  //   component: defineAsyncComponent(
+  //     () => import('@/components/dialog/content/setting/UserPanel.vue')
+  //   )
+  // }
 
-  const workspacePanel: SettingPanelItem = {
-    node: {
-      key: 'workspace',
-      label: 'Workspace',
-      children: []
-    },
-    component: defineAsyncComponent(
-      () =>
-        import('@/platform/workspace/components/dialogs/settings/WorkspacePanelContent.vue')
-    )
-  }
+  // const workspacePanel: SettingPanelItem = {
+  //   node: {
+  //     key: 'workspace',
+  //     label: 'Workspace',
+  //     children: []
+  //   },
+  //   component: defineAsyncComponent(
+  //     () =>
+  //       import('@/platform/workspace/components/dialogs/settings/WorkspacePanelContent.vue')
+  //   )
+  // }
 
-  const workspaceSettingsPanelComponent = defineAsyncComponent(
-    () =>
-      import('@/platform/workspace/components/dialogs/settings/WorkspaceSettingsPanelContent.vue')
-  )
+  // const workspaceSettingsPanelComponent = defineAsyncComponent(
+  //   () =>
+  //     import('@/platform/workspace/components/dialogs/settings/WorkspaceSettingsPanelContent.vue')
+  // )
 
-  const planCreditsPanel: SettingPanelItem = {
-    node: {
-      key: 'workspace',
-      label: 'PlanCredits',
-      children: []
-    },
-    component: workspaceSettingsPanelComponent,
-    props: { section: 'planCredits' }
-  }
+  // const planCreditsPanel: SettingPanelItem = {
+  //   node: {
+  //     key: 'workspace',
+  //     label: 'PlanCredits',
+  //     children: []
+  //   },
+  //   component: workspaceSettingsPanelComponent,
+  //   props: { section: 'planCredits' }
+  // }
 
-  const membersPanel: SettingPanelItem = {
-    node: {
-      key: 'workspace-members',
-      label: 'Members',
-      children: []
-    },
-    component: workspaceSettingsPanelComponent,
-    props: { section: 'members' }
-  }
+  // const membersPanel: SettingPanelItem = {
+  //   node: {
+  //     key: 'workspace-members',
+  //     label: 'Members',
+  //     children: []
+  //   },
+  //   component: workspaceSettingsPanelComponent,
+  //   props: { section: 'members' }
+  // }
 
-  const allowlistPanel: SettingPanelItem = {
-    node: {
-      key: 'workspace-allowlist',
-      label: 'Allowlist',
-      children: []
-    },
-    component: workspaceSettingsPanelComponent,
-    props: { section: 'allowlist' }
-  }
+  // const allowlistPanel: SettingPanelItem = {
+  //   node: {
+  //     key: 'workspace-allowlist',
+  //     label: 'Allowlist',
+  //     children: []
+  //   },
+  //   component: workspaceSettingsPanelComponent,
+  //   props: { section: 'allowlist' }
+  // }
 
-  const shouldShowWorkspacePanel = computed(
-    () => teamWorkspacesEnabled.value && isLoggedIn.value
-  )
-  const shouldShowWorkspaceAllowlist = computed(
-    () =>
-      shouldShowWorkspacePanel.value &&
-      flags.partnerNodeGovernanceEnabled &&
-      workspaceRole.value === 'owner'
-  )
+  // const shouldShowWorkspacePanel = computed(
+  //   () => teamWorkspacesEnabled.value && isLoggedIn.value
+  // )
+  // const shouldShowWorkspaceAllowlist = computed(
+  //   () =>
+  //     shouldShowWorkspacePanel.value &&
+  //     flags.partnerNodeGovernanceEnabled &&
+  //     workspaceRole.value === 'owner'
+  // )
 
-  const billingControlsEnabled = computed(
-    () => isAuthenticatedConfigLoaded.value && flags.billingControlEnabled
-  )
+  // const billingControlsEnabled = computed(
+  //   () => isAuthenticatedConfigLoaded.value && flags.billingControlEnabled
+  // )
 
-  const visibleWorkspacePanels = computed<SettingPanelItem[]>(() => {
-    if (!shouldShowWorkspacePanel.value) return []
-    const workspacePanels = billingControlsEnabled.value
-      ? [planCreditsPanel, membersPanel]
-      : [workspacePanel]
-    return shouldShowWorkspaceAllowlist.value
-      ? [...workspacePanels, allowlistPanel]
-      : workspacePanels
-  })
+  // const visibleWorkspacePanels = computed<SettingPanelItem[]>(() => {
+  //   if (!shouldShowWorkspacePanel.value) return []
+  //   const workspacePanels = billingControlsEnabled.value
+  //     ? [planCreditsPanel, membersPanel]
+  //     : [workspacePanel]
+  //   return shouldShowWorkspaceAllowlist.value
+  //     ? [...workspacePanels, allowlistPanel]
+  //     : workspacePanels
+  // })
 
-  const secretsPanel: SettingPanelItem = {
-    node: {
-      key: 'secrets',
-      label: 'Secrets',
-      children: []
-    },
-    component: defineAsyncComponent(
-      () => import('@/platform/secrets/components/SecretsPanel.vue')
-    )
-  }
+  // const secretsPanel: SettingPanelItem = {
+  //   node: {
+  //     key: 'secrets',
+  //     label: 'Secrets',
+  //     children: []
+  //   },
+  //   component: defineAsyncComponent(
+  //     () => import('@/platform/secrets/components/SecretsPanel.vue')
+  //   )
+  // }
 
-  const shouldShowSecretsPanel = computed(
-    () => flags.userSecretsEnabled && isLoggedIn.value
-  )
+  // const shouldShowSecretsPanel = computed(
+  //   () => flags.userSecretsEnabled && isLoggedIn.value
+  // )
 
   const keybindingPanel: SettingPanelItem = {
     node: {
@@ -278,41 +273,41 @@ export function useSettingUI(
     )
   }
 
-  const extensionPanel: SettingPanelItem = {
-    node: {
-      key: 'extension',
-      label: 'Extension',
-      children: []
-    },
-    component: defineAsyncComponent(
-      () => import('@/platform/settings/components/ExtensionPanel.vue')
-    )
-  }
+  // const extensionPanel: SettingPanelItem = {
+  //   node: {
+  //     key: 'extension',
+  //     label: 'Extension',
+  //     children: []
+  //   },
+  //   component: defineAsyncComponent(
+  //     () => import('@/platform/settings/components/ExtensionPanel.vue')
+  //   )
+  // }
 
-  const serverConfigPanel: SettingPanelItem = {
-    node: {
-      key: 'server-config',
-      label: 'Server-Config',
-      children: []
-    },
-    component: defineAsyncComponent(
-      () => import('@/platform/settings/components/ServerConfigPanel.vue')
-    )
-  }
+  // const serverConfigPanel: SettingPanelItem = {
+  //   node: {
+  //     key: 'server-config',
+  //     label: 'Server-Config',
+  //     children: []
+  //   },
+  //   component: defineAsyncComponent(
+  //     () => import('@/platform/settings/components/ServerConfigPanel.vue')
+  //   )
+  // }
 
   const panels = computed<SettingPanelItem[]>(() =>
     [
       aboutPanel,
-      creditsPanel,
-      userPanel,
-      ...visibleWorkspacePanels.value,
-      keybindingPanel,
-      extensionPanel,
-      ...(isDesktop ? [serverConfigPanel] : []),
-      ...(shouldShowPlanCreditsPanel.value && subscriptionPanel
-        ? [subscriptionPanel]
-        : []),
-      ...(shouldShowSecretsPanel.value ? [secretsPanel] : [])
+      // creditsPanel,
+      // userPanel,
+      // ...visibleWorkspacePanels.value,
+      keybindingPanel
+      // extensionPanel,
+      // ...(isDesktop ? [serverConfigPanel] : []),
+      // ...(shouldShowPlanCreditsPanel.value && subscriptionPanel
+      //  ? [subscriptionPanel]
+      //  : []),
+      //...(shouldShowSecretsPanel.value ? [secretsPanel] : [])
     ].filter((panel) => panel !== null && panel.component)
   )
 
@@ -351,35 +346,35 @@ export function useSettingUI(
   // Sidebar structure when team workspaces is enabled
   const workspaceMenuTreeNodes = computed<SettingTreeNode[]>(() => [
     // Workspace settings
-    translateCategory({
-      key: 'workspace',
-      label: 'Workspace',
-      children: [
-        ...visibleWorkspacePanels.value.map((panel) => panel.node),
-        // The legacy per-account Credits panel is redundant once the workspace
-        // Plan & Credits panel is present, which now owns the credit balance.
-        ...(!billingControlsEnabled.value &&
-        isLoggedIn.value &&
-        !(isCloud && window.__CONFIG__?.subscription_required)
-          ? [creditsPanel.node]
-          : [])
-      ].map(translateCategory)
-    }),
+    // translateCategory({
+    //   key: 'workspace',
+    //   label: 'Workspace',
+    //   children: [
+    //     ...visibleWorkspacePanels.value.map((panel) => panel.node),
+    //     // The legacy per-account Credits panel is redundant once the workspace
+    //     // Plan & Credits panel is present, which now owns the credit balance.
+    //     ...(!billingControlsEnabled.value &&
+    //     isLoggedIn.value &&
+    //     !(isCloud && window.__CONFIG__?.subscription_required)
+    //       ? [creditsPanel.node]
+    //       : [])
+    //   ].map(translateCategory)
+    // }),
     // General settings - Profile + all core settings + special panels
     translateCategory({
       key: 'general',
       label: 'General',
       children: [
-        translateCategory(userPanel.node),
+        // translateCategory(userPanel.node),
         ...coreSettingCategories.value.slice(0, 1).map(translateCategory),
-        ...(shouldShowSecretsPanel.value
-          ? [translateCategory(secretsPanel.node)]
-          : []),
+        // ...(shouldShowSecretsPanel.value
+        //   ? [translateCategory(secretsPanel.node)]
+        //   : []),
         ...coreSettingCategories.value.slice(1).map(translateCategory),
         translateCategory(keybindingPanel.node),
-        translateCategory(extensionPanel.node),
-        translateCategory(aboutPanel.node),
-        ...(isDesktop ? [translateCategory(serverConfigPanel.node)] : [])
+        // translateCategory(extensionPanel.node),
+        translateCategory(aboutPanel.node)
+        // ...(isDesktop ? [translateCategory(serverConfigPanel.node)] : [])
       ]
     }),
     // Custom node settings (only shown if custom nodes have registered settings)
@@ -397,21 +392,21 @@ export function useSettingUI(
   // Sidebar structure when team workspaces is disabled (legacy)
   const legacyMenuTreeNodes = computed<SettingTreeNode[]>(() => [
     // Account settings - show different panels based on distribution and auth state
-    {
-      key: 'account',
-      label: 'Account',
-      children: [
-        userPanel.node,
-        ...(shouldShowLegacyPlanCreditsPanel.value && subscriptionPanel
-          ? [subscriptionPanel.node]
-          : []),
-        ...(shouldShowSecretsPanel.value ? [secretsPanel.node] : []),
-        ...(isLoggedIn.value &&
-        !(isCloud && window.__CONFIG__?.subscription_required)
-          ? [creditsPanel.node]
-          : [])
-      ].map(translateCategory)
-    },
+    // {
+    //   key: 'account',
+    //   label: 'Account',
+    //   children: [
+    //     userPanel.node,
+    //     ...(shouldShowLegacyPlanCreditsPanel.value && subscriptionPanel
+    //       ? [subscriptionPanel.node]
+    //       : []),
+    //     ...(shouldShowSecretsPanel.value ? [secretsPanel.node] : []),
+    //     ...(isLoggedIn.value &&
+    //     !(isCloud && window.__CONFIG__?.subscription_required)
+    //       ? [creditsPanel.node]
+    //       : [])
+    //   ].map(translateCategory)
+    // },
     // Normal settings stored in the settingStore
     {
       key: 'settings',
@@ -424,9 +419,9 @@ export function useSettingUI(
       label: 'Special Settings',
       children: [
         keybindingPanel.node,
-        extensionPanel.node,
-        aboutPanel.node,
-        ...(isDesktop ? [serverConfigPanel.node] : [])
+        // extensionPanel.node,
+        aboutPanel.node
+        // ...(isDesktop ? [serverConfigPanel.node] : [])
       ].map(translateCategory)
     }
   ])
@@ -448,7 +443,7 @@ export function useSettingUI(
           (child as SettingTreeNode & { translatedLabel?: string })
             .translatedLabel ?? child.label,
         icon:
-          child.key === 'workspace' && billingControlsEnabled.value
+          child.key === 'workspace'
             ? CATEGORY_ICONS.PlanCredits
             : (CATEGORY_ICONS[child.key] ??
               CATEGORY_ICONS[child.label] ??

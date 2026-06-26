@@ -6,9 +6,7 @@ import { useI18n } from 'vue-i18n'
 
 import DropdownMenu from '@/components/common/DropdownMenu.vue'
 import AssetsSidebarTab from '@/components/sidebar/tabs/AssetsSidebarTab.vue'
-import CurrentUserButton from '@/components/topbar/CurrentUserButton.vue'
 import Button from '@/components/ui/button/Button.vue'
-import { useCurrentUser } from '@/composables/auth/useCurrentUser'
 import { APP_MODE_FEEDBACK_FORM_URL } from '@/platform/surveys/appModeFeedback'
 import { useWorkflowService } from '@/platform/workflow/core/services/workflowService'
 import { useWorkflowStore } from '@/platform/workflow/management/stores/workflowStore'
@@ -32,7 +30,6 @@ const tabs = [
 const canvasStore = useCanvasStore()
 const colorPaletteService = useColorPaletteService()
 const colorPaletteStore = useColorPaletteStore()
-const { isLoggedIn } = useCurrentUser()
 const executionErrorStore = useExecutionErrorStore()
 const { t } = useI18n()
 const { commandIdToMenuItem } = useMenuItemStore()
@@ -192,7 +189,6 @@ const menuEntries = computed<MenuItem[]>(() => [
           </div>
         </template>
       </DropdownMenu>
-      <CurrentUserButton v-if="isLoggedIn" :show-arrow="false" />
     </header>
     <div class="size-full rounded-b-4xl contain-content">
       <div

@@ -2013,7 +2013,13 @@
     "footerDescription": "Download and place these models in the correct folder.\nNodes with missing models are highlighted red on the canvas.",
     "customModelsWarning": "Some of these are custom models that we don't recognize.",
     "customModelsInstruction": "You'll need to find and download them manually. Search for them online (try Civitai or HuggingFace) or contact the original workflow provider.",
-    "acceptTerms": "Accept terms"
+    "acceptTerms": "Accept terms",
+    "copyModelName": "Copy model name",
+    "addToFavorites": "Add to favorites",
+    "goToModelGallery": "Go to model gallery",
+    "addModelToFavoritesPrompt": "Model is not found, please add it to your favorites in Diffus Model Gallery before using it, or change to a different one.",
+    "contactSupportPrompt": "Model is not found, please contact support to install it.",
+    "contactSupport": "Contact Support"
   },
   "versionMismatchWarning": {
     "title": "Version Compatibility Warning",

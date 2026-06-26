@@ -1,18 +1,13 @@
 import { merge } from 'es-toolkit/compat'
 import { watch } from 'vue'
 import type { Component } from 'vue'
-
+import ComfyUIBundleDialogContent from '@/components/dialog/content/ComfyUIBundleDialogContent.vue'
 import ConfirmationDialogContent from '@/components/dialog/content/ConfirmationDialogContent.vue'
 import ErrorDialogContent from '@/components/dialog/content/ErrorDialogContent.vue'
 import PromptDialogContent from '@/components/dialog/content/PromptDialogContent.vue'
-import TopUpCreditsDialogContentLegacy from '@/components/dialog/content/TopUpCreditsDialogContentLegacy.vue'
-import InsufficientCreditsMemberDialog from '@/platform/workspace/components/InsufficientCreditsMemberDialog.vue'
-import TopUpCreditsDialogContentWorkspace from '@/platform/workspace/components/TopUpCreditsDialogContentWorkspace.vue'
-import { useWorkspaceUI } from '@/platform/workspace/composables/useWorkspaceUI'
 import { t } from '@/i18n'
 import { useTelemetry } from '@/platform/telemetry'
 import { isCloud } from '@/platform/distribution/types'
-import { useBillingContext } from '@/composables/billing/useBillingContext'
 import { useToastStore } from '@/platform/updates/common/toastStore'
 import { useDialogStore } from '@/stores/dialogStore'
 import type {
@@ -26,14 +21,14 @@ import type { WorkspaceRole } from '@/platform/workspace/api/workspaceApi'
 import type { DowngradeToPersonalResult } from '@/platform/workspace/composables/useDowngradeToPersonal'
 
 // Lazy loaders for dialogs - components are loaded on first use
-const lazyApiNodesSignInContent = () =>
-  import('@/components/dialog/content/ApiNodesSignInContent.vue')
-const lazySignInContent = () =>
-  import('@/components/dialog/content/SignInContent.vue')
-const lazyUpdatePasswordContent = () =>
-  import('@/components/dialog/content/UpdatePasswordContent.vue')
-const lazyComfyOrgHeader = () =>
-  import('@/components/dialog/header/ComfyOrgHeader.vue')
+// const lazyApiNodesSignInContent = () =>
+//   import('@/components/dialog/content/ApiNodesSignInContent.vue')
+// const lazySignInContent = () =>
+//   import('@/components/dialog/content/SignInContent.vue')
+// const lazyUpdatePasswordContent = () =>
+//   import('@/components/dialog/content/UpdatePasswordContent.vue')
+// const lazyComfyOrgHeader = () =>
+//   import('@/components/dialog/header/ComfyOrgHeader.vue')
 const lazyCloudNotificationContent = () =>
   import('@/platform/cloud/notification/components/CloudNotificationContent.vue')
 const lazyPublishDialog = () =>
@@ -202,60 +197,62 @@ export const useDialogService = () => {
    * Shows a dialog requiring sign in for API nodes
    * @returns Promise that resolves to true if user clicks login, false if cancelled
    */
-  async function showApiNodesSignInDialog(
-    apiNodeNames: string[]
-  ): Promise<boolean> {
-    const [{ default: ApiNodesSignInContent }, { default: ComfyOrgHeader }] =
-      await Promise.all([lazyApiNodesSignInContent(), lazyComfyOrgHeader()])
+  async function showApiNodesSignInDialog(_: string[]): Promise<boolean> {
+    // const [{ default: ApiNodesSignInContent }, { default: ComfyOrgHeader }] =
+    //   await Promise.all([lazyApiNodesSignInContent(), lazyComfyOrgHeader()])
 
-    return new Promise<boolean>((resolve) => {
-      dialogStore.showDialog({
-        key: 'api-nodes-signin',
-        component: ApiNodesSignInContent,
-        props: {
-          apiNodeNames,
-          onLogin: () => showSignInDialog().then((result) => resolve(result)),
-          onCancel: () => resolve(false)
-        },
-        headerComponent: ComfyOrgHeader,
-        dialogComponentProps: {
-          renderer: 'reka',
-          contentClass: HUG_CONTENT_CLASS,
-          closable: false,
-          onClose: () => resolve(false)
-        }
-      })
-    }).then((result) => {
-      dialogStore.closeDialog({ key: 'api-nodes-signin' })
-      return result
-    })
+    // return new Promise<boolean>((resolve) => {
+    //   dialogStore.showDialog({
+    //     key: 'api-nodes-signin',
+    //     component: ApiNodesSignInContent,
+    //     props: {
+    //       apiNodeNames,
+    //       onLogin: () => showSignInDialog().then((result) => resolve(result)),
+    //       onCancel: () => resolve(false)
+    //     },
+    //     headerComponent: ComfyOrgHeader,
+    //     dialogComponentProps: {
+    //       renderer: 'reka',
+    //       contentClass: HUG_CONTENT_CLASS,
+    //       closable: false,
+    //       onClose: () => resolve(false)
+    //     }
+    //   })
+    // }).then((result) => {
+    //   dialogStore.closeDialog({ key: 'api-nodes-signin' })
+    //   return result
+    // })
+    // console.info('showApiNodesSignInDialog', apiNodeNames)
+    return false
   }
 
   async function showSignInDialog(): Promise<boolean> {
-    const [{ default: SignInContent }, { default: ComfyOrgHeader }] =
-      await Promise.all([lazySignInContent(), lazyComfyOrgHeader()])
+    // const [{ default: SignInContent }, { default: ComfyOrgHeader }] =
+    //   await Promise.all([lazySignInContent(), lazyComfyOrgHeader()])
 
-    return new Promise<boolean>((resolve) => {
-      dialogStore.showDialog({
-        key: 'global-signin',
-        component: SignInContent,
-        headerComponent: ComfyOrgHeader,
-        props: {
-          onSuccess: () => resolve(true)
-        },
-        dialogComponentProps: {
-          renderer: 'reka',
-          // SignInContent is a fixed w-96 — size 'sm' (max-w-sm) leaves only
-          // 352px after the body padding; hug the intrinsic width instead.
-          contentClass: HUG_CONTENT_CLASS,
-          closable: true,
-          onClose: () => resolve(false)
-        }
-      })
-    }).then((result) => {
-      dialogStore.closeDialog({ key: 'global-signin' })
-      return result
-    })
+    // return new Promise<boolean>((resolve) => {
+    //   dialogStore.showDialog({
+    //     key: 'global-signin',
+    //     component: SignInContent,
+    //     headerComponent: ComfyOrgHeader,
+    //     props: {
+    //       onSuccess: () => resolve(true)
+    //     },
+    //     dialogComponentProps: {
+    //       renderer: 'reka',
+    //       // SignInContent is a fixed w-96 — size 'sm' (max-w-sm) leaves only
+    //       // 352px after the body padding; hug the intrinsic width instead.
+    //       contentClass: HUG_CONTENT_CLASS,
+    //       closable: true,
+    //       onClose: () => resolve(false)
+    //     }
+    //   })
+    // }).then((result) => {
+    //   dialogStore.closeDialog({ key: 'global-signin' })
+    //   return result
+    // })
+    // console.info('showSignInDialog')
+    return false
   }
 
   async function prompt({
@@ -330,78 +327,79 @@ export const useDialogService = () => {
     })
   }
 
-  async function showTopUpCreditsDialog(options?: {
+  async function showTopUpCreditsDialog(_?: {
     isInsufficientCredits?: boolean
   }) {
-    const { isActiveSubscription, isFreeTier, type } = useBillingContext()
-    if (!isActiveSubscription.value || isFreeTier.value) {
-      await showSubscriptionRequiredDialog({
-        reason: options?.isInsufficientCredits
-          ? 'out_of_credits'
-          : 'top_up_blocked'
-      })
-      return
-    }
+    // const { isActiveSubscription, isFreeTier, type } = useBillingContext()
+    // if (!isActiveSubscription.value || isFreeTier.value) {
+    //   await showSubscriptionRequiredDialog({
+    //     reason: options?.isInsufficientCredits
+    //       ? 'out_of_credits'
+    //       : 'top_up_blocked'
+    //   })
+    //   return
+    // }
 
     // Members can't top up a team workspace, so they get a read-only
     // "ask your workspace admins" notice instead of the purchase dialog.
-    if (
-      type.value === 'workspace' &&
-      !useWorkspaceUI().permissions.value.canTopUp
-    ) {
-      return dialogStore.showDialog({
-        key: 'insufficient-credits-member',
-        component: InsufficientCreditsMemberDialog,
-        props: {
-          onClose: () =>
-            dialogStore.closeDialog({ key: 'insufficient-credits-member' })
-        },
-        dialogComponentProps: {
-          renderer: 'reka',
-          headless: true,
-          contentClass:
-            'w-[min(360px,95vw)] max-w-[min(360px,95vw)] sm:max-w-[min(360px,95vw)] border-0 bg-transparent shadow-none'
-        }
-      })
-    }
+    // if (
+    //   type.value === 'workspace' &&
+    //   !useWorkspaceUI().permissions.value.canTopUp
+    // ) {
+    //   return dialogStore.showDialog({
+    //     key: 'insufficient-credits-member',
+    //     component: InsufficientCreditsMemberDialog,
+    //     props: {
+    //       onClose: () =>
+    //         dialogStore.closeDialog({ key: 'insufficient-credits-member' })
+    //     },
+    //     dialogComponentProps: {
+    //       renderer: 'reka',
+    //       headless: true,
+    //       contentClass:
+    //         'w-[min(360px,95vw)] max-w-[min(360px,95vw)] sm:max-w-[min(360px,95vw)] border-0 bg-transparent shadow-none'
+    //     }
+    //   })
+    // }
 
-    const component =
-      type.value === 'workspace'
-        ? TopUpCreditsDialogContentWorkspace
-        : TopUpCreditsDialogContentLegacy
+    // const component =
+    //   type.value === 'workspace'
+    //     ? TopUpCreditsDialogContentWorkspace
+    //     : TopUpCreditsDialogContentLegacy
 
-    return dialogStore.showDialog({
-      key: 'top-up-credits',
-      component,
-      props: options,
-      dialogComponentProps: {
-        renderer: 'reka',
-        headless: true,
-        contentClass: SELF_STYLED_PANEL_CONTENT_CLASS
-      }
-    })
+    // return dialogStore.showDialog({
+    //   key: 'top-up-credits',
+    //   component,
+    //   props: options,
+    //   dialogComponentProps: {
+    //     renderer: 'reka',
+    //     headless: true,
+    //     contentClass: SELF_STYLED_PANEL_CONTENT_CLASS
+    //   }
+    // })
+    // console.info('showTopUpCreditsDialog', options)
+    return false
   }
 
   /**
    * Shows a dialog for updating the current user's password.
    */
   async function showUpdatePasswordDialog() {
-    const [{ default: UpdatePasswordContent }, { default: ComfyOrgHeader }] =
-      await Promise.all([lazyUpdatePasswordContent(), lazyComfyOrgHeader()])
-
-    return dialogStore.showDialog({
-      key: 'global-update-password',
-      component: UpdatePasswordContent,
-      headerComponent: ComfyOrgHeader,
-      props: {
-        onSuccess: () =>
-          dialogStore.closeDialog({ key: 'global-update-password' })
-      },
-      dialogComponentProps: {
-        renderer: 'reka',
-        contentClass: HUG_CONTENT_CLASS
-      }
-    })
+    // const [{ default: UpdatePasswordContent }, { default: ComfyOrgHeader }] =
+    //   await Promise.all([lazyUpdatePasswordContent(), lazyComfyOrgHeader()])
+    // return dialogStore.showDialog({
+    //   key: 'global-update-password',
+    //   component: UpdatePasswordContent,
+    //   headerComponent: ComfyOrgHeader,
+    //   props: {
+    //     onSuccess: () =>
+    //       dialogStore.closeDialog({ key: 'global-update-password' })
+    //   },
+    //   dialogComponentProps: {
+    //     renderer: 'reka',
+    //     contentClass: HUG_CONTENT_CLASS
+    //   }
+    // })
   }
 
   /**
@@ -809,6 +807,13 @@ export const useDialogService = () => {
     })
   }
 
+  async function showComfyUIBundleDialog() {
+    useDialogStore().showDialog({
+      title: "🎉 Congratulations! You've Received the ComfyUI Bundle for free!",
+      component: ComfyUIBundleDialogContent
+    })
+  }
+
   return {
     showExecutionErrorDialog,
     showApiNodesSignInDialog,
@@ -837,6 +842,7 @@ export const useDialogService = () => {
     showInviteMemberUpsellDialog,
     showBillingComingSoonDialog,
     showCancelSubscriptionDialog,
-    showDowngradeToPersonalDialog
+    showDowngradeToPersonalDialog,
+    showComfyUIBundleDialog
   }
 }

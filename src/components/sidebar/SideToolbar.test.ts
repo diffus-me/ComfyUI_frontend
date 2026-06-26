@@ -147,14 +147,6 @@ describe('SideToolbar', () => {
     ).toBeInTheDocument()
   })
 
-  it('marks the toolbar as connected when forceConnected is true', () => {
-    renderToolbar({ forceConnected: true })
-
-    // connected-sidebar is a behavioral hook: it drives the global
-    // :root:has() sidebar width variables.
-    expect(screen.getByTestId('side-toolbar')).toHaveClass('connected-sidebar')
-  })
-
   it('shows the shortcuts and bottom panel toggles by default', () => {
     renderToolbar()
 

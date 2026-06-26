@@ -11,6 +11,7 @@
       :variant="queueButtonVariant"
       size="unset"
       :class="queueActionButtonClass"
+      :disabled="sendingPromptRequest"
       data-testid="queue-button"
       :data-variant="queueButtonVariant"
       @click="queuePrompt"
@@ -71,14 +72,13 @@ import {
   DropdownMenuTrigger
 } from 'reka-ui'
 import { storeToRefs } from 'pinia'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 import BatchCountEdit from '@/components/actionbar/BatchCountEdit.vue'
 import TinyChevronIcon from '@/components/actionbar/TinyChevronIcon.vue'
 import Button from '@/components/ui/button/Button.vue'
 import ButtonGroup from '@/components/ui/button-group/ButtonGroup.vue'
-import { isCloud } from '@/platform/distribution/types'
 import { useTelemetry } from '@/platform/telemetry'
 import { useCommandStore } from '@/stores/commandStore'
 import { useExecutionErrorStore } from '@/stores/executionErrorStore'
@@ -93,6 +93,8 @@ import { cn } from '@comfyorg/tailwind-utils'
 const workspaceStore = useWorkspaceStore()
 const { mode: queueMode, batchCount } = storeToRefs(useQueueSettingsStore())
 const { hasMissingError } = storeToRefs(useExecutionErrorStore())
+
+const sendingPromptRequest = ref(false)
 
 const { t } = useI18n()
 type QueueModeMenuKey = 'disabled' | 'change' | 'instant-idle'
@@ -119,34 +121,34 @@ const queueModeMenuItemLookup = computed<Record<string, QueueModeMenuItem>>(
           queueMode.value = 'disabled'
         }
       },
-      change: {
-        key: 'change',
-        label: `${t('menu.run')} (${t('menu.onChange')})`,
-        tooltip: t('menu.onChangeTooltip'),
-        command: () => {
-          useTelemetry()?.trackUiButtonClicked({
-            button_id: 'queue_mode_option_run_on_change_selected',
-            element_group: 'queue'
-          })
-          queueMode.value = 'change'
-        }
-      }
+      // change: {
+      //   key: 'change',
+      //   label: `${t('menu.run')} (${t('menu.onChange')})`,
+      //   tooltip: t('menu.onChangeTooltip'),
+      //   command: () => {
+      //     useTelemetry()?.trackUiButtonClicked({
+      //       button_id: 'queue_mode_option_run_on_change_selected',
+      //       element_group: 'queue'
+      //     })
+      //     queueMode.value = 'change'
+      //   }
+      // }
     }
 
-    if (!isCloud) {
-      items['instant-idle'] = {
-        key: 'instant-idle',
-        label: `${t('menu.run')} (${t('menu.instant')})`,
-        tooltip: t('menu.instantTooltip'),
-        command: () => {
-          useTelemetry()?.trackUiButtonClicked({
-            button_id: 'queue_mode_option_run_instant_selected',
-            element_group: 'queue'
-          })
-          queueMode.value = 'instant-idle'
-        }
-      }
-    }
+    // if (!isCloud) {
+    //   items['instant-idle'] = {
+    //     key: 'instant-idle',
+    //     label: `${t('menu.run')} (${t('menu.instant')})`,
+    //     tooltip: t('menu.instantTooltip'),
+    //     command: () => {
+    //       useTelemetry()?.trackUiButtonClicked({
+    //         button_id: 'queue_mode_option_run_instant_selected',
+    //         element_group: 'queue'
+    //       })
+    //       queueMode.value = 'instant-idle'
+    //     }
+    //   }
+    // }
 
     return items
   }
@@ -184,6 +186,9 @@ const iconClass = computed(() => {
   if (isStopInstantAction.value) {
     return 'icon-[lucide--square]'
   }
+  if (sendingPromptRequest.value) {
+    return 'icon-[lucide--loader-circle] animate-spin'
+  }
   if (hasMissingError.value) {
     return 'icon-[lucide--triangle-alert]'
   }
@@ -216,17 +221,13 @@ const queueButtonTooltip = computed(() => {
 })
 
 const commandStore = useCommandStore()
-const queuePrompt = async (e: Event) => {
+const queuePrompt = async () => {
   if (isStopInstantAction.value) {
     queueMode.value = 'instant-idle'
     return
   }
 
-  const isShiftPressed = 'shiftKey' in e && e.shiftKey
-  const commandId = isShiftPressed
-    ? 'Comfy.QueuePromptFront'
-    : 'Comfy.QueuePrompt'
-
+  const commandId = 'Comfy.QueuePrompt'
   if (isInstantMode(queueMode.value)) {
     queueMode.value = 'instant-running'
   }
@@ -238,11 +239,21 @@ const queuePrompt = async (e: Event) => {
     })
   }
 
-  await commandStore.execute(commandId, {
-    metadata: {
-      subscribe_to_run: false,
-      trigger_source: 'button'
-    }
-  })
+  try {
+    sendingPromptRequest.value = true
+    await commandStore.execute(commandId, {
+      metadata: {
+        subscribe_to_run: false,
+        trigger_source: 'button'
+      }
+    })
+  } finally {
+    await sleep(1000)
+    sendingPromptRequest.value = false
+  }
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 </script>

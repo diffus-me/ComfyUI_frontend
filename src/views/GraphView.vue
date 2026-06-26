@@ -18,6 +18,7 @@
       <BuilderMenu />
       <BuilderFooterToolbar />
     </template>
+    <UserCenter />
   </div>
 
   <GlobalToast />
@@ -26,14 +27,12 @@
   <ModelImportProgressDialog />
   <AssetExportProgressDialog />
   <ManagerProgressToast />
-  <DesktopCloudNotificationController />
-  <UnloadWindowConfirmDialog v-if="!isDesktop" />
   <MenuHamburger />
   <TourOverlay v-if="graphReady" />
 </template>
 
 <script setup lang="ts">
-import { useEventListener, useIntervalFn } from '@vueuse/core'
+import { useEventListener } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
 
 import {
@@ -48,12 +47,12 @@ import {
 
 import { runWhenGlobalIdle } from '@/base/common/async'
 import MenuHamburger from '@/components/MenuHamburger.vue'
-import UnloadWindowConfirmDialog from '@/components/dialog/UnloadWindowConfirmDialog.vue'
 import GraphCanvas from '@/components/graph/GraphCanvas.vue'
 import TourOverlay from '@/platform/onboarding/TourOverlay.vue'
 import GlobalToast from '@/components/toast/GlobalToast.vue'
 import InviteAcceptedToast from '@/platform/workspace/components/toasts/InviteAcceptedToast.vue'
 import RerouteMigrationToast from '@/components/toast/RerouteMigrationToast.vue'
+import UserCenter from '@/components/userCenter/UserCenter.vue'
 import { useBrowserTabTitle } from '@/composables/useBrowserTabTitle'
 import { useCoreCommands } from '@/composables/useCoreCommands'
 import { useQueuePolling } from '@/platform/remote/comfyui/useQueuePolling'
@@ -66,11 +65,7 @@ import type { ServerConfig, ServerConfigValue } from '@/constants/serverConfig'
 import { setActiveLocale } from '@/i18n'
 import AssetExportProgressDialog from '@/platform/assets/components/AssetExportProgressDialog.vue'
 import ModelImportProgressDialog from '@/platform/assets/components/ModelImportProgressDialog.vue'
-import DesktopCloudNotificationController from '@/platform/cloud/notification/components/DesktopCloudNotificationController.vue'
-import { isCloud, isDesktop } from '@/platform/distribution/types'
 import { useSettingStore } from '@/platform/settings/settingStore'
-import { useTelemetry } from '@/platform/telemetry'
-import { getShellLayoutSnapshot } from '@/platform/telemetry/utils/getShellLayoutSnapshot'
 import { useFrontendVersionMismatchWarning } from '@/platform/updates/common/useFrontendVersionMismatchWarning'
 import { useVersionCompatibilityStore } from '@/platform/updates/common/versionCompatibilityStore'
 import { useCanvasStore } from '@/renderer/core/canvas/canvasStore'
@@ -83,7 +78,6 @@ import { useAppMode } from '@/composables/useAppMode'
 import { useAssetsStore } from '@/stores/assetsStore'
 import { useCommandStore } from '@/stores/commandStore'
 import { useExecutionStore } from '@/stores/executionStore'
-import { useAuthStore } from '@/stores/authStore'
 import { useMenuItemStore } from '@/stores/menuItemStore'
 import { useModelStore } from '@/stores/modelStore'
 import { useNodeDefStore, useNodeFrequencyStore } from '@/stores/nodeDefStore'
@@ -95,7 +89,6 @@ import { useServerConfigStore } from '@/stores/serverConfigStore'
 import { useBottomPanelStore } from '@/stores/workspace/bottomPanelStore'
 import { useColorPaletteStore } from '@/stores/workspace/colorPaletteStore'
 import { useSidebarTabStore } from '@/stores/workspace/sidebarTabStore'
-import { electronAPI } from '@/utils/envUtil'
 import BuilderFooterToolbar from '@/components/builder/BuilderFooterToolbar.vue'
 import BuilderMenu from '@/components/builder/BuilderMenu.vue'
 import BuilderToolbar from '@/components/builder/BuilderToolbar.vue'
@@ -114,7 +107,7 @@ const assetsStore = useAssetsStore()
 const versionCompatibilityStore = useVersionCompatibilityStore()
 const graphCanvasContainerRef = ref<HTMLDivElement | null>(null)
 const graphReady = ref(false)
-const { isBuilderMode, mode, isAppMode } = useAppMode()
+const { isBuilderMode } = useAppMode()
 const { linearMode } = storeToRefs(useCanvasStore())
 
 watch(linearMode, (isLinear) => {
@@ -122,10 +115,6 @@ watch(linearMode, (isLinear) => {
     useSidebarTabStore().activeSidebarTabId = null
   }
 })
-
-const telemetry = useTelemetry()
-const authStore = useAuthStore()
-let hasTrackedLogin = false
 
 watch(
   () => colorPaletteStore.completedActivePalette,
@@ -136,45 +125,9 @@ watch(
     } else {
       document.documentElement.classList.add(DARK_THEME_CLASS)
     }
-    if (isDesktop) {
-      electronAPI().changeTheme({
-        color: 'rgba(0, 0, 0, 0)',
-        symbolColor: newTheme.colors.comfy_base['input-text']
-      })
-    }
   },
   { immediate: true }
 )
-
-/**
- * Reports task completion telemetry to Electron analytics when tasks
- * transition from running to history.
- *
- * No `deep: true` needed — `queueStore.tasks` is a computed that spreads
- * three `shallowRef` arrays into a new array on every change, and
- * `TaskItemImpl` instances are immutable (replaced, never mutated).
- */
-if (isDesktop) {
-  watch(
-    () => queueStore.tasks,
-    (newTasks, oldTasks) => {
-      const oldRunningTaskIds = new Set(
-        oldTasks.filter((task) => task.isRunning).map((task) => task.jobId)
-      )
-      newTasks
-        .filter((task) => oldRunningTaskIds.has(task.jobId) && task.isHistory)
-        .forEach((task) => {
-          electronAPI().Events.incrementUserProperty(
-            `execution:${task.displayStatus.toLowerCase()}`,
-            1
-          )
-          electronAPI().Events.trackEvent('execution', {
-            status: task.displayStatus.toLowerCase()
-          })
-        })
-    }
-  )
-}
 
 watchEffect(() => {
   const fontSize = settingStore.get('Comfy.TextareaWidget.FontSize')
@@ -299,73 +252,6 @@ void nextTick(() => {
 const onGraphReady = () => {
   graphReady.value = true
   runWhenGlobalIdle(() => {
-    // Track user login when app is ready in graph view (cloud only)
-    if (isCloud && authStore.isAuthenticated && !hasTrackedLogin) {
-      telemetry?.trackUserLoggedIn()
-      hasTrackedLogin = true
-    }
-
-    // Set up page visibility tracking (cloud only)
-    if (isCloud && telemetry) {
-      useEventListener(document, 'visibilitychange', () => {
-        telemetry.trackPageVisibilityChanged({
-          visibility_state: document.visibilityState as 'visible' | 'hidden'
-        })
-      })
-    }
-
-    // Set up tab count tracking (cloud only)
-    if (isCloud && telemetry) {
-      const tabCountChannel = new BroadcastChannel('comfyui-tab-count')
-      const activeTabs = new Map<string, number>()
-      const currentTabId = crypto.randomUUID()
-
-      // Listen for heartbeats from other tabs
-      tabCountChannel.onmessage = (event) => {
-        if (
-          event.data.type === 'heartbeat' &&
-          event.data.tabId !== currentTabId
-        ) {
-          activeTabs.set(event.data.tabId, Date.now())
-        }
-      }
-
-      // 5-minute heartbeat interval
-      useIntervalFn(() => {
-        const now = Date.now()
-
-        // Clean up stale tabs (no heartbeat for 45 seconds)
-        activeTabs.forEach((lastHeartbeat, tabId) => {
-          if (now - lastHeartbeat > 45000) {
-            activeTabs.delete(tabId)
-          }
-        })
-
-        // Broadcast our heartbeat
-        tabCountChannel.postMessage({
-          type: 'heartbeat',
-          tabId: currentTabId
-        })
-
-        // Track tab count (include current tab)
-        const tabCount = activeTabs.size + 1
-        telemetry.trackTabCount({ tab_count: tabCount })
-      }, 60000 * 5)
-
-      // Send initial heartbeat
-      tabCountChannel.postMessage({ type: 'heartbeat', tabId: currentTabId })
-    }
-
-    // Shell layout snapshot, once per session (cloud only)
-    if (isCloud && telemetry) {
-      telemetry.trackShellLayout(
-        getShellLayoutSnapshot({
-          view_mode: mode.value,
-          is_app_mode: isAppMode.value
-        })
-      )
-    }
-
     // Setting values now available after comfyApp.setup.
     // Load keybindings.
     wrapWithErrorHandling(useKeybindingService().registerUserKeybindings)()

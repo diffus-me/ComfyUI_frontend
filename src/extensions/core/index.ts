@@ -1,5 +1,3 @@
-import { isCloud, isNightly } from '@/platform/distribution/types'
-
 import './clipspace'
 import './contextMenuFilter'
 import './createBoundingBoxes'
@@ -15,9 +13,7 @@ import './imageCrop'
 // The lazy loader triggers loading when a 3D node is used
 import './load3dLazy'
 import './maskeditor'
-if (!isCloud) {
-  await import('./nodeTemplates')
-}
+await import('./nodeTemplates')
 import './noteNode'
 import './painter'
 import './previewAny'
@@ -32,20 +28,3 @@ import './uploadAudio'
 import './uploadImage'
 import './webcamCapture'
 import './widgetInputs'
-
-// Cloud-only extensions - tree-shaken in OSS builds
-if (isCloud) {
-  await import('./cloudRemoteConfig')
-  await import('./cloudBadges')
-  await import('./cloudSessionCookie')
-}
-
-// Feedback button for cloud and nightly builds
-if (isCloud || isNightly) {
-  await import('./cloudFeedbackTopbarButton')
-}
-
-// Nightly-only extensions
-if (isNightly && !isCloud) {
-  await import('./nightlyBadges')
-}

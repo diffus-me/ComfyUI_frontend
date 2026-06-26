@@ -12,8 +12,7 @@ export function useTelemetry(): TelemetryDispatcher | null {
   return _telemetryRegistry
 }
 
-export function setTelemetryRegistry(
-  registry: TelemetryDispatcher | null
-): void {
-  _telemetryRegistry = registry
+export function setTelemetryRegistry(_: TelemetryDispatcher | null): void {
+  // console.log('setTelemetryRegistry', registry)
+  _telemetryRegistry = null
 }

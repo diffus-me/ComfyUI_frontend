@@ -13,28 +13,6 @@
       <div class="mx-1 flex flex-col items-end gap-1">
         <div class="flex items-start gap-2">
           <div
-            v-if="managerState.shouldShowManagerButtons.value || isCloud"
-            class="pointer-events-auto flex h-12 shrink-0 items-center rounded-lg border border-interface-stroke bg-comfy-menu-bg px-2 shadow-interface"
-          >
-            <Button
-              v-tooltip.bottom="customNodesManagerTooltipConfig"
-              variant="secondary"
-              :aria-label="t('menu.manageExtensions')"
-              class="relative"
-              @click="openCustomNodeManager"
-            >
-              <i class="icon-[comfy--extensions-blocks] size-4" />
-              <span class="not-md:hidden">
-                {{ t('menu.manageExtensions') }}
-              </span>
-              <span
-                v-if="shouldShowRedDot"
-                class="absolute top-0.5 right-1 size-2 rounded-full bg-red-500"
-              />
-            </Button>
-          </div>
-
-          <div
             class="pointer-events-auto z-1 flex flex-col rounded-lg border border-interface-stroke bg-comfy-menu-bg px-2 py-1.75 shadow-interface"
           >
             <div
@@ -65,19 +43,6 @@
                 class="shrink-0"
               />
               <LoginButton v-else-if="isDesktop && !isIntegratedTabBar" />
-              <Button
-                v-if="isCloud && flags.workflowSharingEnabled"
-                v-tooltip.bottom="shareTooltipConfig"
-                variant="secondary"
-                :aria-label="t('actionbar.shareTooltip')"
-                @click="() => openShareDialog().catch(toastErrorHandler)"
-                @pointerenter="prefetchShareDialog"
-              >
-                <i class="icon-[comfy--send] size-4" />
-                <span class="not-md:hidden">
-                  {{ t('actionbar.share') }}
-                </span>
-              </Button>
               <div v-if="!isRightSidePanelOpen" class="relative">
                 <Button
                   v-tooltip.bottom="rightSidePanelTooltipConfig"
@@ -102,7 +67,6 @@
                 />
               </div>
             </div>
-            <FreeTierQuota v-if="!isActionbarFloating" />
           </div>
         </div>
         <ErrorOverlay />
@@ -153,15 +117,11 @@ import QueueNotificationBannerHost from '@/components/queue/QueueNotificationBan
 import QueueProgressOverlay from '@/components/queue/QueueProgressOverlay.vue'
 import ErrorOverlay from '@/components/error/ErrorOverlay.vue'
 import ActionBarButtons from '@/components/topbar/ActionBarButtons.vue'
-import CurrentUserButton from '@/components/topbar/CurrentUserButton.vue'
-import LoginButton from '@/components/topbar/LoginButton.vue'
 import StatusBadge from '@/components/common/StatusBadge.vue'
 import Button from '@/components/ui/button/Button.vue'
 import { useCurrentUser } from '@/composables/auth/useCurrentUser'
 import { useQueueFeatureFlags } from '@/composables/queue/useQueueFeatureFlags'
-import { useErrorHandling } from '@/composables/useErrorHandling'
 import { buildTooltipConfig } from '@/composables/useTooltipConfig'
-import FreeTierQuota from '@/platform/cloud/subscription/components/FreeTierQuota.vue'
 import { useSettingStore } from '@/platform/settings/settingStore'
 import { useTelemetry } from '@/platform/telemetry'
 import { app } from '@/scripts/app'
@@ -172,31 +132,18 @@ import { useRightSidePanelStore } from '@/stores/workspace/rightSidePanelStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { isCloud, isDesktop } from '@/platform/distribution/types'
 import { useFeatureFlags } from '@/composables/useFeatureFlags'
-import {
-  openShareDialog,
-  prefetchShareDialog
-} from '@/platform/workflow/sharing/composables/lazyShareDialog'
-import { useConflictAcknowledgment } from '@/workbench/extensions/manager/composables/useConflictAcknowledgment'
-import { useManagerState } from '@/workbench/extensions/manager/composables/useManagerState'
-import { useManagerSurveyDialog } from '@/workbench/extensions/manager/composables/useManagerSurveyDialog'
-import { ManagerTab } from '@/workbench/extensions/manager/types/comfyManagerTypes'
 import { cn } from '@comfyorg/tailwind-utils'
 
 const settingStore = useSettingStore()
 const workspaceStore = useWorkspaceStore()
 const rightSidePanelStore = useRightSidePanelStore()
-const managerState = useManagerState()
-const managerSurveyDialog = useManagerSurveyDialog()
 const { flags } = useFeatureFlags()
 const { isLoggedIn } = useCurrentUser()
 const { t } = useI18n()
-const { toastErrorHandler } = useErrorHandling()
 const executionErrorStore = useExecutionErrorStore()
 const actionBarButtonStore = useActionBarButtonStore()
 const queueUIStore = useQueueUIStore()
 const { isOverlayExpanded: isQueueOverlayExpanded } = storeToRefs(queueUIStore)
-const { shouldShowRedDot: shouldShowConflictRedDot } =
-  useConflictAcknowledgment()
 const isTopMenuHovered = ref(false)
 const actionbarContainerRef = ref<HTMLElement>()
 const isActionbarDocked = useLocalStorage('Comfy.MenuPosition.Docked', true)
@@ -254,16 +201,6 @@ const inlineProgressSummaryTarget = computed(() => {
 const shouldHideInlineProgressSummary = computed(
   () => isQueueProgressOverlayEnabled.value && isQueueOverlayExpanded.value
 )
-const customNodesManagerTooltipConfig = computed(() =>
-  buildTooltipConfig(t('menu.manageExtensions'))
-)
-const shareTooltipConfig = computed(() =>
-  buildTooltipConfig(t('actionbar.shareTooltip'))
-)
-
-const shouldShowRedDot = computed((): boolean => {
-  return shouldShowConflictRedDot.value
-})
 
 const { hasAnyError, isErrorOverlayOpen } = storeToRefs(executionErrorStore)
 
@@ -337,24 +274,4 @@ onBeforeUnmount(() => {
   cancelAnimationFrame(legacyContentCheckRafId)
   legacyContentCheckRafId = null
 })
-
-const openCustomNodeManager = async () => {
-  if (isCloud) {
-    managerSurveyDialog.show()
-    return
-  }
-  try {
-    await managerState.openManager({
-      initialTab: ManagerTab.All,
-      showToastOnLegacyError: false
-    })
-  } catch (error) {
-    try {
-      toastErrorHandler(error)
-    } catch (toastError) {
-      console.error(error)
-      console.error(toastError)
-    }
-  }
-}
 </script>

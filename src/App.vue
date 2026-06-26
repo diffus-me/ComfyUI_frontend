@@ -5,6 +5,7 @@
 </template>
 
 <script setup lang="ts">
+import { useEventListener } from '@vueuse/core'
 import { captureException } from '@sentry/vue'
 import BlockUI from 'primevue/blockui'
 import { computed, onMounted, watch } from 'vue'
@@ -12,7 +13,9 @@ import { computed, onMounted, watch } from 'vue'
 import GlobalDialog from '@/components/dialog/GlobalDialog.vue'
 import config from '@/config'
 import { isDesktop } from '@/platform/distribution/types'
+import { api } from '@/scripts/api'
 import { app } from '@/scripts/app'
+import type { ComfyApp } from '@/scripts/app'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { electronAPI } from '@/utils/envUtil'
 import { parsePreloadError } from '@/utils/preloadErrorUtil'
@@ -128,4 +131,30 @@ onMounted(() => {
   // This runs async and doesn't block UI setup
   void conflictDetection.initializeConflictDetection()
 })
+
+const handleMessage = (message: any) => {
+  if (typeof message === 'string') {
+    try {
+      const { cmd, workflow } = JSON.parse(message)
+      if (cmd === 'runImage') {
+        api.dispatchCustomEvent('runWorkflowReceived', workflow)
+      } else {
+        console.warn(`unhandled event ${cmd}`)
+      }
+    } catch (error) {
+      console.warn('error handling message:', message, error)
+    }
+  }
+}
+
+app.api.addEventListener('setupFinished', () => {
+  window.comfyUIApp = app
+})
+useEventListener(window, 'message', handleMessage)
+
+declare global {
+  interface Window {
+    comfyUIApp?: ComfyApp
+  }
+}
 </script>

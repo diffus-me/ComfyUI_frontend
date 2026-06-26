@@ -131,10 +131,11 @@ export function useManagerState() {
    */
   const isManagerEnabled = readonly(
     computed((): boolean => {
-      return (
-        managerUIState.value !== ManagerUIState.DISABLED &&
-        managerUIState.value !== ManagerUIState.INCOMPATIBLE
-      )
+      // return (
+      //   managerUIState.value !== ManagerUIState.DISABLED &&
+      //   managerUIState.value !== ManagerUIState.INCOMPATIBLE
+      // )
+      return false
     })
   )
 
@@ -143,7 +144,8 @@ export function useManagerState() {
    */
   const isNewManagerUI = readonly(
     computed((): boolean => {
-      return managerUIState.value === ManagerUIState.NEW_UI
+      // return managerUIState.value === ManagerUIState.NEW_UI
+      return false
     })
   )
 
@@ -152,7 +154,8 @@ export function useManagerState() {
    */
   const isLegacyManagerUI = readonly(
     computed((): boolean => {
-      return managerUIState.value === ManagerUIState.LEGACY_UI
+      // return managerUIState.value === ManagerUIState.LEGACY_UI
+      return false
     })
   )
 
@@ -171,7 +174,8 @@ export function useManagerState() {
    */
   const shouldShowInstallButton = readonly(
     computed((): boolean => {
-      return isNewManagerUI.value
+      // return isNewManagerUI.value
+      return false
     })
   )
 
@@ -181,7 +185,8 @@ export function useManagerState() {
    */
   const shouldShowManagerButtons = readonly(
     computed((): boolean => {
-      return isManagerEnabled.value
+      // return isManagerEnabled.value
+      return false
     })
   )
 
@@ -214,13 +219,16 @@ export function useManagerState() {
     showToastOnLegacyError?: boolean
     isLegacyOnly?: boolean
   }): Promise<void> => {
+    if (process.env.ENABLE_MANAGER !== 'true') {
+      return
+    }
     const state = managerUIState.value
     const settingsDialog = useSettingsDialog()
     const commandStore = useCommandStore()
 
     switch (state) {
       case ManagerUIState.DISABLED:
-        settingsDialog.show('extension')
+        settingsDialog.show('about')
         break
 
       case ManagerUIState.INCOMPATIBLE:
@@ -248,7 +256,7 @@ export function useManagerState() {
           }
           // Fallback to extensions panel if not showing toast
           if (options?.showToastOnLegacyError === false) {
-            settingsDialog.show('extension')
+            settingsDialog.show('about')
           }
         }
         break

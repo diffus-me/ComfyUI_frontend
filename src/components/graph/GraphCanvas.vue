@@ -159,7 +159,7 @@ import { useGroupContextMenu } from '@/composables/graph/useGroupContextMenu'
 import { installErrorClearingHooks } from '@/composables/graph/useErrorClearingHooks'
 import type { VueNodeData } from '@/composables/graph/useGraphNodeManager'
 import { useVueNodeLifecycle } from '@/composables/graph/useVueNodeLifecycle'
-import { useNodeBadge } from '@/composables/node/useNodeBadge'
+// import { useNodeBadge } from '@/composables/node/useNodeBadge'
 import { useCanvasDrop } from '@/composables/useCanvasDrop'
 import { useContextMenuTranslation } from '@/composables/useContextMenuTranslation'
 import { useCopy } from '@/composables/useCopy'
@@ -466,7 +466,7 @@ const workflowPersistence = useWorkflowPersistence()
 const { runUrlActionLoaders } = useUrlActionLoaders()
 useCanvasDrop(canvasRef)
 useLitegraphSettings()
-useNodeBadge()
+// useNodeBadge()
 
 useGlobalLitegraph()
 useContextMenuTranslation()

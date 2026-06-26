@@ -2777,7 +2777,13 @@
     "reEnableInSettings": "إعادة التفعيل في {link}",
     "reEnableInSettingsLink": "الإعدادات",
     "title": "هذا سير العمل يفتقد إلى النماذج",
-    "totalSize": "إجمالي حجم التنزيل:"
+    "totalSize": "إجمالي حجم التنزيل:",
+    "copyModelName": "نسخ اسم النموذج",
+    "addToFavorites": "إضافة إلى المفضلة",
+    "goToModelGallery": "الذهاب إلى مكتبة النماذج",
+    "addModelToFavoritesPrompt": "لم يتم العثور على النموذج، يرجى إضافته إلى مفضلاتك في مكتبة النماذج قبل استخدامه، أو تغييره إلى نموذج آخر.",
+    "contactSupportPrompt": "لم يتم العثور على النموذج، يرجى الاتصال بالدعم لتثبيته.",
+    "contactSupport": "اتصل بالدعم"
   },
   "missingNodes": {
     "cloud": {

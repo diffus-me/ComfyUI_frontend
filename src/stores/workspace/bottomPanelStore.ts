@@ -7,6 +7,7 @@ import { isDesktop } from '@/platform/distribution/types'
 import { useCommandStore } from '@/stores/commandStore'
 import type { ComfyExtension } from '@/types/comfy'
 import type { BottomPanelExtension } from '@/types/extensionTypes'
+import { isLocalhost } from '@/platform/distribution/types'
 
 type PanelType = 'terminal' | 'shortcuts'
 
@@ -44,7 +45,7 @@ export const useBottomPanelStore = defineStore('bottomPanel', () => {
       }
     }
   })
-  const bottomPanelTabs = computed(() => activePanelState.value?.tabs ?? [])
+  const bottomPanelTabs = computed(() => activePanelState.value?.tabs.filter((tab) => (!isLocalhost || !tab.disableInLocalhost)) ?? [])
   const activeBottomPanelTabId = computed({
     get: () => activePanelState.value?.activeTabId ?? '',
     set: (tabId: string) => {

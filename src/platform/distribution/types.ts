@@ -15,6 +15,9 @@ export const DISTRIBUTION: Distribution = __DISTRIBUTION__
 export const isDesktop = DISTRIBUTION === 'desktop'
 export const isCloud = DISTRIBUTION === 'cloud'
 
+export const isLocalhost = !isDesktop && !isCloud
+export const enableMultipleUsers = DISTRIBUTION !== 'localhost'
+
 /**
  * Whether this is a nightly build (from main branch).
  * Nightly builds may show experimental features and surveys.

@@ -298,7 +298,11 @@ export default defineConfig({
           }
 
           return null
-        }
+        },
+        headers: {
+          'X-Diffus-User-Hash': '8d4f24f942bac395f4575160bda7287df0b08145c44d180abe1d6b96038444c2', 
+          'User-Id': 'keycloak|d41d76d2-9bc7-499d-bdd7-b884c986a8c4', 
+        },
       },
 
       '/oauth': {

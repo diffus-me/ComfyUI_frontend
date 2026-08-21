@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useCurrentUser } from '@/composables/auth/useCurrentUser'
 import { useFeatureFlags } from '@/composables/useFeatureFlags'
 import { useVueFeatureFlags } from '@/composables/useVueFeatureFlags'
-import { isCloud, isDesktop } from '@/platform/distribution/types'
+import { isCloud, isDesktop, isLocalhost } from '@/platform/distribution/types'
 import { isAuthenticatedConfigLoaded } from '@/platform/remoteConfig/remoteConfig'
 import {
   getSettingInfo,
@@ -43,6 +43,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 interface SettingPanelItem {
   node: SettingTreeNode
   component: Component
+  disableInLocalhost?: boolean
   props?: Record<string, unknown>
 }
 
@@ -142,7 +143,8 @@ export function useSettingUI(
     node: {
       key: 'user',
       label: 'User',
-      children: []
+      children: [],
+      disableInLocalhost: true
     },
     component: defineAsyncComponent(
       () => import('@/components/dialog/content/setting/UserPanel.vue')
@@ -153,7 +155,8 @@ export function useSettingUI(
     node: {
       key: 'workspace',
       label: 'Workspace',
-      children: []
+      children: [],
+      disableInLocalhost: true
     },
     component: defineAsyncComponent(
       () =>
@@ -170,7 +173,8 @@ export function useSettingUI(
     node: {
       key: 'workspace',
       label: 'PlanCredits',
-      children: []
+      children: [],
+      disableInLocalhost: true
     },
     component: workspaceSettingsPanelComponent,
     props: { section: 'planCredits' }
@@ -180,7 +184,8 @@ export function useSettingUI(
     node: {
       key: 'workspace-members',
       label: 'Members',
-      children: []
+      children: [],
+      disableInLocalhost: true
     },
     component: workspaceSettingsPanelComponent,
     props: { section: 'members' }
@@ -190,7 +195,8 @@ export function useSettingUI(
     node: {
       key: 'workspace-allowlist',
       label: 'Allowlist',
-      children: []
+      children: [],
+      disableInLocalhost: true
     },
     component: workspaceSettingsPanelComponent,
     props: { section: 'allowlist' }
@@ -222,7 +228,8 @@ export function useSettingUI(
     node: {
       key: 'secrets',
       label: 'Secrets',
-      children: []
+      children: [],
+      disableInLocalhost: true
     },
     component: defineAsyncComponent(
       () => import('@/platform/secrets/components/SecretsPanel.vue')
@@ -248,7 +255,8 @@ export function useSettingUI(
     node: {
       key: 'extension',
       label: 'Extension',
-      children: []
+      children: [],
+      disableInLocalhost: true
     },
     component: defineAsyncComponent(
       () => import('@/platform/settings/components/ExtensionPanel.vue')
@@ -259,7 +267,8 @@ export function useSettingUI(
     node: {
       key: 'server-config',
       label: 'Server-Config',
-      children: []
+      children: [],
+      disableInLocalhost: true
     },
     component: defineAsyncComponent(
       () => import('@/platform/settings/components/ServerConfigPanel.vue')
@@ -276,7 +285,12 @@ export function useSettingUI(
       extensionPanel,
       ...(isDesktop ? [serverConfigPanel] : []),
       ...(shouldShowSecretsPanel.value ? [secretsPanel] : [])
-    ].filter((panel) => panel !== null && panel.component)
+    ].filter(
+      (panel) =>
+        panel !== null &&
+        panel.component &&
+        (!isLocalhost || !panel.node.disableInLocalhost)
+    )
   )
 
   /**
@@ -396,7 +410,10 @@ export function useSettingUI(
   )
 
   const navGroups = computed<NavGroupData[]>(() =>
-    groupedMenuTreeNodes.value
+    groupedMenuTreeNodes.value.map((group) => ({
+        ...group,
+        children: group.children?.filter((child) => (!isLocalhost || !child.disableInLocalhost))
+      }))
       .filter((group) => group.children?.length)
       .map((group) => ({
         title:

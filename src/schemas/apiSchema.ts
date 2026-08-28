@@ -25,6 +25,15 @@ export const zResultItem = z.object({
   display_name: z.string().optional()
 })
 export type ResultItem = z.infer<typeof zResultItem>
+
+const zCandidateModel = z.object({
+  filename: z.string(),
+  model_type: z.string()
+})
+
+export const zCandidateModelsResponse = z.array(zCandidateModel)
+export type CandidateModelsResponse = z.infer<typeof zCandidateModelsResponse>
+
 // Uses .passthrough() because custom nodes can output arbitrary keys.
 // See docs/adr/0007-node-execution-output-passthrough-schema.md
 const zOutputs = z

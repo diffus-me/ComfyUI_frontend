@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { LGraph } from '@/lib/litegraph/src/litegraph'
 import type { MissingModelCandidate } from '@/platform/missingModel/types'
+import type { CandidateModelsResponse } from '@/schemas/apiSchema'
 import type {
   ComfyWorkflowJSON,
   ModelFile
@@ -74,7 +75,16 @@ const { mockHandles } = vi.hoisted(() => {
         shouldUseAssetBrowser: vi.fn()
       },
       api: {
-        getFolderPaths: vi.fn()
+        getFolderPaths: vi.fn(),
+        getCandidateModels: vi.fn(
+          async (
+            _: {
+              checkpoints: string[]
+              loras: string[]
+            },
+            __?: { signal?: AbortSignal }
+          ): Promise<CandidateModelsResponse> => [] as CandidateModelsResponse
+        )
       },
       fetchModelMetadata: vi.fn(),
       isAncestorPathActive,
@@ -112,6 +122,10 @@ vi.mock('@/stores/modelToNodeStore', () => ({
 }))
 
 vi.mock('@/platform/missingModel/missingModelScan', () => ({
+  getFilename: (path: string) => {
+    const normalizedPath = path.replace(/\\/g, '/')
+    return normalizedPath.slice(normalizedPath.lastIndexOf('/') + 1)
+  },
   scanAllModelCandidates: (
     graph: LGraph,
     isAssetSupported: (nodeType: string, widgetName: string) => boolean,
@@ -134,7 +148,15 @@ vi.mock('@/platform/updates/common/toastStore', () => ({
 
 vi.mock('@/scripts/api', () => ({
   api: {
-    getFolderPaths: () => mockHandles.api.getFolderPaths()
+    getFolderPaths: () => mockHandles.api.getFolderPaths(),
+    getCandidateModels: (
+      models: {
+        checkpoints: string[]
+        loras: string[]
+      },
+      options?: { signal?: AbortSignal }
+    ): Promise<CandidateModelsResponse> =>
+      mockHandles.api.getCandidateModels(models, options)
   }
 }))
 
@@ -361,6 +383,107 @@ describe('missingModelPipeline', () => {
   })
 
   describe('runMissingModelPipeline', () => {
+    it('verifies missing checkpoints and LoRAs with the candidate models API', async () => {
+      const checkpoint = {
+        nodeType: 'CheckpointLoaderSimple',
+        widgetName: 'ckpt_name',
+        name: 'waiNSFWIllustrious_v140.safetensors',
+        directory: 'checkpoints',
+        isMissing: true,
+        isAssetSupported: false
+      } satisfies MissingModelCandidate
+      const lora = {
+        nodeType: 'LoraLoader',
+        widgetName: 'lora_name',
+        name: 'krea2_darkbrush.safetensors',
+        directory: 'loras',
+        isMissing: true,
+        isAssetSupported: false
+      } satisfies MissingModelCandidate
+      const vae = {
+        nodeType: 'VAELoader',
+        widgetName: 'vae_name',
+        name: 'missing-vae.safetensors',
+        directory: 'vae',
+        isMissing: true,
+        isAssetSupported: false
+      } satisfies MissingModelCandidate
+      mockHandles.state.enrichedCandidates = [checkpoint, lora, vae]
+      mockHandles.api.getCandidateModels.mockResolvedValueOnce([
+        {
+          filename: 'models/checkpoints/waiNSFWIllustrious_v140.safetensors',
+          model_type: 'CHECKPOINT'
+        }
+      ])
+
+      const result = await runMissingModelPipeline({
+        graph: createGraph(),
+        graphData: createWorkflowGraphData(),
+        missingModelStore: mockHandles.missingModelStore
+      })
+
+      expect(mockHandles.api.getCandidateModels).toHaveBeenCalledWith(
+        {
+          checkpoints: ['waiNSFWIllustrious_v140.safetensors'],
+          loras: ['krea2_darkbrush.safetensors']
+        },
+        { signal: expect.any(AbortSignal) }
+      )
+      expect(checkpoint.isMissing).toBe(false)
+      expect(result.confirmedCandidates).toEqual([lora, vae])
+    })
+
+    it('clears LoRAs found via LYCORIS candidate model responses', async () => {
+      const lora = {
+        nodeType: 'LoraLoader',
+        widgetName: 'lora_name',
+        name: 'style.safetensors',
+        directory: 'loras',
+        isMissing: true,
+        isAssetSupported: false
+      } satisfies MissingModelCandidate
+      mockHandles.state.enrichedCandidates = [lora]
+      mockHandles.api.getCandidateModels.mockResolvedValueOnce([
+        {
+          filename: 'models/loras/style.safetensors',
+          model_type: 'LYCORIS'
+        }
+      ])
+
+      const result = await runMissingModelPipeline({
+        graph: createGraph(),
+        graphData: createWorkflowGraphData(),
+        missingModelStore: mockHandles.missingModelStore
+      })
+
+      expect(lora.isMissing).toBe(false)
+      expect(result.confirmedCandidates).toEqual([])
+    })
+
+    it('keeps candidates missing when candidate model verification fails', async () => {
+      const checkpoint = {
+        nodeType: 'CheckpointLoaderSimple',
+        widgetName: 'ckpt_name',
+        name: 'missing.safetensors',
+        directory: 'checkpoints',
+        isMissing: true,
+        isAssetSupported: false
+      } satisfies MissingModelCandidate
+      mockHandles.state.enrichedCandidates = [checkpoint]
+      mockHandles.api.getCandidateModels.mockRejectedValueOnce(
+        new Error('network error')
+      )
+
+      const result = await runMissingModelPipeline({
+        graph: createGraph(),
+        graphData: createWorkflowGraphData(),
+        missingModelStore: mockHandles.missingModelStore
+      })
+
+      expect(checkpoint.isMissing).toBe(true)
+      expect(result.confirmedCandidates).toEqual([checkpoint])
+    })
+
     it('returns confirmed missing models and caches pending warning candidates', async () => {
       const confirmedCandidate = {
         nodeType: 'CheckpointLoaderSimple',

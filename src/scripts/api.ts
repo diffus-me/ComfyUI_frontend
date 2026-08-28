@@ -19,7 +19,10 @@ import type {
 import { isCloud } from '@/platform/distribution/types'
 import { useToastStore } from '@/platform/updates/common/toastStore'
 import type { ShareableAssetsResponse } from '@/schemas/apiSchema'
-import { zShareableAssetsResponse } from '@/schemas/apiSchema'
+import {
+  zCandidateModelsResponse,
+  zShareableAssetsResponse
+} from '@/schemas/apiSchema'
 import type {
   TemplateIncludeOnDistributionEnum,
   WorkflowTemplates
@@ -1133,6 +1136,30 @@ export class ComfyApi extends EventTarget {
       return []
     }
     return await res.json()
+  }
+
+  async getCandidateModels(
+    models: {
+      checkpoints: string[]
+      loras: string[]
+    },
+    options?: { signal?: AbortSignal }
+  ) {
+    const res = await this.fetchApi('/v1/candidate-models', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        checkpoints: models.checkpoints,
+        loras: models.loras
+      }),
+      signal: options?.signal
+    })
+    if (!res.ok) {
+      throw new Error(`Failed to fetch candidate models: ${res.status}`)
+    }
+    return zCandidateModelsResponse.parse(await res.json())
   }
 
   /**

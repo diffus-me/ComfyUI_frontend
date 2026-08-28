@@ -310,7 +310,7 @@ function scanComboWidget(
   }
 }
 
-function getFilename(path: string): string {
+export function getFilename(path: string): string {
   const normalizedPath = path.replace(/\\/g, '/')
   return normalizedPath.slice(normalizedPath.lastIndexOf('/') + 1)
 }

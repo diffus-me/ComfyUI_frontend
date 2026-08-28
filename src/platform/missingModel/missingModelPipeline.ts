@@ -4,6 +4,7 @@ import { assetService } from '@/platform/assets/services/assetService'
 import { isCloud } from '@/platform/distribution/types'
 import {
   enrichWithEmbeddedMetadata,
+  getFilename,
   scanAllModelCandidates,
   verifyAssetSupportedCandidates
 } from '@/platform/missingModel/missingModelScan'
@@ -100,6 +101,61 @@ function getCurrentMissingModelMetadata(
   )
 }
 
+async function verifyCandidateModels(
+  candidates: MissingModelCandidate[],
+  signal: AbortSignal
+) {
+  const unresolved = candidates.filter(
+    (candidate) =>
+      candidate.isMissing === true &&
+      (candidate.directory === 'checkpoints' || candidate.directory === 'loras')
+  )
+  if (!unresolved.length || signal.aborted) return
+
+  const response = await api.getCandidateModels(
+    {
+      checkpoints: [
+        ...new Set(
+          unresolved
+            .filter((candidate) => candidate.directory === 'checkpoints')
+            .map((candidate) => candidate.name)
+        )
+      ],
+      loras: [
+        ...new Set(
+          unresolved
+            .filter((candidate) => candidate.directory === 'loras')
+            .map((candidate) => candidate.name)
+        )
+      ]
+    },
+    { signal }
+  )
+  if (signal.aborted) return
+
+  const checkpointFilenames = new Set(
+    response
+      .filter((item) => item.model_type.toUpperCase() === 'CHECKPOINTS')
+      .map((item) => getFilename(item.filename))
+  )
+  const loraFilenames = new Set(
+    response
+      .filter((item) =>
+        ['LORAS', 'LYCORIS'].includes(item.model_type.toUpperCase())
+      )
+      .map((item) => getFilename(item.filename))
+  )
+  for (const candidate of unresolved) {
+    const filenames =
+      candidate.directory === 'checkpoints'
+        ? checkpointFilenames
+        : loraFilenames
+    if (filenames.has(getFilename(candidate.name))) {
+      candidate.isMissing = false
+    }
+  }
+}
+
 export async function runMissingModelPipeline({
   graph,
   graphData,
@@ -133,6 +189,17 @@ export async function runMissingModelPipeline({
   const enrichedCandidates = enrichedAll.filter((c) =>
     isCandidateScopeActive(graph, c)
   )
+
+  try {
+    await verifyCandidateModels(enrichedCandidates, controller.signal)
+  } catch (error) {
+    if (!controller.signal.aborted) {
+      console.warn(
+        '[Missing Model Pipeline] Candidate model verification failed:',
+        error
+      )
+    }
+  }
 
   const confirmedCandidates = enrichedCandidates.filter(
     (c) => c.isMissing === true

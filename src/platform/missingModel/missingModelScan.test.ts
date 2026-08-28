@@ -481,6 +481,63 @@ describe('scanAllModelCandidates', () => {
     ])
   })
 
+  it('uses an exact model path match without changing the widget value', () => {
+    const widget = makeComboWidget(
+      'ckpt_name',
+      'ltx-2.5-22b-distilled.safetensors',
+      [
+        'ltx-2.5-22b-distilled.safetensors',
+        'ltx/ltx-2.5-22b-distilled.safetensors'
+      ]
+    )
+    const graph = makeGraph([
+      makeNode(1, 'CheckpointLoaderSimple', [widget])
+    ])
+
+    const result = scanAllModelCandidates(graph, noAssetSupport)
+
+    expect(result[0]).toMatchObject({
+      name: 'ltx-2.5-22b-distilled.safetensors',
+      isMissing: false
+    })
+    expect(widget.value).toBe('ltx-2.5-22b-distilled.safetensors')
+  })
+
+  it('matches by filename and updates the widget to the backend path', () => {
+    const widget = makeComboWidget(
+      'ckpt_name',
+      'ltx-2.5-22b-distilled.safetensors',
+      ['ltx/ltx-2.5-22b-distilled.safetensors']
+    )
+    const graph = makeGraph([
+      makeNode(1, 'CheckpointLoaderSimple', [widget])
+    ])
+
+    const result = scanAllModelCandidates(graph, noAssetSupport)
+
+    expect(result[0]).toMatchObject({
+      name: 'ltx/ltx-2.5-22b-distilled.safetensors',
+      isMissing: false
+    })
+    expect(widget.value).toBe('ltx/ltx-2.5-22b-distilled.safetensors')
+  })
+
+  it('matches model filenames across path separator styles', () => {
+    const widget = makeComboWidget(
+      'ckpt_name',
+      'models\\ltx-2.5-22b-distilled.safetensors',
+      ['ltx/ltx-2.5-22b-distilled.safetensors']
+    )
+    const graph = makeGraph([
+      makeNode(1, 'CheckpointLoaderSimple', [widget])
+    ])
+
+    const result = scanAllModelCandidates(graph, noAssetSupport)
+
+    expect(result[0].isMissing).toBe(false)
+    expect(widget.value).toBe('ltx/ltx-2.5-22b-distilled.safetensors')
+  })
+
   it('should skip non-model values (no model extension)', () => {
     const graph = makeGraph([
       makeNode(1, 'SomeNode', [

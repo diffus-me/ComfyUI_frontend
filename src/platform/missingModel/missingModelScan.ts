@@ -287,7 +287,14 @@ function scanComboWidget(
     target.definitionWidgetName
   )
   const options = resolveComboValues(target.definitionWidget)
-  const inOptions = options.includes(value)
+  const exactMatch = options.find((option) => option === value)
+  const filename = getFilename(value)
+  const filenameMatch = exactMatch
+    ? undefined
+    : options.find((option) => getFilename(option) === filename)
+  const matchedValue = exactMatch ?? filenameMatch
+
+  if (filenameMatch) target.valueWidget.value = filenameMatch
 
   return {
     nodeId: target.executionId,
@@ -297,10 +304,15 @@ function scanComboWidget(
     nodeType: target.nodeType,
     widgetName: target.candidateWidgetName,
     isAssetSupported: nodeIsAssetSupported,
-    name: value,
+    name: matchedValue ?? value,
     directory: getDirectory?.(target.nodeType),
-    isMissing: nodeIsAssetSupported ? undefined : !inOptions
+    isMissing: nodeIsAssetSupported ? undefined : matchedValue === undefined
   }
+}
+
+function getFilename(path: string): string {
+  const normalizedPath = path.replace(/\\/g, '/')
+  return normalizedPath.slice(normalizedPath.lastIndexOf('/') + 1)
 }
 
 export function enrichWithEmbeddedMetadata(

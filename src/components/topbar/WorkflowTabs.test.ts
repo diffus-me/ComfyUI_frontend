@@ -7,6 +7,7 @@ import { computed, defineComponent, h, nextTick } from 'vue'
 import { createI18n } from 'vue-i18n'
 
 import enMessages from '@/locales/en/main.json' with { type: 'json' }
+import { useCurrentUser } from '@/composables/auth/useCurrentUser'
 import { useSettingStore } from '@/platform/settings/settingStore'
 import { useTelemetry } from '@/platform/telemetry'
 import type { LoadedComfyWorkflow } from '@/platform/workflow/management/stores/workflowStore'
@@ -22,6 +23,7 @@ vi.mock(import('@/platform/telemetry'))
 const distribution = vi.hoisted(() => ({
   isCloud: false,
   isDesktop: false,
+  enableMultipleUsers: true,
   isNightly: false
 }))
 
@@ -38,6 +40,9 @@ vi.mock(import('@/platform/distribution/types'), () => ({
   },
   get isDesktop() {
     return distribution.isDesktop
+  },
+  get enableMultipleUsers() {
+    return distribution.enableMultipleUsers
   },
   get isNightly() {
     return distribution.isNightly
@@ -135,14 +140,14 @@ vi.mock(import('./WorkflowTab.vue'), () => ({
 vi.mock(import('./CurrentUserButton.vue'), () => ({
   default: defineComponent({
     name: 'CurrentUserButtonStub',
-    render: () => h('div')
+    render: () => h('div', { 'data-testid': 'current-user-button' })
   })
 }))
 
 vi.mock(import('./LoginButton.vue'), () => ({
   default: defineComponent({
     name: 'LoginButtonStub',
-    render: () => h('div')
+    render: () => h('div', { 'data-testid': 'login-button' })
   })
 }))
 
@@ -172,6 +177,7 @@ beforeEach(() => {
   consentChecking.value = false
   distribution.isCloud = false
   distribution.isDesktop = false
+  distribution.enableMultipleUsers = true
   distribution.isNightly = false
   useSettingStore().$patch({
     settingValues: { 'Comfy.UI.TabBarLayout': 'Default' }
@@ -183,6 +189,25 @@ beforeEach(() => {
     onAccept()
   })
   overflowObservers.length = 0
+})
+
+describe('WorkflowTabs account controls', () => {
+  it('hides the current user control when multiple users are disabled', () => {
+    distribution.enableMultipleUsers = false
+    useCurrentUser().isLoggedIn = computed(() => true)
+
+    renderComponent()
+
+    expect(screen.queryByTestId('current-user-button')).not.toBeInTheDocument()
+  })
+
+  it('hides the login control when multiple users are disabled', () => {
+    distribution.enableMultipleUsers = false
+
+    renderComponent()
+
+    expect(screen.queryByTestId('login-button')).not.toBeInTheDocument()
+  })
 })
 
 describe('WorkflowTabs feedback button', () => {

@@ -28,6 +28,7 @@ import type {
   ModelFolderInfo
 } from '@/platform/assets/schemas/assetSchema'
 import { isCloud } from '@/platform/distribution/types'
+import { zCandidateModelsResponse } from '@/platform/missingModel/candidateModelsSchema'
 import { addBreadcrumb } from '@sentry/vue'
 import { useTelemetry } from '@/platform/telemetry'
 import { useToastStore } from '@/platform/updates/common/toastStore'
@@ -1249,6 +1250,33 @@ export class ComfyApi extends EventTarget {
       return []
     }
     return await res.json()
+  }
+
+  async getCandidateModels(
+    models: {
+      checkpoints: string[]
+      loras: string[]
+    },
+    options?: { signal?: AbortSignal }
+  ) {
+    const res = await this.fetchApi('/v1/candidate-models', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        checkpoints: models.checkpoints,
+        loras: models.loras
+      }),
+      signal: options?.signal
+    })
+    if (!res.ok) {
+      return { ok: false, status: res.status } as const
+    }
+    return {
+      ok: true,
+      models: zCandidateModelsResponse.parse(await res.json())
+    } as const
   }
 
   /**

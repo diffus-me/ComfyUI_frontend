@@ -20,6 +20,7 @@ interface BaseBottomPanelExtension {
   title?: string // For extensions that provide static titles
   titleKey?: string // For core tabs with i18n keys
   targetPanel?: 'terminal' | 'shortcuts'
+  disableInLocalhost?: boolean
 }
 
 export interface VueExtension {

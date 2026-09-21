@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { useBottomPanelStore } from '@/stores/workspace/bottomPanelStore'
 import type { BottomPanelExtension } from '@/types/extensionTypes'
@@ -40,13 +40,21 @@ vi.mock(import('@/composables/bottomPanelTabs/useTerminalTabs'), () => ({
   })
 }))
 
-const mockData = vi.hoisted(() => ({ isDesktop: false }))
+const mockData = vi.hoisted(() => ({ isDesktop: false, isLocalhost: false }))
 
 vi.mock(import('@/platform/distribution/types'), () => ({
   get isDesktop() {
     return mockData.isDesktop
+  },
+  get isLocalhost() {
+    return mockData.isLocalhost
   }
 }))
+
+beforeEach(() => {
+  mockData.isDesktop = false
+  mockData.isLocalhost = false
+})
 
 describe('useBottomPanelStore', () => {
   it('should initialize with empty panels', () => {
@@ -74,6 +82,25 @@ describe('useBottomPanelStore', () => {
       tab
     )
     expect(store.panels.terminal.activeTabId).toBe('test-tab')
+  })
+
+  it('does not register localhost-disabled tabs or their commands', () => {
+    mockData.isLocalhost = true
+    const store = useBottomPanelStore()
+    const tab: BottomPanelExtension = {
+      id: 'disabled-tab',
+      title: 'Disabled',
+      component: {},
+      type: 'vue',
+      targetPanel: 'terminal',
+      disableInLocalhost: true
+    }
+
+    store.registerBottomPanelTab(tab)
+    store.toggleBottomPanelTab(tab.id)
+
+    expect(store.panels.terminal.tabs).toEqual([])
+    expect(store.activePanel).toBeNull()
   })
 
   it('should toggle panel visibility', () => {

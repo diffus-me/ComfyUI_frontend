@@ -35,6 +35,7 @@ const mockData = vi.hoisted(() => ({
 vi.mock(import('@/composables/auth/useCurrentUser'))
 
 vi.mock(import('@/platform/distribution/types'), () => ({
+  enableMultipleUsers: true,
   isCloud: false,
   isNightly: false
 }))

@@ -6,10 +6,13 @@ import {
   enrichWithEmbeddedMetadata,
   hasPendingVerification,
   scanAllModelCandidates,
-  verifyAssetSupportedCandidates
+  shouldVerifyCandidateModel,
+  verifyAssetSupportedCandidates,
+  verifyPendingModelCandidates
 } from '@/platform/missingModel/missingModelScan'
 import type { MissingModelWorkflowData } from '@/platform/missingModel/missingModelScan'
 import type { MissingModelCandidate } from '@/platform/missingModel/types'
+import { normalizeModelPath } from '@/platform/missingModel/missingModelUtils'
 import { reportError } from '@/platform/telemetry/reportError'
 import { useToastStore } from '@/platform/updates/common/toastStore'
 import { updatePendingWarnings } from '@/platform/workflow/core/utils/pendingWarnings'
@@ -104,6 +107,80 @@ function getCurrentMissingModelMetadata(
   )
 }
 
+async function verifyCandidateModels(
+  candidates: MissingModelCandidate[],
+  signal: AbortSignal
+) {
+  const unresolved = candidates.filter(
+    (candidate) =>
+      (candidate.isMissing === true || shouldVerifyCandidateModel(candidate)) &&
+      (candidate.directory === 'checkpoints' || candidate.directory === 'loras')
+  )
+  if (!unresolved.length || signal.aborted) return
+
+  const result = await api.getCandidateModels(
+    {
+      checkpoints: [
+        ...new Set(
+          unresolved
+            .filter((candidate) => candidate.directory === 'checkpoints')
+            .map((candidate) => candidate.name)
+        )
+      ],
+      loras: [
+        ...new Set(
+          unresolved
+            .filter((candidate) => candidate.directory === 'loras')
+            .map((candidate) => candidate.name)
+        )
+      ]
+    },
+    { signal }
+  )
+  signal.throwIfAborted()
+  if (!result.ok) {
+    reportError(
+      `Candidate model verification failed with status ${result.status}`,
+      { errorType: 'missing_model_verification_failed' }
+    )
+    return
+  }
+
+  const checkpointPaths = new Set(
+    result.models
+      .filter((item) => item.model_type === 'checkpoints')
+      .map((item) => normalizeModelPath(item.filename))
+  )
+  const loraPaths = new Set(
+    result.models
+      .filter((item) => item.model_type === 'loras')
+      .map((item) => normalizeModelPath(item.filename))
+  )
+  for (const candidate of unresolved) {
+    const paths =
+      candidate.directory === 'checkpoints' ? checkpointPaths : loraPaths
+    if (paths.has(normalizeModelPath(candidate.name))) {
+      candidate.isMissing = false
+    }
+  }
+}
+
+async function verifyCandidateModelsSafely(
+  candidates: MissingModelCandidate[],
+  signal: AbortSignal
+) {
+  try {
+    await verifyCandidateModels(candidates, signal)
+  } catch (error) {
+    if (signal.aborted) return
+    console.warn(
+      '[Missing Model Pipeline] Candidate model verification failed:',
+      error
+    )
+    reportError(error, { errorType: 'missing_model_verification_failed' })
+  }
+}
+
 export async function runMissingModelPipeline({
   graph,
   graphData,
@@ -137,10 +214,20 @@ export async function runMissingModelPipeline({
     isCandidateScopeActive(graph, c)
   )
 
-  const confirmedCandidates = enrichedCandidates.filter(
-    (c) => c.isMissing === true
+  const requiresCandidateModelVerification = (
+    candidate: MissingModelCandidate
+  ) =>
+    (candidate.isMissing === true || shouldVerifyCandidateModel(candidate)) &&
+    (candidate.directory === 'checkpoints' || candidate.directory === 'loras')
+  const backendCandidates = enrichedCandidates.filter(
+    requiresCandidateModelVerification
   )
-  const hasDeferredCandidates = enrichedCandidates.some(hasPendingVerification)
+  const confirmedCandidates = enrichedCandidates.filter(
+    (candidate) => candidate.isMissing === true
+  )
+  const deferredCandidates = enrichedCandidates.filter(hasPendingVerification)
+  const hasDeferredCandidates =
+    deferredCandidates.length > 0 || backendCandidates.length > 0
   const downloadableCandidates = confirmedCandidates.filter(hasDownloadMetadata)
 
   const missingModels: ModelFile[] = downloadableCandidates.map(toModelFile)
@@ -194,8 +281,17 @@ export async function runMissingModelPipeline({
     })
   }
 
+  const verifyDeferredCandidates = async () => {
+    await verifyPendingModelCandidates(deferredCandidates, controller.signal)
+    if (controller.signal.aborted) return
+    await verifyCandidateModelsSafely(enrichedCandidates, controller.signal)
+  }
+
   if (isCloud) {
-    void verifyAssetSupportedCandidates(enrichedCandidates, controller.signal)
+    void verifyDeferredCandidates()
+      .then(() =>
+        verifyAssetSupportedCandidates(enrichedCandidates, controller.signal)
+      )
       .then(() => {
         if (controller.signal.aborted) return
         surfaceActiveCandidates()
@@ -210,7 +306,7 @@ export async function runMissingModelPipeline({
   }
 
   const verification = hasDeferredCandidates
-    ? verifyAssetSupportedCandidates(enrichedCandidates, controller.signal)
+    ? verifyDeferredCandidates()
     : Promise.resolve()
   void verification
     .then(async () => {

@@ -108,7 +108,7 @@
         <i class="icon-[lucide--megaphone] size-4" />
       </Button>
       <CurrentUserButton v-if="showCurrentUser" compact class="shrink-0 p-1" />
-      <LoginButton v-else class="p-1" />
+      <LoginButton v-else-if="enableMultipleUsers" class="p-1" />
       <template v-if="showAgentEntry">
         <div
           data-testid="agent-entry-separator"
@@ -145,7 +145,6 @@ import Button from '@/components/ui/button/Button.vue'
 import { useCurrentUser } from '@/composables/auth/useCurrentUser'
 import { useWorkflowStatusDismissal } from '@/composables/useWorkflowStatusDismissal'
 import { useOverflowObserver } from '@/composables/element/useOverflowObserver'
-import { isCloud, isDesktop, isNightly } from '@/platform/distribution/types'
 import { useSettingStore } from '@/platform/settings/settingStore'
 import { openFeedbackDialog } from '@/platform/support/feedbackDialog'
 import { useTelemetry } from '@/platform/telemetry'
@@ -157,6 +156,12 @@ import { useTopbarBadgeStore } from '@/stores/topbarBadgeStore'
 import { useWorkflowTabActivityStore } from '@/stores/workflowTabActivityStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { useAgentConsent } from '@/workbench/extensions/agent/composables/agent/useAgentConsent'
+import {
+  enableMultipleUsers,
+  isCloud,
+  isDesktop,
+  isNightly
+} from '@/platform/distribution/types'
 import { whileMouseDown } from '@/utils/mouseDownUtil'
 import { useAgentPanelStore } from '@/workbench/extensions/agent/stores/agent/agentPanelStore'
 
@@ -220,7 +225,9 @@ useWorkflowStatusDismissal()
 const isIntegratedTabBar = computed(
   () => settingStore.get('Comfy.UI.TabBarLayout') !== 'Legacy'
 )
-const showCurrentUser = computed(() => isCloud || isLoggedIn.value)
+const showCurrentUser = computed(
+  () => enableMultipleUsers && (isCloud || isLoggedIn.value)
+)
 
 function openFeedback() {
   openFeedbackDialog('topbar')

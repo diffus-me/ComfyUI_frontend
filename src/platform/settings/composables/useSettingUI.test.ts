@@ -17,6 +17,7 @@ const env = vi.hoisted(() => {
   const state = {
     isCloud: false,
     isDesktop: false,
+    isLocalhost: false,
     workspaceRole: 'owner' as 'owner' | 'member',
     partnerNodeGovernanceStatus: 'inactive' as
       | 'inactive'
@@ -49,6 +50,9 @@ vi.mock(import('@/platform/distribution/types'), () => ({
   },
   get isDesktop() {
     return env.state.isDesktop
+  },
+  get isLocalhost() {
+    return env.state.isLocalhost
   }
 }))
 
@@ -135,6 +139,7 @@ describe('useSettingUI', () => {
     Object.assign(env.state, {
       isCloud: false,
       isDesktop: false,
+      isLocalhost: false,
       workspaceRole: 'owner',
       partnerNodeGovernanceStatus: 'inactive',
       partnerNodeGovernanceProviders: []
@@ -231,6 +236,23 @@ describe('useSettingUI', () => {
         key: 'workspace',
         label: 'PlanCredits'
       })
+    })
+
+    it('removes localhost-disabled panels from every lookup surface', () => {
+      env.state.isLocalhost = true
+
+      const { defaultCategory, findCategoryByKey, findPanelByKey, navGroups } =
+        useSettingUI('extension')
+      const navKeys = navGroups.value.flatMap((group) =>
+        group.items.map(({ id }) => id)
+      )
+
+      expect(navKeys).not.toEqual(
+        expect.arrayContaining(['extension', 'secrets', 'user', 'workspace'])
+      )
+      expect(findCategoryByKey('extension')).toBeNull()
+      expect(findPanelByKey('extension')).toBeNull()
+      expect(defaultCategory.value.key).not.toBe('extension')
     })
 
     it('shows only Plan & Credits in the local Workspace group', () => {

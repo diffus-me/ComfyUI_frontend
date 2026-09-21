@@ -3,6 +3,7 @@ import { getComboWidgetInventory } from '@/core/graph/widgets/comboWidgetInvento
 import type { FlattenableWorkflowGraph } from '@/platform/workflow/core/utils/workflowFlattening'
 import { flattenWorkflowNodes } from '@/platform/workflow/core/utils/workflowFlattening'
 import type { MissingModelCandidate, MissingModelViewModel } from './types'
+import { getModelFilename, normalizeModelPath } from './missingModelUtils'
 import { getAssetFilename } from '@/platform/assets/utils/assetMetadataUtils'
 import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
 // eslint-disable-next-line import-x/no-restricted-paths
@@ -39,6 +40,7 @@ export type MissingModelWorkflowData = FlattenableWorkflowGraph & {
 }
 
 type DeferredVerification = (
+  candidate: MissingModelCandidate,
   signal?: AbortSignal
 ) => Promise<boolean | undefined>
 
@@ -46,11 +48,18 @@ const pendingVerifications = new WeakMap<
   MissingModelCandidate,
   DeferredVerification
 >()
+const candidateModelVerifications = new WeakSet<MissingModelCandidate>()
 
 export function hasPendingVerification(
   candidate: MissingModelCandidate
 ): boolean {
   return pendingVerifications.has(candidate)
+}
+
+export function shouldVerifyCandidateModel(
+  candidate: MissingModelCandidate
+): boolean {
+  return candidateModelVerifications.has(candidate)
 }
 
 function copyCandidate(
@@ -60,6 +69,9 @@ function copyCandidate(
   const copy = { ...candidate, ...overrides }
   const verify = pendingVerifications.get(candidate)
   if (verify) pendingVerifications.set(copy, verify)
+  if (candidateModelVerifications.has(candidate)) {
+    candidateModelVerifications.add(copy)
+  }
   return copy
 }
 
@@ -320,6 +332,26 @@ function scanAssetWidget(
   }
 }
 
+function findMatchingComboValue(
+  widget: IComboWidget,
+  value: string
+): string | undefined {
+  const options = resolveComboValues(widget).filter(
+    (option): option is string => typeof option === 'string'
+  )
+  const normalizedValue = normalizeModelPath(value)
+  const exactMatch = options.find(
+    (option) => normalizeModelPath(option) === normalizedValue
+  )
+  if (exactMatch !== undefined) return exactMatch
+  if (normalizedValue.includes('/')) return
+
+  const filenameMatches = options.filter(
+    (option) => getModelFilename(option) === normalizedValue
+  )
+  return filenameMatches.length === 1 ? filenameMatches[0] : undefined
+}
+
 function scanComboWidget(
   target: ModelWidgetScanTarget & { definitionWidget: IComboWidget },
   isAssetSupported: (nodeType: string, widgetName: string) => boolean,
@@ -328,6 +360,8 @@ function scanComboWidget(
   const value = target.valueWidget.value
   if (typeof value !== 'string' || !value.trim()) return null
   if (!isModelFileName(value)) return null
+
+  const matchedValue = findMatchingComboValue(target.definitionWidget, value)
 
   const nodeIsAssetSupported = isAssetSupported(
     target.nodeType,
@@ -341,28 +375,56 @@ function scanComboWidget(
     nodeType: target.nodeType,
     widgetName: target.candidateWidgetName,
     isAssetSupported: nodeIsAssetSupported,
-    name: value,
+    name: matchedValue ?? value,
     directory: getDirectory?.(target.nodeType),
     isMissing: undefined
   }
-  if (nodeIsAssetSupported) return candidate
-
-  const isAbsentFromOptions = () =>
-    !resolveComboValues(target.definitionWidget).includes(value)
   const inventory = getComboWidgetInventory(target.definitionWidget)
   if (inventory && inventory.getStatus() !== 'ready') {
-    pendingVerifications.set(candidate, async (signal) => {
+    pendingVerifications.set(candidate, async (verifyingCandidate, signal) => {
       await untilSettledOrAborted(inventory.waitForSettled(signal), signal)
       if (signal?.aborted || inventory.getStatus() !== 'ready') {
         return undefined
       }
-      if (target.valueWidget.value !== value) return undefined
-      return isAbsentFromOptions()
+      const currentValue = target.valueWidget.value
+      if (typeof currentValue !== 'string' || currentValue !== value) {
+        return undefined
+      }
+      const settledMatch = findMatchingComboValue(
+        target.definitionWidget,
+        currentValue
+      )
+      if (settledMatch !== undefined) {
+        verifyingCandidate.name = settledMatch
+        if (settledMatch !== currentValue) {
+          target.valueWidget.value = settledMatch
+          return false
+        }
+        return nodeIsAssetSupported ? undefined : false
+      }
+      if (nodeIsAssetSupported) {
+        candidateModelVerifications.add(verifyingCandidate)
+        return undefined
+      }
+      return true
     })
     return candidate
   }
 
-  candidate.isMissing = isAbsentFromOptions()
+  if (matchedValue !== undefined) {
+    if (matchedValue !== value) {
+      target.valueWidget.value = matchedValue
+      candidate.isMissing = false
+    } else if (!nodeIsAssetSupported) {
+      candidate.isMissing = false
+    }
+    return candidate
+  }
+  if (nodeIsAssetSupported) {
+    candidateModelVerifications.add(candidate)
+  } else {
+    candidate.isMissing = true
+  }
   return candidate
 }
 
@@ -475,10 +537,9 @@ interface AssetVerifier {
   getAssets: (nodeType: string) => AssetItem[] | undefined
 }
 
-export async function verifyAssetSupportedCandidates(
+export async function verifyPendingModelCandidates(
   candidates: MissingModelCandidate[],
-  signal?: AbortSignal,
-  assetsStore?: AssetVerifier
+  signal?: AbortSignal
 ): Promise<void> {
   if (signal?.aborted) return
 
@@ -487,10 +548,18 @@ export async function verifyAssetSupportedCandidates(
       const verify = pendingVerifications.get(candidate)
       if (!verify) return
       pendingVerifications.delete(candidate)
-      const isMissing = await verify(signal)
+      const isMissing = await verify(candidate, signal)
       if (!signal?.aborted) candidate.isMissing = isMissing
     })
   )
+}
+
+export async function verifyAssetSupportedCandidates(
+  candidates: MissingModelCandidate[],
+  signal?: AbortSignal,
+  assetsStore?: AssetVerifier
+): Promise<void> {
+  await verifyPendingModelCandidates(candidates, signal)
 
   if (signal?.aborted) return
 

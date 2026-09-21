@@ -11,6 +11,7 @@ import type { LGraph } from '@/lib/litegraph/src/litegraph'
 import { LGraphNode, LGraphEventMode } from '@/lib/litegraph/src/litegraph'
 import { promoteValueWidgetViaSubgraphInput } from '@/core/graph/subgraph/promotionUtils'
 import type { MissingModelCandidate } from '@/platform/missingModel/types'
+import type { ComfyApi } from '@/scripts/api'
 import type {
   ComfyWorkflowJSON,
   ModelFile
@@ -33,6 +34,8 @@ vi.mock(import('@/platform/telemetry/reportError'))
 import * as graphTraversal from '@/utils/graphTraversalUtil'
 
 vi.mock(import('@/utils/graphTraversalUtil'), { spy: true })
+
+type CandidateModelsResult = Awaited<ReturnType<ComfyApi['getCandidateModels']>>
 
 const { mockHandles } = vi.hoisted(() => {
   const state = {
@@ -59,17 +62,33 @@ const { mockHandles } = vi.hoisted(() => {
       hasPendingVerification: vi.fn(
         (_candidate: MissingModelCandidate) => false
       ),
+      shouldVerifyCandidateModel: vi.fn(
+        (_candidate: MissingModelCandidate) => false
+      ),
       verifyAssetSupportedCandidates: vi.fn(
         async (
           _candidates: readonly MissingModelCandidate[],
           _signal: AbortSignal
         ) => undefined
       ),
+      verifyPendingModelCandidates: vi.fn(
+        async (_candidates: MissingModelCandidate[], _signal: AbortSignal) =>
+          undefined
+      ),
       assetService: {
         shouldUseWidgetAssetPicker: vi.fn()
       },
       api: {
-        getFolderPaths: vi.fn()
+        getFolderPaths: vi.fn(),
+        getCandidateModels: vi.fn(
+          async (
+            _: {
+              checkpoints: string[]
+              loras: string[]
+            },
+            __?: { signal?: AbortSignal }
+          ): Promise<CandidateModelsResult> => ({ ok: true, models: [] })
+        )
       },
       fetchModelMetadata: vi.fn()
     }
@@ -95,6 +114,7 @@ beforeEach(() => {
 vi.mock<unknown>(import('@/platform/missingModel/missingModelScan'), () => ({
   hasPendingVerification: (candidate: MissingModelCandidate) =>
     mockHandles.hasPendingVerification(candidate),
+  shouldVerifyCandidateModel: mockHandles.shouldVerifyCandidateModel,
   scanAllModelCandidates: (
     graph: LGraph,
     isAssetSupported: (nodeType: string, widgetName: string) => boolean,
@@ -106,14 +126,16 @@ vi.mock<unknown>(import('@/platform/missingModel/missingModelScan'), () => ({
     graphData: ComfyWorkflowJSON
   ) => mockHandles.enrichWithEmbeddedMetadata(candidates, graphData),
   verifyAssetSupportedCandidates: (
-    candidates: readonly MissingModelCandidate[],
+    candidates: MissingModelCandidate[],
     signal: AbortSignal
-  ) => mockHandles.verifyAssetSupportedCandidates(candidates, signal)
+  ) => mockHandles.verifyAssetSupportedCandidates(candidates, signal),
+  verifyPendingModelCandidates: mockHandles.verifyPendingModelCandidates
 }))
 
 vi.mock<unknown>(import('@/scripts/api'), () => ({
   api: {
-    getFolderPaths: () => mockHandles.api.getFolderPaths()
+    getFolderPaths: () => mockHandles.api.getFolderPaths(),
+    getCandidateModels: mockHandles.api.getCandidateModels
   }
 }))
 
@@ -145,7 +167,8 @@ function deferModelVerification() {
   const pending = new Promise<void>((resolve) => {
     resolveVerification = resolve
   })
-  mockHandles.verifyAssetSupportedCandidates.mockImplementationOnce(
+  mockHandles.hasPendingVerification.mockReturnValue(true)
+  mockHandles.verifyPendingModelCandidates.mockImplementationOnce(
     async (candidates) => {
       await pending
       for (const candidate of candidates) candidate.isMissing = true
@@ -169,7 +192,9 @@ describe('missingModelPipeline', () => {
     )
     mockHandles.scanAllModelCandidates.mockReturnValue([])
     mockHandles.verifyAssetSupportedCandidates.mockResolvedValue(undefined)
+    mockHandles.verifyPendingModelCandidates.mockResolvedValue(undefined)
     mockHandles.hasPendingVerification.mockReturnValue(false)
+    mockHandles.shouldVerifyCandidateModel.mockReturnValue(false)
     vi.mocked(graphTraversal.getNodeByExecutionId).mockReturnValue(null)
     mockHandles.api.getFolderPaths.mockResolvedValue({})
     mockHandles.fetchModelMetadata.mockResolvedValue({
@@ -216,7 +241,7 @@ describe('missingModelPipeline', () => {
       const pending = new Promise<void>((resolve) => {
         finishVerification = resolve
       })
-      mockHandles.verifyAssetSupportedCandidates.mockImplementationOnce(
+      mockHandles.verifyPendingModelCandidates.mockImplementationOnce(
         async () => {
           await pending
           if (outcome === 'failed') throw new Error('asset service unavailable')
@@ -599,11 +624,9 @@ describe('missingModelPipeline', () => {
       mockHandles.hasPendingVerification.mockImplementation(
         (candidate) => candidate === remoteCandidate
       )
-      mockHandles.verifyAssetSupportedCandidates.mockImplementation(
-        async () => {
-          remoteCandidate.isMissing = true
-        }
-      )
+      mockHandles.verifyPendingModelCandidates.mockImplementation(async () => {
+        remoteCandidate.isMissing = true
+      })
       mockHandles.api.getFolderPaths.mockResolvedValue({
         checkpoints: ['/models/checkpoints']
       })
@@ -717,11 +740,9 @@ describe('missingModelPipeline', () => {
       mockHandles.hasPendingVerification.mockImplementation(
         (candidate) => candidate === remoteCandidate
       )
-      mockHandles.verifyAssetSupportedCandidates.mockImplementation(
-        async () => {
-          remoteCandidate.isMissing = false
-        }
-      )
+      mockHandles.verifyPendingModelCandidates.mockImplementation(async () => {
+        remoteCandidate.isMissing = false
+      })
 
       await runMissingModelPipeline({
         graph: createGraph(),
@@ -734,6 +755,262 @@ describe('missingModelPipeline', () => {
       expect(
         useExecutionErrorStore().surfaceMissingModels
       ).toHaveBeenCalledWith([], { silent: false })
+    })
+
+    it('checks the backend after deferred combo options do not match', async () => {
+      const remoteCandidate: MissingModelCandidate = {
+        nodeType: 'CheckpointLoaderSimple',
+        widgetName: 'ckpt_name',
+        name: 'selected.safetensors',
+        directory: 'checkpoints',
+        isMissing: undefined,
+        isAssetSupported: false
+      }
+      mockHandles.state.enrichedCandidates = [remoteCandidate]
+      mockHandles.hasPendingVerification.mockImplementation(
+        (candidate) => candidate === remoteCandidate
+      )
+      mockHandles.verifyPendingModelCandidates.mockImplementation(async () => {
+        remoteCandidate.isMissing = true
+      })
+      mockHandles.api.getCandidateModels.mockResolvedValue({
+        ok: true,
+        models: [
+          {
+            filename: 'selected.safetensors',
+            model_type: 'checkpoints'
+          }
+        ]
+      })
+
+      await runMissingModelPipeline({
+        graph: createGraph(),
+        graphData: createWorkflowGraphData(),
+        missingModelStore: useMissingModelStore()
+      })
+      await vi.dynamicImportSettled()
+
+      expect(mockHandles.api.getCandidateModels).toHaveBeenCalledWith(
+        {
+          checkpoints: ['selected.safetensors'],
+          loras: []
+        },
+        { signal: expect.any(AbortSignal) }
+      )
+      expect(remoteCandidate.isMissing).toBe(false)
+      expect(
+        useExecutionErrorStore().surfaceMissingModels
+      ).toHaveBeenCalledWith([], { silent: false })
+    })
+
+    it('does not wait for backend candidate verification during workflow load', async () => {
+      const candidate = {
+        nodeType: 'CheckpointLoaderSimple',
+        widgetName: 'ckpt_name',
+        name: 'selected.safetensors',
+        directory: 'checkpoints',
+        isMissing: true,
+        isAssetSupported: false
+      } satisfies MissingModelCandidate
+      let finishVerification!: () => void
+      mockHandles.state.enrichedCandidates = [candidate]
+      mockHandles.api.getCandidateModels.mockImplementation(
+        () =>
+          new Promise<CandidateModelsResult>((resolve) => {
+            finishVerification = () => {
+              resolve({
+                ok: true,
+                models: [
+                  {
+                    filename: 'selected.safetensors',
+                    model_type: 'checkpoints'
+                  }
+                ]
+              })
+            }
+          })
+      )
+
+      await expect(
+        runMissingModelPipeline({
+          graph: createGraph(),
+          graphData: createWorkflowGraphData(),
+          missingModelStore: useMissingModelStore()
+        })
+      ).resolves.toEqual({
+        missingModels: [],
+        confirmedCandidates: [candidate]
+      })
+      await vi.waitFor(() => {
+        expect(mockHandles.api.getCandidateModels).toHaveBeenCalledOnce()
+      })
+
+      finishVerification()
+      await vi.waitFor(() => {
+        expect(candidate.isMissing).toBe(false)
+      })
+    })
+
+    it('keeps same-named models in different directories distinct', async () => {
+      const installedCandidate = {
+        nodeType: 'CheckpointLoaderSimple',
+        widgetName: 'ckpt_name',
+        name: 'a/model.safetensors',
+        directory: 'checkpoints',
+        isMissing: true,
+        isAssetSupported: false
+      } satisfies MissingModelCandidate
+      const missingCandidate = {
+        ...installedCandidate,
+        name: 'b/model.safetensors'
+      }
+      mockHandles.state.enrichedCandidates = [
+        installedCandidate,
+        missingCandidate
+      ]
+      mockHandles.api.getCandidateModels.mockResolvedValue({
+        ok: true,
+        models: [
+          {
+            filename: 'a/model.safetensors',
+            model_type: 'checkpoints'
+          }
+        ]
+      })
+
+      await runMissingModelPipeline({
+        graph: createGraph(),
+        graphData: createWorkflowGraphData(),
+        missingModelStore: useMissingModelStore()
+      })
+      await vi.waitFor(() => {
+        expect(installedCandidate.isMissing).toBe(false)
+        expect(missingCandidate.isMissing).toBe(true)
+      })
+    })
+
+    it('checks the backend before verifying an unmatched asset candidate', async () => {
+      mockHandles.distribution.isCloud = true
+      const assetCandidate: MissingModelCandidate = {
+        nodeType: 'CheckpointLoaderSimple',
+        widgetName: 'ckpt_name',
+        name: 'selected.safetensors',
+        directory: 'checkpoints',
+        isMissing: undefined,
+        isAssetSupported: true
+      }
+      mockHandles.state.enrichedCandidates = [assetCandidate]
+      mockHandles.shouldVerifyCandidateModel.mockImplementation(
+        (candidate) => candidate === assetCandidate
+      )
+      mockHandles.api.getCandidateModels.mockResolvedValue({
+        ok: true,
+        models: [
+          {
+            filename: 'selected.safetensors',
+            model_type: 'checkpoints'
+          }
+        ]
+      })
+
+      await runMissingModelPipeline({
+        graph: createGraph(),
+        graphData: createWorkflowGraphData(),
+        missingModelStore: useMissingModelStore()
+      })
+      await vi.dynamicImportSettled()
+
+      expect(mockHandles.api.getCandidateModels).toHaveBeenCalledWith(
+        {
+          checkpoints: ['selected.safetensors'],
+          loras: []
+        },
+        { signal: expect.any(AbortSignal) }
+      )
+      expect(assetCandidate.isMissing).toBe(false)
+    })
+
+    it('checks the backend before asset verification after options settle', async () => {
+      mockHandles.distribution.isCloud = true
+      const assetCandidate: MissingModelCandidate = {
+        nodeType: 'CheckpointLoaderSimple',
+        widgetName: 'ckpt_name',
+        name: 'selected.safetensors',
+        directory: 'checkpoints',
+        isMissing: undefined,
+        isAssetSupported: true
+      }
+      const events: string[] = []
+      let needsBackendVerification = false
+      mockHandles.state.enrichedCandidates = [assetCandidate]
+      mockHandles.hasPendingVerification.mockImplementation(
+        (candidate) => candidate === assetCandidate
+      )
+      mockHandles.verifyPendingModelCandidates.mockImplementation(async () => {
+        events.push('options')
+        needsBackendVerification = true
+      })
+      mockHandles.shouldVerifyCandidateModel.mockImplementation(
+        () => needsBackendVerification
+      )
+      mockHandles.api.getCandidateModels.mockImplementation(async () => {
+        events.push('endpoint')
+        return {
+          ok: true,
+          models: [
+            {
+              filename: 'selected.safetensors',
+              model_type: 'checkpoints'
+            }
+          ]
+        }
+      })
+      mockHandles.verifyAssetSupportedCandidates.mockImplementation(
+        async () => {
+          events.push('asset')
+        }
+      )
+
+      await runMissingModelPipeline({
+        graph: createGraph(),
+        graphData: createWorkflowGraphData(),
+        missingModelStore: useMissingModelStore()
+      })
+      await vi.dynamicImportSettled()
+
+      expect(events).toEqual(['options', 'endpoint', 'asset'])
+      expect(assetCandidate.isMissing).toBe(false)
+    })
+
+    it('continues the pipeline when backend candidate verification fails', async () => {
+      const candidate = {
+        nodeType: 'CheckpointLoaderSimple',
+        widgetName: 'ckpt_name',
+        name: 'missing.safetensors',
+        directory: 'checkpoints',
+        isMissing: true,
+        isAssetSupported: false
+      } satisfies MissingModelCandidate
+      mockHandles.state.enrichedCandidates = [candidate]
+      mockHandles.api.getCandidateModels.mockResolvedValue({
+        ok: false,
+        status: 503
+      })
+
+      await runMissingModelPipeline({
+        graph: createGraph(),
+        graphData: createWorkflowGraphData(),
+        missingModelStore: useMissingModelStore()
+      })
+      await vi.dynamicImportSettled()
+
+      expect(reportError).toHaveBeenCalledWith(
+        'Candidate model verification failed with status 503',
+        { errorType: 'missing_model_verification_failed' }
+      )
+      expect(
+        useExecutionErrorStore().surfaceMissingModels
+      ).toHaveBeenCalledWith([candidate], { silent: false })
     })
 
     it('surfaces static and deferred remote candidates together after verification', async () => {
@@ -755,11 +1032,9 @@ describe('missingModelPipeline', () => {
       mockHandles.hasPendingVerification.mockImplementation(
         (candidate) => candidate === remoteCandidate
       )
-      mockHandles.verifyAssetSupportedCandidates.mockImplementation(
-        async () => {
-          remoteCandidate.isMissing = true
-        }
-      )
+      mockHandles.verifyPendingModelCandidates.mockImplementation(async () => {
+        remoteCandidate.isMissing = true
+      })
 
       const result = await runMissingModelPipeline({
         graph: createGraph(),

@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useCurrentUser } from '@/composables/auth/useCurrentUser'
 import { useFeatureFlags } from '@/composables/useFeatureFlags'
 import { useVueFeatureFlags } from '@/composables/useVueFeatureFlags'
-import { isCloud, isDesktop } from '@/platform/distribution/types'
+import { isCloud, isDesktop, isLocalhost } from '@/platform/distribution/types'
 import {
   getSettingInfo,
   useSettingStore
@@ -42,6 +42,7 @@ const CATEGORY_ICONS: Record<string, string> = {
 interface SettingPanelItem {
   node: SettingTreeNode
   component: Component
+  disableInLocalhost?: boolean
   props?: Record<string, unknown>
 }
 
@@ -143,6 +144,7 @@ export function useSettingUI(
       label: 'User',
       children: []
     },
+    disableInLocalhost: true,
     component: defineAsyncComponent(
       () => import('@/components/dialog/content/setting/UserPanel.vue')
     )
@@ -159,6 +161,7 @@ export function useSettingUI(
       label: 'PlanCredits',
       children: []
     },
+    disableInLocalhost: true,
     component: workspaceSettingsPanelComponent,
     props: { section: 'planCredits' }
   }
@@ -169,6 +172,7 @@ export function useSettingUI(
       label: 'Members',
       children: []
     },
+    disableInLocalhost: true,
     component: workspaceSettingsPanelComponent,
     props: { section: 'members' }
   }
@@ -179,6 +183,7 @@ export function useSettingUI(
       label: 'Allowlist',
       children: []
     },
+    disableInLocalhost: true,
     component: workspaceSettingsPanelComponent,
     props: { section: 'allowlist' }
   }
@@ -208,6 +213,7 @@ export function useSettingUI(
       label: 'Secrets',
       children: []
     },
+    disableInLocalhost: true,
     component: defineAsyncComponent(
       () => import('@/platform/secrets/components/SecretsPanel.vue')
     )
@@ -234,6 +240,7 @@ export function useSettingUI(
       label: 'Extension',
       children: []
     },
+    disableInLocalhost: true,
     component: defineAsyncComponent(
       () => import('@/platform/settings/components/ExtensionPanel.vue')
     )
@@ -245,21 +252,32 @@ export function useSettingUI(
       label: 'Server-Config',
       children: []
     },
+    disableInLocalhost: true,
     component: defineAsyncComponent(
       () => import('@/platform/settings/components/ServerConfigPanel.vue')
     )
   }
 
-  const panels = computed<SettingPanelItem[]>(() => [
-    aboutPanel,
-    creditsPanel,
-    userPanel,
-    ...visibleWorkspacePanels.value,
-    keybindingPanel,
-    extensionPanel,
-    ...(isDesktop ? [serverConfigPanel] : []),
-    ...(shouldShowSecretsPanel.value ? [secretsPanel] : [])
-  ])
+  function isPanelEnabled(panel: SettingPanelItem): boolean {
+    return !isLocalhost || !panel.disableInLocalhost
+  }
+
+  const enabledWorkspacePanels = computed(() =>
+    visibleWorkspacePanels.value.filter(isPanelEnabled)
+  )
+
+  const panels = computed<SettingPanelItem[]>(() =>
+    [
+      aboutPanel,
+      creditsPanel,
+      userPanel,
+      ...visibleWorkspacePanels.value,
+      keybindingPanel,
+      extensionPanel,
+      ...(isDesktop ? [serverConfigPanel] : []),
+      ...(shouldShowSecretsPanel.value ? [secretsPanel] : [])
+    ].filter(isPanelEnabled)
+  )
 
   /**
    * The default category to show when the dialog is opened.
@@ -301,7 +319,7 @@ export function useSettingUI(
     translateCategory({
       key: 'workspace',
       label: 'Workspace',
-      children: visibleWorkspacePanels.value
+      children: enabledWorkspacePanels.value
         .map((panel) => panel.node)
         .map(translateCategory)
     }),
@@ -309,16 +327,22 @@ export function useSettingUI(
       key: 'general',
       label: 'General',
       children: [
-        translateCategory(userPanel.node),
+        ...(isPanelEnabled(userPanel)
+          ? [translateCategory(userPanel.node)]
+          : []),
         ...coreSettingCategories.value.slice(0, 1).map(translateCategory),
-        ...(shouldShowSecretsPanel.value
+        ...(shouldShowSecretsPanel.value && isPanelEnabled(secretsPanel)
           ? [translateCategory(secretsPanel.node)]
           : []),
         ...coreSettingCategories.value.slice(1).map(translateCategory),
         translateCategory(keybindingPanel.node),
-        translateCategory(extensionPanel.node),
+        ...(isPanelEnabled(extensionPanel)
+          ? [translateCategory(extensionPanel.node)]
+          : []),
         translateCategory(aboutPanel.node),
-        ...(isDesktop ? [translateCategory(serverConfigPanel.node)] : [])
+        ...(isDesktop && isPanelEnabled(serverConfigPanel)
+          ? [translateCategory(serverConfigPanel.node)]
+          : [])
       ]
     }),
     ...(customNodeSettingCategories.value.length > 0

@@ -36,6 +36,7 @@ const spies = vi.hoisted(() => ({
 vi.mock(import('@/platform/distribution/types'), () => ({
   isCloud: false,
   isDesktop: false,
+  isLocalhost: false,
   isNightly: false
 }))
 

@@ -43,8 +43,11 @@ import type {
   ExecutionStartWsMessage,
   ExecutionSuccessWsMessage,
   FeatureFlagsWsMessage,
+  FinishedWsMessage,
+  InputClearedWsMessage,
   LogsRawResponse,
   LogsWsMessage,
+  MonitorErrorWsMessage,
   NotificationWsMessage,
   ProgressStateWsMessage,
   ProgressTextWsMessage,
@@ -226,6 +229,7 @@ interface FrontendApiCalls {
   graphCleared: never
   reconnecting: never
   reconnected: never
+  setupFinished: never
 }
 
 export type PromptQueueingEventPayload = FrontendApiCalls['promptQueueing']
@@ -236,6 +240,7 @@ interface BackendApiCalls {
   progress: ProgressWsMessage
   executing: ExecutingWsMessage
   executed: ExecutedWsMessage
+  finished: FinishedWsMessage
   status: StatusWsMessage
   notification: NotificationWsMessage
   execution_start: ExecutionStartWsMessage
@@ -244,6 +249,8 @@ interface BackendApiCalls {
   execution_interrupted: ExecutionInterruptedWsMessage
   execution_cached: ExecutionCachedWsMessage
   logs: LogsWsMessage
+  monitor_error: MonitorErrorWsMessage
+  input_cleared: InputClearedWsMessage
   /** Binary preview/progress data */
   b_preview: Blob
   /** Binary preview with metadata (node_id, job_id) */
@@ -993,6 +1000,7 @@ export class ComfyApi extends EventTarget {
             case 'execution_interrupted':
             case 'execution_cached':
             case 'execution_success':
+            case 'finished':
             case 'progress':
             case 'progress_state':
             case 'executed':
@@ -1000,6 +1008,8 @@ export class ComfyApi extends EventTarget {
             case 'logs':
             case 'b_preview':
             case 'notification':
+            case 'monitor_error':
+            case 'input_cleared':
               this.dispatchCustomEvent(msg.type, msg.data)
               break
             case 'graphChanged':

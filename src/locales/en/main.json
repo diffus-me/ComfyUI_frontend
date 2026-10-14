@@ -2419,6 +2419,10 @@
     "noVideoSource": "Select or connect a video to preview and edit"
   },
   "toastMessages": {
+    "diffusPromptQueued": "Prompt queued",
+    "diffusPromptFinished": "Prompt finished in {seconds}s",
+    "diffusPromptFinishedWithCredits": "Prompt finished in {seconds}s; credits consumed: {consumption}, charged: {charged}",
+    "diffusInputFolderCleared": "Input folder cleared",
     "nothingToQueue": "Nothing to queue",
     "pleaseSelectOutputNodes": "Please select output nodes",
     "failedToQueue": "Failed to queue",

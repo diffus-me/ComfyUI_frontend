@@ -6,8 +6,27 @@ interface DiffusFeaturePermissions {
   openComfyUIRewardBundleDialog(): boolean
 }
 
+type DiffusModelSelectorFilterValue = string | string[]
+
+export interface DiffusModelSelectorOptions {
+  filter: Record<string, DiffusModelSelectorFilterValue>
+  lockedFilterKeys?: string[]
+}
+
+export interface DiffusModelSelectorResult {
+  title: string
+  value: string
+  filename: string
+}
+
 interface DiffusAppBridge {
   featurePermissions: DiffusFeaturePermissions
+  openModelSelector?: (
+    options: DiffusModelSelectorOptions
+  ) => Promise<DiffusModelSelectorResult | undefined>
+  toast?: {
+    error(options: { title: string; description?: string }): void
+  }
 }
 
 export type ComfyUIHostBridge = Pick<ComfyApp, 'loadGraphData'>
@@ -31,6 +50,20 @@ function getDiffusApp(): DiffusAppBridge | undefined {
 
 export function isDiffusAppAvailable(): boolean {
   return getDiffusApp() !== undefined
+}
+
+export function isDiffusModelSelectorAvailable(): boolean {
+  return getDiffusApp()?.openModelSelector !== undefined
+}
+
+export async function openDiffusModelSelector(
+  options: DiffusModelSelectorOptions
+): Promise<DiffusModelSelectorResult | undefined> {
+  return getDiffusApp()?.openModelSelector?.(options)
+}
+
+export function showDiffusModelSelectorError(message: string): void {
+  getDiffusApp()?.toast?.error({ title: message })
 }
 
 export function exposeComfyUIAppToHost(app: ComfyUIHostBridge): void {

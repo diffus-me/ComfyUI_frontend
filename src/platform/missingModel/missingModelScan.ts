@@ -3,6 +3,8 @@ import { getComboWidgetInventory } from '@/core/graph/widgets/comboWidgetInvento
 import type { FlattenableWorkflowGraph } from '@/platform/workflow/core/utils/workflowFlattening'
 import { flattenWorkflowNodes } from '@/platform/workflow/core/utils/workflowFlattening'
 import type { MissingModelCandidate, MissingModelViewModel } from './types'
+import { zCandidateModelInfo } from './candidateModelsSchema'
+import type { CandidateModelInfo } from './candidateModelsSchema'
 import { getModelFilename, normalizeModelPath } from './missingModelUtils'
 import { getAssetFilename } from '@/platform/assets/utils/assetMetadataUtils'
 import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
@@ -38,6 +40,11 @@ import { getParentExecutionIds } from '@/types/nodeIdentification'
 export type MissingModelWorkflowData = FlattenableWorkflowGraph & {
   models?: ModelFile[]
 }
+
+type ModelDirectoryResolver = (
+  nodeType: string,
+  widgetName: string
+) => string | undefined
 
 type DeferredVerification = (
   candidate: MissingModelCandidate,
@@ -156,6 +163,53 @@ export function isModelFileName(name: string): boolean {
   return Array.from(MODEL_FILE_EXTENSIONS).some((ext) => lower.endsWith(ext))
 }
 
+interface ModelWidgetReference {
+  name: string
+  modelInfo?: CandidateModelInfo
+}
+
+function parseCandidateModelInfo(
+  value: unknown
+): CandidateModelInfo | undefined {
+  let parsed = value
+  if (typeof value === 'string') {
+    if (!value.trimStart().startsWith('{')) return
+    try {
+      parsed = JSON.parse(value)
+    } catch {
+      return
+    }
+  }
+
+  const result = zCandidateModelInfo.safeParse(parsed)
+  return result.success ? result.data : undefined
+}
+
+function getModelWidgetReference(
+  value: unknown
+): ModelWidgetReference | undefined {
+  const selectorValue =
+    typeof value === 'object' && value !== null && !Array.isArray(value)
+      ? (value as Record<string, unknown>).value
+      : undefined
+  const modelInfo =
+    parseCandidateModelInfo(selectorValue) ?? parseCandidateModelInfo(value)
+  if (modelInfo) {
+    return {
+      name: `${modelInfo.stem}.${modelInfo.extension}`,
+      modelInfo
+    }
+  }
+
+  return typeof value === 'string' ? { name: value } : undefined
+}
+
+function modelWidgetReferenceKey(reference: ModelWidgetReference): string {
+  return reference.modelInfo
+    ? `sha256:${reference.modelInfo.sha256.toLowerCase()}`
+    : `filename:${normalizeModelPath(reference.name)}`
+}
+
 /**
  * Scan COMBO and asset widgets on configured graph nodes for model-like values.
  * Must be called after `graph.configure()` so widget name/value mappings are accurate.
@@ -166,7 +220,7 @@ export function isModelFileName(name: string): boolean {
 export function scanAllModelCandidates(
   rootGraph: LGraph,
   isAssetSupported: (nodeType: string, widgetName: string) => boolean,
-  getDirectory?: (nodeType: string) => string | undefined
+  getDirectory?: ModelDirectoryResolver
 ): MissingModelCandidate[] {
   const allNodes = collectAllNodes(rootGraph)
   const candidates: MissingModelCandidate[] = []
@@ -192,7 +246,7 @@ export function scanNodeModelCandidates(
   rootGraph: LGraph,
   node: LGraphNode,
   isAssetSupported: (nodeType: string, widgetName: string) => boolean,
-  getDirectory?: (nodeType: string) => string | undefined
+  getDirectory?: ModelDirectoryResolver
 ): MissingModelCandidate[] {
   const isSubgraphNode =
     typeof node.isSubgraphNode === 'function' && node.isSubgraphNode()
@@ -312,7 +366,7 @@ function isComboScanTarget(
 
 function scanAssetWidget(
   target: ModelWidgetScanTarget & { definitionWidget: IAssetWidget },
-  getDirectory: ((nodeType: string) => string | undefined) | undefined
+  getDirectory: ModelDirectoryResolver | undefined
 ): MissingModelCandidate | null {
   const value = target.valueWidget.value
   if (typeof value !== 'string' || !value.trim()) return null
@@ -327,7 +381,7 @@ function scanAssetWidget(
     widgetName: target.candidateWidgetName,
     isAssetSupported: true,
     name: value,
-    directory: getDirectory?.(target.nodeType),
+    directory: getDirectory?.(target.nodeType, target.definitionWidgetName),
     isMissing: undefined
   }
 }
@@ -355,10 +409,12 @@ function findMatchingComboValue(
 function scanComboWidget(
   target: ModelWidgetScanTarget & { definitionWidget: IComboWidget },
   isAssetSupported: (nodeType: string, widgetName: string) => boolean,
-  getDirectory: ((nodeType: string) => string | undefined) | undefined
+  getDirectory: ModelDirectoryResolver | undefined
 ): MissingModelCandidate | null {
-  const value = target.valueWidget.value
-  if (typeof value !== 'string' || !value.trim()) return null
+  const widgetValue = target.valueWidget.value
+  const reference = getModelWidgetReference(widgetValue)
+  if (!reference?.name.trim()) return null
+  const value = reference.name
   if (!isModelFileName(value)) return null
 
   const matchedValue = findMatchingComboValue(target.definitionWidget, value)
@@ -376,7 +432,8 @@ function scanComboWidget(
     widgetName: target.candidateWidgetName,
     isAssetSupported: nodeIsAssetSupported,
     name: matchedValue ?? value,
-    directory: getDirectory?.(target.nodeType),
+    ...(reference.modelInfo && { modelInfo: reference.modelInfo }),
+    directory: getDirectory?.(target.nodeType, target.definitionWidgetName),
     isMissing: undefined
   }
   const inventory = getComboWidgetInventory(target.definitionWidget)
@@ -386,18 +443,28 @@ function scanComboWidget(
       if (signal?.aborted || inventory.getStatus() !== 'ready') {
         return undefined
       }
-      const currentValue = target.valueWidget.value
-      if (typeof currentValue !== 'string' || currentValue !== value) {
+      const currentWidgetValue = target.valueWidget.value
+      const currentReference = getModelWidgetReference(currentWidgetValue)
+      if (
+        !currentReference ||
+        modelWidgetReferenceKey(currentReference) !==
+          modelWidgetReferenceKey(reference)
+      ) {
         return undefined
       }
       const settledMatch = findMatchingComboValue(
         target.definitionWidget,
-        currentValue
+        currentReference.name
       )
       if (settledMatch !== undefined) {
         verifyingCandidate.name = settledMatch
-        if (settledMatch !== currentValue) {
-          target.valueWidget.value = settledMatch
+        if (settledMatch !== currentReference.name) {
+          if (
+            typeof currentWidgetValue === 'string' &&
+            !currentReference.modelInfo
+          ) {
+            target.valueWidget.value = settledMatch
+          }
           return false
         }
         return nodeIsAssetSupported ? undefined : false
@@ -413,7 +480,9 @@ function scanComboWidget(
 
   if (matchedValue !== undefined) {
     if (matchedValue !== value) {
-      target.valueWidget.value = matchedValue
+      if (typeof widgetValue === 'string' && !reference.modelInfo) {
+        target.valueWidget.value = matchedValue
+      }
       candidate.isMissing = false
     } else if (!nodeIsAssetSupported) {
       candidate.isMissing = false

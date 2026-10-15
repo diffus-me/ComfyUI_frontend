@@ -4,6 +4,7 @@ import { useWorkflowStore } from '@/platform/workflow/management/stores/workflow
 import { useMissingModelStore } from './missingModelStore'
 import { useExecutionErrorStore } from '@/stores/executionErrorStore'
 import { useModelToNodeStore } from '@/stores/modelToNodeStore'
+import { useNodeDefStore } from '@/stores/nodeDefStore'
 import { useToastStore } from '@/platform/updates/common/toastStore'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -11,6 +12,7 @@ import type { LGraph } from '@/lib/litegraph/src/litegraph'
 import { LGraphNode, LGraphEventMode } from '@/lib/litegraph/src/litegraph'
 import { promoteValueWidgetViaSubgraphInput } from '@/core/graph/subgraph/promotionUtils'
 import type { MissingModelCandidate } from '@/platform/missingModel/types'
+import type { CandidateModelReference } from '@/platform/missingModel/candidateModelsSchema'
 import type { ComfyApi } from '@/scripts/api'
 import type {
   ComfyWorkflowJSON,
@@ -50,7 +52,10 @@ const { mockHandles } = vi.hoisted(() => {
         (
           _graph: LGraph,
           _isAssetSupported: (nodeType: string, widgetName: string) => boolean,
-          _getDirectory?: (nodeType: string) => string | undefined
+          _getDirectory?: (
+            nodeType: string,
+            widgetName: string
+          ) => string | undefined
         ): MissingModelCandidate[] => []
       ),
       enrichWithEmbeddedMetadata: vi.fn(
@@ -83,8 +88,9 @@ const { mockHandles } = vi.hoisted(() => {
         getCandidateModels: vi.fn(
           async (
             _: {
-              checkpoints: string[]
-              loras: string[]
+              checkpoints: CandidateModelReference[]
+              diffusion_models: CandidateModelReference[]
+              loras: CandidateModelReference[]
             },
             __?: { signal?: AbortSignal }
           ): Promise<CandidateModelsResult> => ({ ok: true, models: [] })
@@ -118,7 +124,7 @@ vi.mock<unknown>(import('@/platform/missingModel/missingModelScan'), () => ({
   scanAllModelCandidates: (
     graph: LGraph,
     isAssetSupported: (nodeType: string, widgetName: string) => boolean,
-    getDirectory?: (nodeType: string) => string | undefined
+    getDirectory?: (nodeType: string, widgetName: string) => string | undefined
   ) =>
     mockHandles.scanAllModelCandidates(graph, isAssetSupported, getDirectory),
   enrichWithEmbeddedMetadata: (
@@ -207,6 +213,74 @@ describe('missingModelPipeline', () => {
         candidate.isMissing === true &&
         vi.mocked(graphTraversal.isCandidateScopeActive)(graph, candidate)
     )
+    delete useNodeDefStore().nodeDefsByName.UnetLoaderGGUF
+  })
+
+  it('uses canonical model selector metadata for GGUF verification', async () => {
+    const modelInfo = {
+      id: 42,
+      model_type: 'checkpoint',
+      base: 'FLUX1',
+      stem: 'flux-q8',
+      extension: 'gguf',
+      sha256: 'b'.repeat(64),
+      config_sha256: null
+    }
+    const candidate: MissingModelCandidate = {
+      nodeType: 'UnetLoaderGGUF',
+      widgetName: 'unet_name',
+      name: 'flux-q8.gguf',
+      modelInfo,
+      isMissing: true,
+      isAssetSupported: false
+    }
+    useNodeDefStore().nodeDefsByName.UnetLoaderGGUF = fromPartial({
+      inputs: {
+        unet_name: {
+          model_selector: {
+            model_types: ['diffusion_models'],
+            quantization: 'GGUF'
+          }
+        }
+      }
+    })
+    let directory: string | undefined
+    mockHandles.scanAllModelCandidates.mockImplementation(
+      (_graph, _isAssetSupported, getDirectory) => {
+        directory = getDirectory?.('UnetLoaderGGUF', 'unet_name')
+        candidate.directory = directory
+        mockHandles.state.enrichedCandidates = [candidate]
+        return [candidate]
+      }
+    )
+    mockHandles.api.getCandidateModels.mockResolvedValue({
+      ok: true,
+      models: [
+        {
+          filename: 'flux-q8.gguf',
+          model_type: 'diffusion_models',
+          model_info: modelInfo
+        }
+      ]
+    })
+
+    await runMissingModelPipeline({
+      graph: createGraph(),
+      graphData: createWorkflowGraphData(),
+      missingModelStore: useMissingModelStore()
+    })
+    await vi.dynamicImportSettled()
+
+    expect(directory).toBe('diffusion_models')
+    expect(mockHandles.api.getCandidateModels).toHaveBeenCalledWith(
+      {
+        checkpoints: [],
+        diffusion_models: [modelInfo],
+        loras: []
+      },
+      { signal: expect.any(AbortSignal) }
+    )
+    expect(candidate.isMissing).toBe(false)
   })
 
   it.for([
@@ -793,6 +867,7 @@ describe('missingModelPipeline', () => {
       expect(mockHandles.api.getCandidateModels).toHaveBeenCalledWith(
         {
           checkpoints: ['selected.safetensors'],
+          diffusion_models: [],
           loras: []
         },
         { signal: expect.any(AbortSignal) }
@@ -801,6 +876,55 @@ describe('missingModelPipeline', () => {
       expect(
         useExecutionErrorStore().surfaceMissingModels
       ).toHaveBeenCalledWith([], { silent: false })
+    })
+
+    it('checks Load Diffusion Model candidates against diffusion_models', async () => {
+      const modelInfo = {
+        id: 42,
+        model_type: 'checkpoint',
+        base: 'FLUX1',
+        stem: 'selected',
+        extension: 'safetensors',
+        sha256: 'a'.repeat(64),
+        config_sha256: null
+      }
+      const diffusionModelCandidate: MissingModelCandidate = {
+        nodeType: 'UNETLoader',
+        widgetName: 'unet_name',
+        name: 'selected.safetensors',
+        modelInfo,
+        directory: 'diffusion_models',
+        isMissing: true,
+        isAssetSupported: false
+      }
+      mockHandles.state.enrichedCandidates = [diffusionModelCandidate]
+      mockHandles.api.getCandidateModels.mockResolvedValue({
+        ok: true,
+        models: [
+          {
+            filename: 'selected.safetensors',
+            model_type: 'diffusion_models',
+            model_info: modelInfo
+          }
+        ]
+      })
+
+      await runMissingModelPipeline({
+        graph: createGraph(),
+        graphData: createWorkflowGraphData(),
+        missingModelStore: useMissingModelStore()
+      })
+      await vi.dynamicImportSettled()
+
+      expect(mockHandles.api.getCandidateModels).toHaveBeenCalledWith(
+        {
+          checkpoints: [],
+          diffusion_models: [modelInfo],
+          loras: []
+        },
+        { signal: expect.any(AbortSignal) }
+      )
+      expect(diffusionModelCandidate.isMissing).toBe(false)
     })
 
     it('does not wait for backend candidate verification during workflow load', async () => {
@@ -923,6 +1047,7 @@ describe('missingModelPipeline', () => {
       expect(mockHandles.api.getCandidateModels).toHaveBeenCalledWith(
         {
           checkpoints: ['selected.safetensors'],
+          diffusion_models: [],
           loras: []
         },
         { signal: expect.any(AbortSignal) }

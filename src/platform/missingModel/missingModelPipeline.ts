@@ -13,6 +13,15 @@ import {
 import type { MissingModelWorkflowData } from '@/platform/missingModel/missingModelScan'
 import type { MissingModelCandidate } from '@/platform/missingModel/types'
 import { normalizeModelPath } from '@/platform/missingModel/missingModelUtils'
+import type {
+  CandidateModelInfo,
+  CandidateModelReference,
+  CandidateModelDirectory
+} from '@/platform/missingModel/candidateModelsSchema'
+import {
+  isCandidateModelDirectory,
+  resolveCandidateModelDirectory
+} from '@/platform/missingModel/candidateModelsSchema'
 import { reportError } from '@/platform/telemetry/reportError'
 import { useToastStore } from '@/platform/updates/common/toastStore'
 import { updatePendingWarnings } from '@/platform/workflow/core/utils/pendingWarnings'
@@ -21,6 +30,7 @@ import type { ModelFile } from '@/platform/workflow/validation/schemas/workflowS
 import { api } from '@/scripts/api'
 import { useExecutionErrorStore } from '@/stores/executionErrorStore'
 import { useModelToNodeStore } from '@/stores/modelToNodeStore'
+import { useNodeDefStore } from '@/stores/nodeDefStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import type { MissingNodeType } from '@/types/comfy'
 import {
@@ -61,6 +71,46 @@ interface RefreshMissingModelPipelineOptions {
 type MissingModelCandidateWithDownloadMetadata = MissingModelCandidate & {
   url: string
   directory: string
+}
+
+function candidateModelReferenceKey(
+  reference: CandidateModelReference
+): string {
+  return typeof reference === 'string'
+    ? `filename:${normalizeModelPath(reference)}`
+    : `sha256:${reference.sha256.toLowerCase()}`
+}
+
+function getCandidateModelReference(
+  candidate: MissingModelCandidate
+): CandidateModelReference {
+  return candidate.modelInfo ?? candidate.name
+}
+
+function collectCandidateModelReferences(
+  candidates: Array<
+    MissingModelCandidate & { directory: CandidateModelDirectory }
+  >,
+  directory: CandidateModelDirectory
+): CandidateModelReference[] {
+  const references = candidates
+    .filter((candidate) => candidate.directory === directory)
+    .map(getCandidateModelReference)
+  return [
+    ...new Map(
+      references.map((reference) => [
+        candidateModelReferenceKey(reference),
+        reference
+      ])
+    ).values()
+  ]
+}
+
+function verifiedCandidateModelKey(model: {
+  filename: string
+  model_info?: CandidateModelInfo
+}): string {
+  return candidateModelReferenceKey(model.model_info ?? model.filename)
 }
 
 function cacheModelCandidates(
@@ -112,28 +162,24 @@ async function verifyCandidateModels(
   signal: AbortSignal
 ) {
   const unresolved = candidates.filter(
-    (candidate) =>
+    (
+      candidate
+    ): candidate is MissingModelCandidate & {
+      directory: CandidateModelDirectory
+    } =>
       (candidate.isMissing === true || shouldVerifyCandidateModel(candidate)) &&
-      (candidate.directory === 'checkpoints' || candidate.directory === 'loras')
+      isCandidateModelDirectory(candidate.directory)
   )
   if (!unresolved.length || signal.aborted) return
 
   const result = await api.getCandidateModels(
     {
-      checkpoints: [
-        ...new Set(
-          unresolved
-            .filter((candidate) => candidate.directory === 'checkpoints')
-            .map((candidate) => candidate.name)
-        )
-      ],
-      loras: [
-        ...new Set(
-          unresolved
-            .filter((candidate) => candidate.directory === 'loras')
-            .map((candidate) => candidate.name)
-        )
-      ]
+      checkpoints: collectCandidateModelReferences(unresolved, 'checkpoints'),
+      diffusion_models: collectCandidateModelReferences(
+        unresolved,
+        'diffusion_models'
+      ),
+      loras: collectCandidateModelReferences(unresolved, 'loras')
     },
     { signal }
   )
@@ -146,20 +192,33 @@ async function verifyCandidateModels(
     return
   }
 
-  const checkpointPaths = new Set(
+  const checkpointReferences = new Set(
     result.models
       .filter((item) => item.model_type === 'checkpoints')
-      .map((item) => normalizeModelPath(item.filename))
+      .map(verifiedCandidateModelKey)
   )
-  const loraPaths = new Set(
+  const loraReferences = new Set(
     result.models
       .filter((item) => item.model_type === 'loras')
-      .map((item) => normalizeModelPath(item.filename))
+      .map(verifiedCandidateModelKey)
   )
+  const diffusionModelReferences = new Set(
+    result.models
+      .filter((item) => item.model_type === 'diffusion_models')
+      .map(verifiedCandidateModelKey)
+  )
+  const referencesByDirectory: Record<CandidateModelDirectory, Set<string>> = {
+    checkpoints: checkpointReferences,
+    diffusion_models: diffusionModelReferences,
+    loras: loraReferences
+  }
   for (const candidate of unresolved) {
-    const paths =
-      candidate.directory === 'checkpoints' ? checkpointPaths : loraPaths
-    if (paths.has(normalizeModelPath(candidate.name))) {
+    const references = referencesByDirectory[candidate.directory]
+    if (
+      references.has(
+        candidateModelReferenceKey(getCandidateModelReference(candidate))
+      )
+    ) {
       candidate.isMissing = false
     }
   }
@@ -191,8 +250,14 @@ export async function runMissingModelPipeline({
 }: RunMissingModelPipelineOptions): Promise<MissingModelPipelineResult> {
   const controller = missingModelStore.createVerificationAbortController()
 
-  const getDirectory = (nodeType: string) =>
-    useModelToNodeStore().getCategoryForNodeType(nodeType)
+  const getDirectory = (nodeType: string, widgetName: string) => {
+    const inputSpec =
+      useNodeDefStore().nodeDefsByName[nodeType]?.inputs[widgetName]
+    return (
+      resolveCandidateModelDirectory(inputSpec) ??
+      useModelToNodeStore().getCategoryForNodeType(nodeType)
+    )
+  }
   const isAssetBrowserWidget = assetService.shouldUseWidgetAssetPicker
 
   const candidates = scanAllModelCandidates(
@@ -218,7 +283,7 @@ export async function runMissingModelPipeline({
     candidate: MissingModelCandidate
   ) =>
     (candidate.isMissing === true || shouldVerifyCandidateModel(candidate)) &&
-    (candidate.directory === 'checkpoints' || candidate.directory === 'loras')
+    isCandidateModelDirectory(candidate.directory)
   const backendCandidates = enrichedCandidates.filter(
     requiresCandidateModelVerification
   )

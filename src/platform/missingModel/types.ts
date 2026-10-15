@@ -1,6 +1,7 @@
 import type { NodeExecutionId } from '@/types/nodeIdentification'
 import type { SerializedNodeId } from '@/types/nodeId'
 import type { PromotedWidgetExecutionSource } from '@/core/graph/subgraph/promotedWidgetTypes'
+import type { CandidateModelInfo } from '@/platform/missingModel/candidateModelsSchema'
 
 /**
  * A single (node, widget, model) binding detected by the missing model pipeline.
@@ -17,6 +18,7 @@ export interface MissingModelCandidate {
   isAssetSupported: boolean
 
   name: string
+  modelInfo?: CandidateModelInfo
   directory?: string
   url?: string
   hash?: string

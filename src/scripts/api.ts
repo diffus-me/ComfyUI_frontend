@@ -29,6 +29,7 @@ import type {
 } from '@/platform/assets/schemas/assetSchema'
 import { isCloud } from '@/platform/distribution/types'
 import { zCandidateModelsResponse } from '@/platform/missingModel/candidateModelsSchema'
+import type { CandidateModelReference } from '@/platform/missingModel/candidateModelsSchema'
 import { addBreadcrumb } from '@sentry/vue'
 import { useTelemetry } from '@/platform/telemetry'
 import { useToastStore } from '@/platform/updates/common/toastStore'
@@ -1264,8 +1265,9 @@ export class ComfyApi extends EventTarget {
 
   async getCandidateModels(
     models: {
-      checkpoints: string[]
-      loras: string[]
+      checkpoints: CandidateModelReference[]
+      diffusion_models: CandidateModelReference[]
+      loras: CandidateModelReference[]
     },
     options?: { signal?: AbortSignal }
   ) {
@@ -1276,6 +1278,7 @@ export class ComfyApi extends EventTarget {
       },
       body: JSON.stringify({
         checkpoints: models.checkpoints,
+        diffusion_models: models.diffusion_models,
         loras: models.loras
       }),
       signal: options?.signal

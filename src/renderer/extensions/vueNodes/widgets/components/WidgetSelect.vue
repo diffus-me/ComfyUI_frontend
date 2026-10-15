@@ -1,6 +1,11 @@
 <template>
+  <WidgetDiffusModelSelector
+    v-if="isDiffusSelector"
+    v-model="modelValue"
+    :widget
+  />
   <WidgetSelectDropdown
-    v-if="isDropdownUIWidget"
+    v-else-if="isDropdownUIWidget"
     v-model="modelValue"
     :widget
     :node-type="widget.nodeType ?? nodeType"
@@ -24,6 +29,7 @@
 import { computed } from 'vue'
 
 import { assetService } from '@/platform/assets/services/assetService'
+import WidgetDiffusModelSelector from '@/renderer/extensions/vueNodes/widgets/components/WidgetDiffusModelSelector.vue'
 import WidgetSelectDefault from '@/renderer/extensions/vueNodes/widgets/components/WidgetSelectDefault.vue'
 import WidgetSelectDropdown from '@/renderer/extensions/vueNodes/widgets/components/WidgetSelectDropdown.vue'
 import WidgetWithControl from '@/renderer/extensions/vueNodes/widgets/components/WidgetWithControl.vue'
@@ -31,6 +37,7 @@ import type { LayoutMode } from '@/renderer/extensions/vueNodes/widgets/componen
 import type { ResultItemType } from '@/schemas/resultItemTypeSchema'
 import { isComboInputSpec } from '@/schemas/nodeDef/nodeDefSchemaV2'
 import type { ComboInputSpec } from '@/schemas/nodeDef/nodeDefSchemaV2'
+import { isDiffusModelSelectorActive } from '@/scripts/diffusModelSelector'
 import type {
   SimplifiedControlWidget,
   SimplifiedWidget,
@@ -53,6 +60,10 @@ const comboSpec = computed<ComboInputSpec | undefined>(() => {
   }
   return undefined
 })
+
+const isDiffusSelector = computed(() =>
+  isDiffusModelSelectorActive(props.widget.spec)
+)
 
 const specDescriptor = computed<{
   kind: AssetKind

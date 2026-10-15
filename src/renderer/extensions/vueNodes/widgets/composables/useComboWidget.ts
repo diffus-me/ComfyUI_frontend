@@ -19,6 +19,10 @@ import { isComboInputSpec } from '@/schemas/nodeDef/nodeDefSchemaV2'
 import { transformInputSpecV2ToV1 } from '@/schemas/nodeDef/migration'
 import { ComponentWidgetImpl, addWidget } from '@/scripts/domWidget'
 import type { BaseDOMWidget } from '@/scripts/domWidget'
+import {
+  configureDiffusModelSelectorWidget,
+  isDiffusModelSelectorDeclared
+} from '@/scripts/diffusModelSelector'
 import type { ComfyWidgetConstructorV2 } from '@/scripts/widgets'
 import { addValueControlWidgets } from '@/scripts/widgets'
 import { useAssetsStore } from '@/stores/assetsStore'
@@ -242,7 +246,7 @@ const addComboWidget = (
 ): IBaseWidget => {
   const defaultValue = getDefaultValue(inputSpec)
 
-  if (isCloud) {
+  if (isCloud && !isDiffusModelSelectorDeclared(inputSpec)) {
     if (
       assetService.shouldUseWidgetAssetPicker(node.comfyClass, inputSpec.name)
     ) {
@@ -275,6 +279,8 @@ const addComboWidget = (
       values: inputSpec.options ?? []
     }
   )
+
+  configureDiffusModelSelectorWidget(node, widget, inputSpec)
 
   if (inputSpec.remote) {
     if (!isComboWidget(widget)) {

@@ -3,13 +3,27 @@ import { describe, expect, it, vi } from 'vitest'
 import { api } from '@/scripts/api'
 
 describe('api.getCandidateModels', () => {
-  it('returns validated candidates for the requested model paths', async () => {
+  it('returns validated candidates for the requested model references', async () => {
     const signal = new AbortController().signal
+    const modelInfo = {
+      id: 42,
+      model_type: 'checkpoint',
+      base: 'FLUX1',
+      stem: 'diffusion',
+      extension: 'safetensors',
+      sha256: 'a'.repeat(64),
+      config_sha256: null
+    }
     vi.spyOn(api, 'fetchApi').mockResolvedValue(
       Response.json([
         {
           filename: 'models/checkpoint.safetensors',
           model_type: 'checkpoints'
+        },
+        {
+          filename: 'diffusion.safetensors',
+          model_type: 'diffusion_models',
+          model_info: modelInfo
         }
       ])
     )
@@ -18,6 +32,7 @@ describe('api.getCandidateModels', () => {
       api.getCandidateModels(
         {
           checkpoints: ['models/checkpoint.safetensors'],
+          diffusion_models: [modelInfo],
           loras: []
         },
         { signal }
@@ -28,6 +43,11 @@ describe('api.getCandidateModels', () => {
         {
           filename: 'models/checkpoint.safetensors',
           model_type: 'checkpoints'
+        },
+        {
+          filename: 'diffusion.safetensors',
+          model_type: 'diffusion_models',
+          model_info: modelInfo
         }
       ]
     })
@@ -36,6 +56,7 @@ describe('api.getCandidateModels', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         checkpoints: ['models/checkpoint.safetensors'],
+        diffusion_models: [modelInfo],
         loras: []
       }),
       signal
@@ -48,7 +69,11 @@ describe('api.getCandidateModels', () => {
     )
 
     await expect(
-      api.getCandidateModels({ checkpoints: [], loras: [] })
+      api.getCandidateModels({
+        checkpoints: [],
+        diffusion_models: [],
+        loras: []
+      })
     ).resolves.toEqual({ ok: false, status: 503 })
   })
 
@@ -58,7 +83,11 @@ describe('api.getCandidateModels', () => {
     )
 
     await expect(
-      api.getCandidateModels({ checkpoints: [], loras: [] })
+      api.getCandidateModels({
+        checkpoints: [],
+        diffusion_models: [],
+        loras: []
+      })
     ).rejects.toMatchObject({ name: 'ZodError' })
   })
 })

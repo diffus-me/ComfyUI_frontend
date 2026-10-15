@@ -502,6 +502,50 @@ describe('scanAllModelCandidates', () => {
     ])
   })
 
+  it('preserves ModelInfo from a Model Gallery selection', () => {
+    const modelInfo = {
+      id: 42,
+      model_type: 'checkpoint',
+      base: 'FLUX1',
+      stem: 'selected-model',
+      extension: 'safetensors',
+      sha256: 'a'.repeat(64),
+      config_sha256: null
+    }
+    const selection = {
+      title: 'Selected Model',
+      value: JSON.stringify(modelInfo),
+      filename: 'ignored-filename.safetensors'
+    }
+    const widget = fromAny<IComboWidget, unknown>({
+      type: 'combo',
+      name: 'unet_name',
+      value: selection,
+      options: { values: [] }
+    })
+    const graph = makeGraph([makeNode(1, 'UNETLoader', [widget])])
+
+    const result = scanAllModelCandidates(
+      graph,
+      noAssetSupport,
+      () => 'diffusion_models'
+    )
+
+    expect(result).toEqual([
+      {
+        nodeId: '1',
+        nodeType: 'UNETLoader',
+        widgetName: 'unet_name',
+        isAssetSupported: false,
+        name: 'selected-model.safetensors',
+        modelInfo,
+        directory: 'diffusion_models',
+        isMissing: true
+      }
+    ])
+    expect(widget.value).toBe(selection)
+  })
+
   it('should not report models that exist in combo options', () => {
     const graph = makeGraph([
       makeNode(1, 'CheckpointLoaderSimple', [

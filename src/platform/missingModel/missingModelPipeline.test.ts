@@ -284,6 +284,63 @@ describe('missingModelPipeline', () => {
   })
 
   it.for([
+    ['NunchakuFluxDiTLoader', 'model_path'],
+    ['WanVideoModelLoader', 'model']
+  ] as const)(
+    'matches a %s filename candidate when the backend returns ModelInfo',
+    async ([nodeType, widgetName]) => {
+      const modelInfo = {
+        id: 42,
+        model_type: 'checkpoint',
+        base: 'FLUX1',
+        stem: 'selected',
+        extension: 'safetensors',
+        sha256: 'c'.repeat(64),
+        config_sha256: null
+      }
+      const candidate: MissingModelCandidate = {
+        nodeType,
+        widgetName,
+        name: 'selected.safetensors',
+        directory: 'diffusion_models',
+        isMissing: true,
+        isAssetSupported: false
+      }
+      mockHandles.state.enrichedCandidates = [candidate]
+      mockHandles.api.getCandidateModels.mockResolvedValue({
+        ok: true,
+        models: [
+          {
+            filename: 'selected.safetensors',
+            model_type: 'diffusion_models',
+            model_info: modelInfo
+          }
+        ]
+      })
+
+      await runMissingModelPipeline({
+        graph: createGraph(),
+        graphData: createWorkflowGraphData(),
+        missingModelStore: useMissingModelStore()
+      })
+      await vi.dynamicImportSettled()
+
+      expect(mockHandles.api.getCandidateModels).toHaveBeenCalledWith(
+        {
+          checkpoints: [],
+          diffusion_models: ['selected.safetensors'],
+          loras: []
+        },
+        { signal: expect.any(AbortSignal) }
+      )
+      expect(candidate.isMissing).toBe(false)
+      expect(
+        useExecutionErrorStore().surfaceMissingModels
+      ).toHaveBeenCalledWith([], { silent: false })
+    }
+  )
+
+  it.for([
     { isCloud: true, outcome: 'verified', resolvedMissing: true },
     { isCloud: true, outcome: 'verified', resolvedMissing: false },
     { isCloud: true, outcome: 'failed', resolvedMissing: undefined },

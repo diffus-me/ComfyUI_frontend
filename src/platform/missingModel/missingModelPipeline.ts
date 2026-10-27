@@ -106,11 +106,14 @@ function collectCandidateModelReferences(
   ]
 }
 
-function verifiedCandidateModelKey(model: {
+function verifiedCandidateModelKeys(model: {
   filename: string
   model_info?: CandidateModelInfo
-}): string {
-  return candidateModelReferenceKey(model.model_info ?? model.filename)
+}): string[] {
+  return [
+    candidateModelReferenceKey(model.filename),
+    ...(model.model_info ? [candidateModelReferenceKey(model.model_info)] : [])
+  ]
 }
 
 function cacheModelCandidates(
@@ -195,17 +198,17 @@ async function verifyCandidateModels(
   const checkpointReferences = new Set(
     result.models
       .filter((item) => item.model_type === 'checkpoints')
-      .map(verifiedCandidateModelKey)
+      .flatMap(verifiedCandidateModelKeys)
   )
   const loraReferences = new Set(
     result.models
       .filter((item) => item.model_type === 'loras')
-      .map(verifiedCandidateModelKey)
+      .flatMap(verifiedCandidateModelKeys)
   )
   const diffusionModelReferences = new Set(
     result.models
       .filter((item) => item.model_type === 'diffusion_models')
-      .map(verifiedCandidateModelKey)
+      .flatMap(verifiedCandidateModelKeys)
   )
   const referencesByDirectory: Record<CandidateModelDirectory, Set<string>> = {
     checkpoints: checkpointReferences,

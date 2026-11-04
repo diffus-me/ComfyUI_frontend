@@ -1065,6 +1065,52 @@ describe('SubgraphWidgetPromotion', () => {
         }
       })
 
+      it('serializes promoted host widget values in the API prompt', async () => {
+        const subgraph = createTestSubgraph({
+          inputs: [{ name: 'unet_name', type: 'COMBO' }]
+        })
+        const node = new LGraphNode('Load Diffusion Model')
+        node.comfyClass = 'UNETLoader'
+        const input = node.addInput('unet_name', 'COMBO')
+        const widget = node.addWidget(
+          'combo',
+          'unet_name',
+          'original.safetensors',
+          () => undefined,
+          { values: ['original.safetensors'] }
+        )
+        input.widget = { name: widget.name }
+        subgraph.add(node)
+        subgraph.inputNode.slots[0].connect(input, node)
+
+        const host = createTestSubgraphNode(subgraph)
+        host.comfyClass = 'Subgraph'
+        host.graph?.add(host)
+        const modelInfo = JSON.stringify({
+          id: 124243,
+          model_type: 'checkpoint',
+          stem: 'model',
+          extension: 'safetensors',
+          sha256: 'sha256'
+        })
+        writePromotedWidgetValue(host, 0, {
+          value: modelInfo,
+          filename: 'model.safetensors',
+          title: 'Model title'
+        })
+        const hostWidget = host.widgets[0]
+        hostWidget.serializeValue = async () => {
+          const value = hostWidget.value
+          return typeof value === 'object' && value !== null
+            ? Reflect.get(value, 'value')
+            : value
+        }
+
+        const { output } = await graphToPrompt(host.rootGraph)
+
+        expect(output[`${host.id}:${node.id}`].inputs.unet_name).toBe(modelInfo)
+      })
+
       type ControlCase = {
         name: string
         editVia: 'viewKey' | 'vue'

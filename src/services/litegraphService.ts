@@ -36,6 +36,7 @@ import type {
   ISerialisableNodeOutput,
   ISerialisedNode
 } from '@/lib/litegraph/src/types/serialisation'
+import { createPromotedWidgetStoreProjection } from '@/lib/litegraph/src/subgraph/promotedWidgetStoreProjection'
 import type { IBaseWidget } from '@/lib/litegraph/src/types/widgets'
 import { toConcreteWidget } from '@/lib/litegraph/src/widgets/widgetMap'
 import { useSettingStore } from '@/platform/settings/settingStore'
@@ -54,10 +55,14 @@ import type {
 } from '@/schemas/nodeDef/nodeDefSchemaV2'
 import type { ComfyNodeDef as ComfyNodeDefV1 } from '@/schemas/nodeDefSchema'
 import { ComfyApp, app } from '@/scripts/app'
+import {
+  configureDiffusModelSelectorWidget,
+  isDiffusModelSelectorDeclared
+} from '@/scripts/diffusModelSelector'
 import { $el } from '@/scripts/ui'
 import { useExecutionStore } from '@/stores/executionStore'
 import { useNodeOutputStore } from '@/stores/nodeOutputStore'
-import { ComfyNodeDefImpl } from '@/stores/nodeDefStore'
+import { ComfyNodeDefImpl, useNodeDefStore } from '@/stores/nodeDefStore'
 import {
   getPreviewExposureHostLocator,
   usePreviewExposureStore
@@ -440,12 +445,30 @@ export const useLitegraphService = () => {
         widgetId: WidgetId,
         sourceWidget: Readonly<IBaseWidget>
       ): IBaseWidget | undefined {
-        return createPromotedMultilineWidget({
+        const multilineWidget = createPromotedMultilineWidget({
           subgraphNode: this,
           input,
           widgetId,
           sourceWidget
         })
+        if (multilineWidget) return multilineWidget
+
+        const inputSpec = useNodeDefStore().getInputSpecForWidget(
+          this,
+          input.name
+        )
+        if (!inputSpec || !isDiffusModelSelectorDeclared(inputSpec)) return
+
+        const widget = toConcreteWidget(
+          createPromotedWidgetStoreProjection(input, widgetId),
+          this,
+          false
+        )
+        if (!widget || widget.type !== 'combo') return
+
+        widget.bindRegisteredState(this.id)
+        configureDiffusModelSelectorWidget(this, widget, inputSpec)
+        return widget
       }
 
       /**

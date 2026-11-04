@@ -155,7 +155,14 @@ export const graphToPrompt = async (
 
       // Resolved to an actual widget value rather than a node connection
       if (resolvedInput.widgetInfo) {
-        const { value } = resolvedInput.widgetInfo
+        const { widget, widgetNode } = resolvedInput.widgetInfo
+        const value =
+          widget?.serializeValue && widgetNode
+            ? await widget.serializeValue(
+                widgetNode,
+                widgetNode.widgets?.indexOf(widget) ?? -1
+              )
+            : resolvedInput.widgetInfo.value
         inputs[input.name] = Array.isArray(value) ? { __value__: value } : value
         continue
       }

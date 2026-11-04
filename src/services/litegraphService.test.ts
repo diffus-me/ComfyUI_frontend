@@ -1,3 +1,4 @@
+import { fromPartial } from '@total-typescript/shoehorn'
 import { cloneDeep } from 'es-toolkit'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -7,11 +8,15 @@ vi.mock<unknown>(import('@/scripts/app'), () => ({
 }))
 
 import { i18n, mergeCustomNodesI18n } from '@/i18n'
-import { LiteGraph } from '@/lib/litegraph/src/litegraph'
+import { LGraph, LiteGraph } from '@/lib/litegraph/src/litegraph'
+import { createTestSubgraph } from '@/lib/litegraph/src/subgraph/__fixtures__/subgraphHelpers'
 import type { IBaseWidget } from '@/lib/litegraph/src/types/widgets'
+import type { WidgetEventOptions } from '@/lib/litegraph/src/widgets/BaseWidget'
+import { ComboWidget } from '@/lib/litegraph/src/widgets/ComboWidget'
 import type { ComfyNodeDef as ComfyNodeDefV1 } from '@/schemas/nodeDefSchema'
 import { app } from '@/scripts/app'
 import { useLitegraphService } from '@/services/litegraphService'
+import { useNodeDefStore } from '@/stores/nodeDefStore'
 import { useWidgetStore } from '@/stores/widgetStore'
 
 const enMessages = cloneDeep(i18n.global.getLocaleMessage('en'))
@@ -217,5 +222,120 @@ describe('useLitegraphService().registerNodeDef custom widget metadata', () => {
     expect(widget?.options.advanced).toBe(true)
     expect(widget?.options.hidden).toBe(true)
     expect(widget?.hidden).toBe(true)
+  })
+})
+
+describe('useLitegraphService().registerSubgraphNodeDef promoted model selector', () => {
+  const sourceNodeName = 'TestLoadDiffusionModel'
+
+  afterEach(() => {
+    delete window.diffusApp
+    Reflect.deleteProperty(app, 'rootGraph')
+  })
+
+  it('opens the Gallery from the promoted root graph widget', async () => {
+    const sourceNodeDef: ComfyNodeDefV1 = {
+      name: sourceNodeName,
+      display_name: 'Test Load Diffusion Model',
+      category: 'testing',
+      python_module: 'nodes',
+      description: '',
+      input: {
+        required: {
+          unet_name: [
+            ['original.safetensors'],
+            {
+              model_selector: { model_types: 'diffusion_models' }
+            }
+          ]
+        }
+      },
+      output: ['MODEL'],
+      output_name: ['MODEL'],
+      output_node: false
+    }
+    useNodeDefStore().addNodeDef(sourceNodeDef)
+    await useLitegraphService().registerNodeDef(sourceNodeName, sourceNodeDef)
+
+    const rootGraph = new LGraph()
+    Reflect.set(app, 'rootGraph', rootGraph)
+    const subgraph = createTestSubgraph({ rootGraph })
+    const sourceNode = LiteGraph.createNode(sourceNodeName)
+    if (!sourceNode) throw new Error('Failed to create source node')
+    subgraph.add(sourceNode)
+
+    const sourceWidget = sourceNode.widgets?.find(
+      (widget) => widget.name === 'unet_name'
+    )
+    if (!sourceWidget) throw new Error('Missing source widget')
+    const sourceInput = sourceNode.getSlotFromWidget(sourceWidget)
+    if (!sourceInput) throw new Error('Missing source input')
+    const subgraphInput = subgraph.addInput('unet_name', 'COMBO')
+    if (!subgraphInput.connect(sourceInput, sourceNode)) {
+      throw new Error('Failed to promote source widget')
+    }
+
+    useLitegraphService().registerSubgraphNodeDef(
+      {
+        name: subgraph.id,
+        display_name: subgraph.name,
+        category: 'subgraph',
+        python_module: 'nodes',
+        description: '',
+        input: { required: {} },
+        output: [],
+        output_name: [],
+        output_node: false
+      },
+      subgraph,
+      {
+        id: -1,
+        type: subgraph.id,
+        pos: [0, 0],
+        size: [200, 100],
+        inputs: [],
+        outputs: [],
+        properties: {},
+        flags: {},
+        mode: 0,
+        order: 0
+      }
+    )
+
+    const hostNode = LiteGraph.createNode(subgraph.id)
+    if (!hostNode) throw new Error('Failed to create subgraph node')
+    rootGraph.add(hostNode)
+
+    const openModelSelector = vi.fn(async () => undefined)
+    window.diffusApp = {
+      featurePermissions: {
+        checkTierForComfyUI: vi.fn(),
+        openUpgradeDialogByReason: vi.fn(),
+        openComfyUIRewardBundleDialog: vi.fn(() => false)
+      },
+      openModelSelector
+    }
+
+    const promotedWidget = hostNode.widgets?.find(
+      (widget) => widget.name === 'unet_name'
+    )
+    expect(promotedWidget).toBeDefined()
+    expect(promotedWidget).toBeInstanceOf(ComboWidget)
+    if (!(promotedWidget instanceof ComboWidget)) return
+
+    promotedWidget.onClick(
+      fromPartial<WidgetEventOptions>({
+        node: hostNode,
+        canvas: { graph_mouse: [0, 0] },
+        e: {}
+      })
+    )
+
+    await vi.waitFor(() =>
+      expect(openModelSelector).toHaveBeenCalledWith({
+        filter: { type: ['CHECKPOINT'] },
+        lockedFilterKeys: ['type']
+      })
+    )
   })
 })

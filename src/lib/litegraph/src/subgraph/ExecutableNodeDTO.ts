@@ -10,6 +10,7 @@ import { RecursionError } from '@/lib/litegraph/src/infrastructure/RecursionErro
 import { SlotIndexError } from '@/lib/litegraph/src/infrastructure/SlotIndexError'
 import type { ISlotType } from '@/lib/litegraph/src/interfaces'
 import { LGraphEventMode, LiteGraph } from '@/lib/litegraph/src/litegraph'
+import type { IBaseWidget } from '@/lib/litegraph/src/types/widgets'
 
 import type { Subgraph } from './Subgraph'
 import type { SubgraphNode } from './SubgraphNode'
@@ -36,7 +37,11 @@ type ResolvedInput = {
   /** The slot index of the output on the node that the link originates from. `-1` when widget value is set. */
   origin_slot: number
   /** Boxed widget value (e.g. for widgets). If this box is `undefined`, then an input link is connected, and widget values from the subgraph node are ignored. */
-  widgetInfo?: { value: unknown }
+  widgetInfo?: {
+    value: unknown
+    widget?: IBaseWidget
+    widgetNode?: LGraphNode
+  }
 }
 
 /**
@@ -194,12 +199,17 @@ export class ExecutableNodeDTO implements ExecutableLGraphNode {
       if (linkId === null) {
         const id = subgraphNodeInput.widgetId
         if (!id) return
+        const widget = subgraphNode.getWidgetFromSlot(subgraphNodeInput)
 
         return {
           node: this,
           origin_id: this.id,
           origin_slot: -1,
-          widgetInfo: { value: useWidgetValueStore().getWidget(id)?.value }
+          widgetInfo: {
+            value: useWidgetValueStore().getWidget(id)?.value,
+            widget,
+            widgetNode: subgraphNode
+          }
         }
       }
 

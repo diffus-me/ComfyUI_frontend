@@ -25,9 +25,16 @@ vi.mock(import('firebase/auth'))
 vi.mock(import('@/platform/telemetry'))
 
 const distribution = vi.hoisted(() => ({
+  enableMultipleUsers: true,
   isCloud: false,
   isDesktop: false,
   isNightly: false
+}))
+
+vi.mock(import('@/types/distribution'), () => ({
+  get supportsMultipleUsers() {
+    return distribution.enableMultipleUsers
+  }
 }))
 
 const overflowObservers = vi.hoisted<
@@ -141,14 +148,14 @@ vi.mock(import('./WorkflowTab.vue'), () => ({
 vi.mock(import('./CurrentUserButton.vue'), () => ({
   default: defineComponent({
     name: 'CurrentUserButtonStub',
-    render: () => h('div')
+    render: () => h('div', { 'data-testid': 'current-user-button' })
   })
 }))
 
 vi.mock(import('./LoginButton.vue'), () => ({
   default: defineComponent({
     name: 'LoginButtonStub',
-    render: () => h('div')
+    render: () => h('div', { 'data-testid': 'login-button' })
   })
 }))
 
@@ -176,6 +183,7 @@ beforeEach(() => {
   consentChecking.value = false
   distribution.isCloud = false
   distribution.isDesktop = false
+  distribution.enableMultipleUsers = true
   distribution.isNightly = false
   useSettingStore().$patch({
     settingValues: { 'Comfy.UI.TabBarLayout': 'Default' }
@@ -187,6 +195,18 @@ beforeEach(() => {
     onAccept()
   })
   overflowObservers.length = 0
+})
+
+describe('WorkflowTabs account controls', () => {
+  it('hides account controls when multiple users are disabled', () => {
+    distribution.enableMultipleUsers = false
+    distribution.isCloud = true
+
+    renderComponent()
+
+    expect(screen.queryByTestId('current-user-button')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('login-button')).not.toBeInTheDocument()
+  })
 })
 
 describe('WorkflowTabs feedback button', () => {

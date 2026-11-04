@@ -498,6 +498,86 @@ describe('scanAllModelCandidates', () => {
     ])
   })
 
+  it('preserves ModelInfo from a Model Gallery selection', () => {
+    const modelInfo = {
+      id: 42,
+      model_type: 'checkpoint',
+      base: 'FLUX1',
+      stem: 'selected-model',
+      extension: 'safetensors',
+      sha256: 'a'.repeat(64),
+      config_sha256: null
+    }
+    const selection = {
+      title: 'Selected Model',
+      value: JSON.stringify(modelInfo),
+      filename: 'ignored-filename.safetensors'
+    }
+    const widget = fromAny<IComboWidget, unknown>({
+      type: 'combo',
+      name: 'unet_name',
+      value: selection,
+      options: { values: [] }
+    })
+    const graph = makeGraph([makeNode(1, 'UNETLoader', [widget])])
+
+    const result = scanAllModelCandidates(
+      graph,
+      noAssetSupport,
+      () => 'diffusion_models'
+    )
+
+    expect(result).toEqual([
+      {
+        nodeId: '1',
+        nodeType: 'UNETLoader',
+        widgetName: 'unet_name',
+        isAssetSupported: false,
+        name: 'selected-model.safetensors',
+        modelInfo,
+        directory: 'diffusion_models',
+        isMissing: true
+      }
+    ])
+    expect(widget.value).toBe(selection)
+  })
+
+  it('keeps a Gallery selection missing until its ModelInfo is verified', () => {
+    const modelInfo = {
+      id: 42,
+      model_type: 'checkpoint',
+      base: 'FLUX1',
+      stem: 'selected-model',
+      extension: 'safetensors',
+      sha256: 'a'.repeat(64),
+      config_sha256: null
+    }
+    const selection = {
+      title: 'Selected Model',
+      value: JSON.stringify(modelInfo),
+      filename: 'selected-model.safetensors'
+    }
+    const widget = fromAny<IComboWidget, unknown>({
+      type: 'combo',
+      name: 'unet_name',
+      value: selection,
+      options: { values: ['selected-model.safetensors'] }
+    })
+    const graph = makeGraph([makeNode(1, 'UNETLoader', [widget])])
+
+    const [candidate] = scanAllModelCandidates(
+      graph,
+      noAssetSupport,
+      () => 'diffusion_models'
+    )
+
+    expect(candidate).toMatchObject({
+      name: 'selected-model.safetensors',
+      modelInfo,
+      isMissing: true
+    })
+  })
+
   it('should not report models that exist in combo options', () => {
     const graph = makeGraph([
       makeNode(1, 'CheckpointLoaderSimple', [
@@ -519,6 +599,80 @@ describe('scanAllModelCandidates', () => {
         isMissing: false
       }
     ])
+  })
+
+  it.for([
+    {
+      name: 'exact model path',
+      value: 'ltx-2.5-22b-distilled.safetensors',
+      options: [
+        'ltx-2.5-22b-distilled.safetensors',
+        'ltx/ltx-2.5-22b-distilled.safetensors'
+      ],
+      isAssetSupported: noAssetSupport,
+      expectedValue: 'ltx-2.5-22b-distilled.safetensors',
+      expectedMissing: false
+    },
+    {
+      name: 'unique filename',
+      value: 'ltx-2.5-22b-distilled.safetensors',
+      options: ['ltx/ltx-2.5-22b-distilled.safetensors'],
+      isAssetSupported: noAssetSupport,
+      expectedValue: 'ltx/ltx-2.5-22b-distilled.safetensors',
+      expectedMissing: false
+    },
+    {
+      name: 'asset-supported unique filename',
+      value: 'ltx-2.5-22b-distilled.safetensors',
+      options: ['ltx/ltx-2.5-22b-distilled.safetensors'],
+      isAssetSupported: () => true,
+      expectedValue: 'ltx/ltx-2.5-22b-distilled.safetensors',
+      expectedMissing: false
+    },
+    {
+      name: 'equivalent path separators',
+      value: 'ltx\\ltx-2.5-22b-distilled.safetensors',
+      options: ['ltx/ltx-2.5-22b-distilled.safetensors'],
+      isAssetSupported: noAssetSupport,
+      expectedValue: 'ltx/ltx-2.5-22b-distilled.safetensors',
+      expectedMissing: false
+    },
+    {
+      name: 'different directory',
+      value: 'models\\ltx-2.5-22b-distilled.safetensors',
+      options: ['ltx/ltx-2.5-22b-distilled.safetensors'],
+      isAssetSupported: noAssetSupport,
+      expectedValue: 'models\\ltx-2.5-22b-distilled.safetensors',
+      expectedMissing: true
+    }
+  ])(
+    'resolves $name safely',
+    ({ value, options, isAssetSupported, expectedValue, expectedMissing }) => {
+      const widget = makeComboWidget('ckpt_name', value, options)
+      const graph = makeGraph([makeNode(1, 'CheckpointLoaderSimple', [widget])])
+
+      const result = scanAllModelCandidates(graph, isAssetSupported)
+
+      expect(result[0]).toMatchObject({
+        name: expectedValue,
+        isMissing: expectedMissing
+      })
+      expect(widget.value).toBe(expectedValue)
+    }
+  )
+
+  it('does not choose between duplicate filenames in different directories', () => {
+    const value = 'model.safetensors'
+    const widget = makeComboWidget('ckpt_name', value, [
+      'a/model.safetensors',
+      'b/model.safetensors'
+    ])
+    const graph = makeGraph([makeNode(1, 'CheckpointLoaderSimple', [widget])])
+
+    const result = scanAllModelCandidates(graph, noAssetSupport)
+
+    expect(result[0]).toMatchObject({ name: value, isMissing: true })
+    expect(widget.value).toBe(value)
   })
 
   it('should skip non-model values (no model extension)', () => {
@@ -2100,7 +2254,13 @@ describe("while the page's deployment listing is slow", () => {
 })
 
 describe('remote combo inventory', () => {
-  function makeRemoteCombo(value: string) {
+  function makeRemoteCombo(
+    value: string,
+    isAssetSupported: (
+      nodeType: string,
+      widgetName: string
+    ) => boolean = noAssetSupport
+  ) {
     const widget = makeComboWidget('file_name', value, ['0', '1'])
     const inventory: { status: ComboWidgetInventoryStatus } = {
       status: 'loading'
@@ -2124,7 +2284,7 @@ describe('remote combo inventory', () => {
       node,
       widget,
       settle,
-      scan: () => scanNodeModelCandidates(graph, node, noAssetSupport)
+      scan: () => scanNodeModelCandidates(graph, node, isAssetSupported)
     }
   }
 
@@ -2149,6 +2309,18 @@ describe('remote combo inventory', () => {
 
     expect(candidates.map((c) => c.isMissing)).toEqual([false, true])
     expect(candidates.some(hasPendingVerification)).toBe(false)
+  })
+
+  it('confirms an asset-supported filename match after inventory settles', async () => {
+    const remote = makeRemoteCombo('selected.safetensors', () => true)
+    const candidates = remote.scan()
+
+    const verifying = verifyAssetSupportedCandidates(candidates)
+    remote.settle('ready', ['models/selected.safetensors'])
+    await verifying
+
+    expect(candidates[0].isMissing).toBe(false)
+    expect(remote.widget.value).toBe('models/selected.safetensors')
   })
 
   it('discards the deferred result when the selected value changed', async () => {

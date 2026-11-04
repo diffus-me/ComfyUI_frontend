@@ -38,6 +38,10 @@ vi.mock(import('@/platform/distribution/types'), () => ({
   isNightly: false
 }))
 
+vi.mock(import('@/types/distribution'), () => ({
+  isLocalhostDistribution: false
+}))
+
 vi.mock(import('@/platform/telemetry'))
 
 const i18n = createI18n({

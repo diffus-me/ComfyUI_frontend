@@ -67,10 +67,12 @@
                 @update:progress-target="updateProgressTarget"
               />
               <CurrentUserButton
-                v-if="isLoggedIn && !isIntegratedTabBar"
+                v-if="isLoggedIn && !isIntegratedTabBar && enableMultipleUsers"
                 class="shrink-0"
               />
-              <LoginButton v-else-if="!isIntegratedTabBar" />
+              <LoginButton
+                v-else-if="!isIntegratedTabBar && enableMultipleUsers"
+              />
               <Button
                 v-if="managerState.shouldShowExtensionsButton.value"
                 :tooltip="t('menu.manageExtensions')"
@@ -209,6 +211,7 @@ import { useQueueUIStore } from '@/stores/queueStore'
 import { useRightSidePanelStore } from '@/stores/workspace/rightSidePanelStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { isCloud } from '@/platform/distribution/types'
+import { supportsMultipleUsers as enableMultipleUsers } from '@/types/distribution'
 import { openDeployToComfyApiDialog } from '@/platform/workflow/deploy/composables/lazyDeployToComfyApiDialog'
 import {
   openShareDialog,

@@ -58,7 +58,7 @@
         <SidebarLogoutIcon v-if="userStore.isMultiUserServer" :is-small />
         <SidebarHelpCenterIcon :is-small />
         <SidebarBottomPanelToggleButton
-          v-if="!isCloud && !hideWorkspaceToggles"
+          v-if="!isCloud && !hideWorkspaceToggles && !isLocalhost"
           :is-small
         />
         <SidebarShortcutsToggleButton v-if="!hideWorkspaceToggles" :is-small />
@@ -101,6 +101,7 @@ import { useUserStore } from '@/stores/userStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import type { SidebarTabExtension } from '@/types/extensionTypes'
 import { cn } from '@comfyorg/tailwind-utils'
+import { isLocalhostDistribution as isLocalhost } from '@/types/distribution'
 
 import SidebarHelpCenterIcon from './SidebarHelpCenterIcon.vue'
 import SidebarIcon from './SidebarIcon.vue'

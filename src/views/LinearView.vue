@@ -127,8 +127,8 @@ const {
   () => window.innerWidth * 0.2
 )
 
-const bottomLeftRef = useTemplateRef('bottomLeftRef')
-const bottomRightRef = useTemplateRef('bottomRightRef')
+const bottomLeftRef = useTemplateRef<HTMLDivElement>('bottomLeftRef')
+const bottomRightRef = useTemplateRef<HTMLDivElement>('bottomRightRef')
 const linearWorkflowRef = useTemplateRef('linearWorkflowRef')
 
 function dragDrop(e: DragEvent) {

@@ -19,6 +19,7 @@
       <BuilderFooterToolbar />
     </template>
   </div>
+  <UserCenter v-if="isDiffusApp" />
 
   <AppToaster />
   <ToastDock>
@@ -121,6 +122,8 @@ import BuilderMenu from '@/components/builder/BuilderMenu.vue'
 import BuilderToolbar from '@/components/builder/BuilderToolbar.vue'
 import LinearView from '@/views/LinearView.vue'
 import ManagerProgressToast from '@/workbench/extensions/manager/components/ManagerProgressToast.vue'
+import UserCenter from '@/components/userCenter/UserCenter.vue'
+import { isDiffusAppAvailable } from '@/scripts/diffusApp'
 
 setupAutoQueueHandler()
 useProgressFavicon()
@@ -128,6 +131,8 @@ useProgressTextPreviews()
 useBrowserTabTitle()
 useDesktopCloudNotification()
 if (isCloud) useDeploymentCompatibility()
+
+const isDiffusApp = isDiffusAppAvailable()
 
 const settingStore = useSettingStore()
 const executionStore = useExecutionStore()

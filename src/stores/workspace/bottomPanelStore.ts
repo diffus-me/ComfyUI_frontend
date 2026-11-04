@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 
 import { useCommandStore } from '@/stores/commandStore'
 import type { ComfyExtension } from '@/types/comfy'
+import { isLocalhostDistribution as isLocalhost } from '@/types/distribution'
 import type { BottomPanelExtension } from '@/types/extensionTypes'
 
 type PanelType = 'terminal' | 'shortcuts'
@@ -106,6 +107,8 @@ export const useBottomPanelStore = defineStore('bottomPanel', () => {
     }
   }
   const registerBottomPanelTab = (tab: BottomPanelExtension) => {
+    if (isLocalhost && tab.disableInLocalhost) return
+
     const targetPanel = tab.targetPanel ?? 'terminal'
     const panel = panels.value[targetPanel]
 

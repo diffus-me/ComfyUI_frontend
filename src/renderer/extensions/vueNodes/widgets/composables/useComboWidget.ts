@@ -19,6 +19,10 @@ import { isComboInputSpec } from '@/schemas/nodeDef/nodeDefSchemaV2'
 import { transformInputSpecV2ToV1 } from '@/schemas/nodeDef/migration'
 import { ComponentWidgetImpl, addWidget } from '@/scripts/domWidget'
 import type { BaseDOMWidget } from '@/types/domWidget'
+import {
+  configureDiffusModelSelectorWidget,
+  isDiffusModelSelectorDeclared
+} from '@/scripts/diffusModelSelector'
 import type { ComfyWidgetConstructorV2 } from '@/types/widgetConstructor'
 import { addValueControlWidgets } from '@/core/graph/widgets/valueControlWidgets'
 import { useAssetsStore } from '@/stores/assetsStore'
@@ -236,36 +240,87 @@ const createInputMappingWidget = (
   return widget
 }
 
+function createCloudComboWidget(
+  node: LGraphNode,
+  inputSpec: ComboInputSpec
+): IBaseWidget | undefined {
+  if (!isCloud || isDiffusModelSelectorDeclared(inputSpec)) return
+  if (
+    assetService.shouldUseWidgetAssetPicker(node.comfyClass, inputSpec.name)
+  ) {
+    const cloudDefault = resolveCloudDefault(
+      node.comfyClass ?? '',
+      inputSpec.default
+    )
+    return createAssetBrowserWidget(node, inputSpec, cloudDefault)
+  }
+
+  if (NODE_MEDIA_TYPE_MAP[node.comfyClass ?? '']) {
+    return createInputMappingWidget(
+      node,
+      inputSpec,
+      resolveCloudInputDefault(node.comfyClass, inputSpec.default)
+    )
+  }
+}
+
+function configureRemoteComboWidget(
+  node: LGraphNode,
+  inputSpec: ComboInputSpec,
+  widget: IBaseWidget,
+  defaultValue: string | undefined
+): void {
+  if (!inputSpec.remote) return
+  if (!isComboWidget(widget)) {
+    throw new Error(`Expected combo widget but received ${widget.type}`)
+  }
+
+  const remoteWidget = useRemoteWidget({
+    remoteConfig: inputSpec.remote,
+    defaultValue: defaultValue ?? 'Loading...',
+    node,
+    widget
+  })
+  if (inputSpec.remote.refresh_button) remoteWidget.addRefreshButton()
+
+  registerComboWidgetInventory(widget, {
+    getStatus: remoteWidget.getInventoryStatus,
+    waitForSettled: remoteWidget.waitForInventory
+  })
+  bindDynamicValuesOption(widget, () => remoteWidget.getValue())
+}
+
+function configureComboValueControl(
+  node: LGraphNode,
+  inputSpec: ComboInputSpec,
+  widget: IBaseWidget
+): void {
+  if (!inputSpec.control_after_generate) return
+  if (!isComboWidget(widget)) {
+    throw new Error(`Expected combo widget but received ${widget.type}`)
+  }
+
+  const defaultType =
+    typeof inputSpec.control_after_generate === 'string'
+      ? inputSpec.control_after_generate
+      : 'randomize'
+  widget.linkedWidgets = addValueControlWidgets(
+    node,
+    widget,
+    defaultType,
+    undefined,
+    transformInputSpecV2ToV1(inputSpec)
+  )
+}
+
 const addComboWidget = (
   node: LGraphNode,
   inputSpec: ComboInputSpec
 ): IBaseWidget => {
   const defaultValue = getDefaultValue(inputSpec)
+  const cloudWidget = createCloudComboWidget(node, inputSpec)
+  if (cloudWidget) return cloudWidget
 
-  if (isCloud) {
-    if (
-      assetService.shouldUseWidgetAssetPicker(node.comfyClass, inputSpec.name)
-    ) {
-      // Default from cloud assets, not from server combo options.
-      // Server options list local files that may not exist in the user's
-      // cloud asset library, leading to missing-model errors on undo/reload.
-      const cloudDefault = resolveCloudDefault(
-        node.comfyClass ?? '',
-        inputSpec.default
-      )
-      return createAssetBrowserWidget(node, inputSpec, cloudDefault)
-    }
-
-    if (NODE_MEDIA_TYPE_MAP[node.comfyClass ?? '']) {
-      return createInputMappingWidget(
-        node,
-        inputSpec,
-        resolveCloudInputDefault(node.comfyClass, inputSpec.default)
-      )
-    }
-  }
-
-  // Standard combo widget
   const widget = node.addWidget(
     'combo',
     inputSpec.name,
@@ -276,43 +331,9 @@ const addComboWidget = (
     }
   )
 
-  if (inputSpec.remote) {
-    if (!isComboWidget(widget)) {
-      throw new Error(`Expected combo widget but received ${widget.type}`)
-    }
-
-    const remoteWidget = useRemoteWidget({
-      remoteConfig: inputSpec.remote,
-      defaultValue,
-      node,
-      widget
-    })
-    if (inputSpec.remote.refresh_button) remoteWidget.addRefreshButton()
-
-    registerComboWidgetInventory(widget, {
-      getStatus: remoteWidget.getInventoryStatus,
-      waitForSettled: remoteWidget.waitForInventory
-    })
-    bindDynamicValuesOption(widget, () => remoteWidget.getValue())
-  }
-
-  if (inputSpec.control_after_generate) {
-    if (!isComboWidget(widget)) {
-      throw new Error(`Expected combo widget but received ${widget.type}`)
-    }
-
-    const defaultType =
-      typeof inputSpec.control_after_generate === 'string'
-        ? inputSpec.control_after_generate
-        : 'randomize'
-    widget.linkedWidgets = addValueControlWidgets(
-      node,
-      widget,
-      defaultType,
-      undefined,
-      transformInputSpecV2ToV1(inputSpec)
-    )
-  }
+  configureDiffusModelSelectorWidget(node, widget, inputSpec)
+  configureRemoteComboWidget(node, inputSpec, widget, defaultValue)
+  configureComboValueControl(node, inputSpec, widget)
 
   return widget
 }

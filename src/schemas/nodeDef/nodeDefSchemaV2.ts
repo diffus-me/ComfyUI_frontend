@@ -37,7 +37,8 @@ const zStringInputSpec = zStringInputOptions.extend({
 const zComboInputSpec = zComboInputOptions.extend({
   type: z.literal('COMBO'),
   name: z.string(),
-  isOptional: z.boolean().optional()
+  isOptional: z.boolean().optional(),
+  model_selector: z.unknown().optional()
 })
 
 const zColorInputSpec = zBaseInputOptions.extend({

@@ -213,6 +213,7 @@ import {
   pasteVideoNode,
   pasteVideoNodes
 } from '@/composables/usePaste'
+import { checkTierForPrompt, exposeComfyUIAppToHost } from './diffusApp'
 
 export { ANIM_PREVIEW_WIDGET } from '@/composables/node/useNodeAnimatedImage'
 
@@ -1005,6 +1006,8 @@ export class ComfyApp implements IComfyApp {
       this.canvasContainer,
       this.canvas
     )
+    exposeComfyUIAppToHost(this)
+    api.dispatchCustomEvent('setupFinished')
   }
 
   private resizeCanvas(canvas: HTMLCanvasElement) {
@@ -1715,6 +1718,8 @@ export class ComfyApp implements IComfyApp {
     batchCount: number = 1,
     optionsOrQueueNodeIds: QueuePromptOptions | NodeExecutionId[] = {}
   ): Promise<boolean> {
+    checkTierForPrompt()
+
     const options = Array.isArray(optionsOrQueueNodeIds)
       ? { queueNodeIds: optionsOrQueueNodeIds }
       : optionsOrQueueNodeIds

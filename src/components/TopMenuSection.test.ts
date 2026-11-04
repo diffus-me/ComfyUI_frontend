@@ -50,6 +50,10 @@ vi.mock(import('@/platform/distribution/types'), () => ({
   isNightly: false
 }))
 
+vi.mock(import('@/types/distribution'), () => ({
+  supportsMultipleUsers: true
+}))
+
 vi.mock(import('@/composables/useFeatureFlags'))
 vi.mock(
   import('@/platform/workflow/deploy/composables/lazyDeployToComfyApiDialog'),

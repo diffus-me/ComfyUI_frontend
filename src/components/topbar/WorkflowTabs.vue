@@ -3,7 +3,7 @@
     :class="
       cn(
         'workflow-tabs-container flex h-full flex-auto flex-row gap-1 overflow-hidden bg-background px-1',
-        isDesktop ? 'max-w-[env(titlebar-area-width,100vw)]' : 'max-w-full'
+        containerMaxWidthClass
       )
     "
   >
@@ -73,7 +73,7 @@
         class="h-5 w-px shrink-0 bg-border/50"
       />
       <Button
-        v-if="isCloud || isNightly"
+        v-if="showFeedbackButton"
         :tooltip="$t('actionbar.feedbackTooltip')"
         variant="muted-textonly"
         size="icon"
@@ -83,20 +83,24 @@
       >
         <i class="icon-[lucide--megaphone] size-4" />
       </Button>
-      <CurrentUserButton v-if="showCurrentUser" compact class="shrink-0 p-1" />
-      <LoginButton v-else class="p-1" />
-      <template v-if="showAgentEntry">
-        <div
-          data-testid="agent-entry-separator"
-          class="h-5 w-px shrink-0 bg-border/50"
-        />
-        <AgentEntryButton
-          :active="agentPanelStore.isVisible"
-          :inviting="!agentPanelStore.hasEverOpened"
-          :comfy-agent="comfyAgentNotReady"
-          @click="onAgentEntryClick"
-        />
-      </template>
+      <component
+        :is="accountControl.component"
+        v-if="accountControl"
+        v-bind="accountControl.props"
+        :class="accountControl.class"
+      />
+      <component
+        :is="agentSeparatorComponent"
+        data-testid="agent-entry-separator"
+        class="h-5 w-px shrink-0 bg-border/50"
+      />
+      <component
+        :is="agentEntryComponent"
+        :active="agentPanelStore.isVisible"
+        :inviting="!agentPanelStore.hasEverOpened"
+        :comfy-agent="comfyAgentNotReady"
+        @click="onAgentEntryClick"
+      />
     </div>
     <div v-else class="ml-auto flex h-full shrink-0 items-center">
       <TopbarBadges />
@@ -139,6 +143,7 @@ import { useTopbarBadgeStore } from '@/stores/topbarBadgeStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { useAgentConsent } from '@/workbench/extensions/agent/composables/agent/useAgentConsent'
 import { useAgentPanelStore } from '@/workbench/extensions/agent/stores/agent/agentPanelStore'
+import { supportsMultipleUsers as enableMultipleUsers } from '@/types/distribution'
 
 import WorkflowOverflowMenu from './WorkflowOverflowMenu.vue'
 
@@ -171,6 +176,12 @@ const showAgentEntry = computed(
   () =>
     (agentPanelStore.enabled || comfyAgentNotReady.value !== undefined) &&
     !(agentPanelStore.isOpen && isChecking.value)
+)
+const agentEntryComponent = computed(() =>
+  showAgentEntry.value ? AgentEntryButton : undefined
+)
+const agentSeparatorComponent = computed(() =>
+  showAgentEntry.value ? 'div' : undefined
 )
 
 async function onAgentEntryClick(): Promise<void> {
@@ -208,8 +219,23 @@ useWorkflowStatusDismissal()
 const isIntegratedTabBar = computed(
   () => settingStore.get('Comfy.UI.TabBarLayout') !== 'Legacy'
 )
-const showCurrentUser = computed(() => isCloud || isLoggedIn.value)
-
+const containerMaxWidthClass = isDesktop
+  ? 'max-w-[env(titlebar-area-width,100vw)]'
+  : 'max-w-full'
+const showFeedbackButton = isCloud || isNightly
+const showCurrentUser = computed(
+  () => enableMultipleUsers && (isCloud || isLoggedIn.value)
+)
+const accountControl = computed(() => {
+  if (!enableMultipleUsers) return undefined
+  return showCurrentUser.value
+    ? {
+        component: CurrentUserButton,
+        props: { compact: true },
+        class: 'shrink-0 p-1'
+      }
+    : { component: LoginButton, props: {}, class: 'p-1' }
+})
 function openFeedback() {
   openFeedbackDialog('topbar')
 }

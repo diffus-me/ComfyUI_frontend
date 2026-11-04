@@ -10,7 +10,8 @@ export function useLogsTerminalTab(): BottomPanelExtension {
     title: 'Logs',
     titleKey: 'g.logs',
     component: markRaw(LogsTerminal),
-    type: 'vue'
+    type: 'vue',
+    disableInLocalhost: true
   }
 }
 
@@ -20,6 +21,7 @@ export function useCommandTerminalTab(): BottomPanelExtension {
     title: 'Terminal',
     titleKey: 'g.terminal',
     component: markRaw(CommandTerminal),
-    type: 'vue'
+    type: 'vue',
+    disableInLocalhost: true
   }
 }

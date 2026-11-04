@@ -69,6 +69,10 @@ import {
   copyToClipspace,
   pasteFromClipspace
 } from '@/scripts/clipspace'
+import {
+  configureDiffusModelSelectorWidget,
+  getDiffusModelSelectorSpec
+} from '@/scripts/diffusModelSelector'
 import { $el } from '@/scripts/ui/utils'
 import { useExecutionStore } from '@/stores/executionStore'
 import { useNodeOutputStore } from '@/stores/nodeOutputStore'
@@ -464,12 +468,27 @@ export const useLitegraphService = () => {
         widgetId: WidgetId,
         sourceWidget: Readonly<IBaseWidget>
       ): IBaseWidget | undefined {
-        return createPromotedMultilineWidget({
+        const multilineWidget = createPromotedMultilineWidget({
           subgraphNode: this,
           input,
           widgetId,
           sourceWidget
         })
+        if (multilineWidget) return multilineWidget
+
+        const inputSpec = getDiffusModelSelectorSpec(sourceWidget)
+        if (!inputSpec) return
+
+        const widget = toConcreteWidget(
+          this.createPromotedWidgetProjection(input, widgetId),
+          this,
+          false
+        )
+        if (!widget || widget.type !== 'combo') return
+
+        widget.bindRegisteredState(this.id)
+        configureDiffusModelSelectorWidget(this, widget, inputSpec)
+        return widget
       }
 
       /**

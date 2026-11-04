@@ -3,6 +3,7 @@ import type {
   ModelFile
 } from '@/platform/workflow/validation/schemas/workflowSchema'
 import { getComboWidgetInventory } from '@/core/graph/widgets/comboWidgetInventory'
+import type { ComboWidgetInventory } from '@/core/graph/widgets/comboWidgetInventory'
 import type { FlattenableWorkflowGraph } from '@/platform/workflow/core/utils/workflowFlattening'
 import { flattenWorkflowNodes } from '@/platform/workflow/core/utils/workflowFlattening'
 import {
@@ -11,6 +12,12 @@ import {
   isNodeAndAncestorsActive
 } from '@/platform/workflow/core/utils/modelRequirements'
 import type { MissingModelCandidate } from './types'
+import {
+  getModelFilename,
+  getModelWidgetReference,
+  modelWidgetReferenceKey,
+  normalizeModelPath
+} from './missingModelUtils'
 import { getAssetFilename } from '@/platform/assets/utils/assetMetadataUtils'
 import type { AssetItem } from '@/platform/assets/schemas/assetSchema'
 import {
@@ -43,7 +50,13 @@ export type MissingModelWorkflowData = FlattenableWorkflowGraph & {
   models?: ModelFile[]
 }
 
+type ModelDirectoryResolver = (
+  nodeType: string,
+  widgetName: string
+) => string | undefined
+
 type DeferredVerification = (
+  candidate: MissingModelCandidate,
   signal?: AbortSignal
 ) => Promise<boolean | undefined>
 
@@ -64,11 +77,18 @@ const pendingVerifications = new WeakMap<
   MissingModelCandidate,
   DeferredVerification
 >()
+const candidateModelVerifications = new WeakSet<MissingModelCandidate>()
 
 export function hasPendingVerification(
   candidate: MissingModelCandidate
 ): boolean {
   return pendingVerifications.has(candidate)
+}
+
+export function shouldVerifyCandidateModel(
+  candidate: MissingModelCandidate
+): boolean {
+  return candidateModelVerifications.has(candidate)
 }
 
 function copyCandidate(
@@ -78,6 +98,9 @@ function copyCandidate(
   const copy = { ...candidate, ...overrides }
   const verify = pendingVerifications.get(candidate)
   if (verify) pendingVerifications.set(copy, verify)
+  if (candidateModelVerifications.has(candidate)) {
+    candidateModelVerifications.add(copy)
+  }
   return copy
 }
 
@@ -168,7 +191,7 @@ export function isModelFileName(name: string): boolean {
 export function scanAllModelCandidates(
   rootGraph: LGraph,
   isAssetSupported: (nodeType: string, widgetName: string) => boolean,
-  getDirectory?: (nodeType: string) => string | undefined,
+  getDirectory?: ModelDirectoryResolver,
   releaseModelOptions?: ReleaseModelOptions
 ): MissingModelCandidate[] {
   const allNodes = collectAllNodes(rootGraph)
@@ -196,7 +219,7 @@ export function scanNodeModelCandidates(
   rootGraph: LGraph,
   node: LGraphNode,
   isAssetSupported: (nodeType: string, widgetName: string) => boolean,
-  getDirectory?: (nodeType: string) => string | undefined,
+  getDirectory?: ModelDirectoryResolver,
   releaseModelOptions?: ReleaseModelOptions
 ): MissingModelCandidate[] {
   const isSubgraphNode =
@@ -332,7 +355,7 @@ function deferToReleaseOptions(
   releaseModelOptions: ReleaseModelOptions | undefined
 ): void {
   if (!releaseModelOptions) return
-  pendingVerifications.set(candidate, async (signal) => {
+  pendingVerifications.set(candidate, async (_candidate, signal) => {
     const options = await releaseModelOptions(
       target.nodeType,
       target.definitionWidgetName,
@@ -344,7 +367,7 @@ function deferToReleaseOptions(
 
 function scanAssetWidget(
   target: ModelWidgetScanTarget & { definitionWidget: IAssetWidget },
-  getDirectory: ((nodeType: string) => string | undefined) | undefined,
+  getDirectory: ModelDirectoryResolver | undefined,
   releaseModelOptions: ReleaseModelOptions | undefined
 ): MissingModelCandidate | null {
   const value = target.valueWidget.value
@@ -360,22 +383,173 @@ function scanAssetWidget(
     widgetName: target.candidateWidgetName,
     isAssetSupported: true,
     name: value,
-    directory: getDirectory?.(target.nodeType),
+    directory: getDirectory?.(target.nodeType, target.definitionWidgetName),
     isMissing: undefined
   }
   deferToReleaseOptions(candidate, target, releaseModelOptions)
   return candidate
 }
 
+function findMatchingComboValue(
+  widget: IComboWidget,
+  value: string
+): string | undefined {
+  const options = resolveComboValues(widget).filter(
+    (option): option is string => typeof option === 'string'
+  )
+  const normalizedValue = normalizeModelPath(value)
+  const exactMatch = options.find(
+    (option) => normalizeModelPath(option) === normalizedValue
+  )
+  if (exactMatch !== undefined) return exactMatch
+  if (normalizedValue.includes('/')) return
+
+  const filenameMatches = options.filter(
+    (option) => getModelFilename(option) === normalizedValue
+  )
+  return filenameMatches.length === 1 ? filenameMatches[0] : undefined
+}
+
+type ModelWidgetReference = NonNullable<
+  ReturnType<typeof getModelWidgetReference>
+>
+
+function getComboModelReference(
+  target: ModelWidgetScanTarget
+): ModelWidgetReference | undefined {
+  const reference = getModelWidgetReference(target.valueWidget.value)
+  return reference?.name.trim() && isModelFileName(reference.name)
+    ? reference
+    : undefined
+}
+
+function resolveSettledComboMatch(
+  target: ModelWidgetScanTarget & { definitionWidget: IComboWidget },
+  widgetValue: unknown,
+  reference: ModelWidgetReference,
+  candidate: MissingModelCandidate,
+  matchedValue: string | undefined,
+  nodeIsAssetSupported: boolean
+): boolean | undefined {
+  if (matchedValue === undefined) {
+    if (nodeIsAssetSupported) {
+      candidateModelVerifications.add(candidate)
+      return
+    }
+    return true
+  }
+
+  candidate.name = matchedValue
+  if (reference.modelInfo) return true
+  if (matchedValue !== reference.name) {
+    if (typeof widgetValue === 'string') {
+      target.valueWidget.value = matchedValue
+    }
+    return false
+  }
+  return nodeIsAssetSupported ? undefined : false
+}
+
+async function verifyComboInventory(
+  target: ModelWidgetScanTarget & { definitionWidget: IComboWidget },
+  reference: ModelWidgetReference,
+  candidate: MissingModelCandidate,
+  inventory: ComboWidgetInventory,
+  nodeIsAssetSupported: boolean,
+  signal?: AbortSignal
+): Promise<boolean | undefined> {
+  await untilSettledOrAborted(inventory.waitForSettled(signal), signal)
+  if (signal?.aborted || inventory.getStatus() !== 'ready') return
+
+  const widgetValue = target.valueWidget.value
+  const currentReference = getModelWidgetReference(widgetValue)
+  if (
+    !currentReference ||
+    modelWidgetReferenceKey(currentReference) !==
+      modelWidgetReferenceKey(reference)
+  ) {
+    return
+  }
+
+  return resolveSettledComboMatch(
+    target,
+    widgetValue,
+    currentReference,
+    candidate,
+    findMatchingComboValue(target.definitionWidget, currentReference.name),
+    nodeIsAssetSupported
+  )
+}
+
+function deferComboInventoryVerification(
+  target: ModelWidgetScanTarget & { definitionWidget: IComboWidget },
+  reference: ModelWidgetReference,
+  candidate: MissingModelCandidate,
+  inventory: ComboWidgetInventory,
+  nodeIsAssetSupported: boolean
+): void {
+  pendingVerifications.set(candidate, (verifyingCandidate, signal) =>
+    verifyComboInventory(
+      target,
+      reference,
+      verifyingCandidate,
+      inventory,
+      nodeIsAssetSupported,
+      signal
+    )
+  )
+}
+
+function resolveReadyComboCandidate(
+  target: ModelWidgetScanTarget & { definitionWidget: IComboWidget },
+  widgetValue: unknown,
+  reference: ModelWidgetReference,
+  candidate: MissingModelCandidate,
+  matchedValue: string | undefined,
+  nodeIsAssetSupported: boolean
+): void {
+  if (matchedValue === undefined) {
+    if (nodeIsAssetSupported) candidateModelVerifications.add(candidate)
+    else candidate.isMissing = true
+    return
+  }
+
+  if (reference.modelInfo) {
+    candidate.isMissing = true
+    return
+  }
+  if (matchedValue !== reference.name) {
+    if (typeof widgetValue === 'string') {
+      target.valueWidget.value = matchedValue
+    }
+    candidate.isMissing = false
+  } else if (!nodeIsAssetSupported) {
+    candidate.isMissing = false
+  }
+}
+
+function shouldDeferComboToRelease(
+  nodeIsAssetSupported: boolean,
+  releaseModelOptions: ReleaseModelOptions | undefined,
+  reference: ModelWidgetReference
+): releaseModelOptions is ReleaseModelOptions {
+  return Boolean(
+    nodeIsAssetSupported && releaseModelOptions && !reference.modelInfo
+  )
+}
+
 function scanComboWidget(
   target: ModelWidgetScanTarget & { definitionWidget: IComboWidget },
   isAssetSupported: (nodeType: string, widgetName: string) => boolean,
-  getDirectory: ((nodeType: string) => string | undefined) | undefined,
+  getDirectory: ModelDirectoryResolver | undefined,
   releaseModelOptions: ReleaseModelOptions | undefined
 ): MissingModelCandidate | null {
-  const value = target.valueWidget.value
-  if (typeof value !== 'string' || !value.trim()) return null
-  if (!isModelFileName(value)) return null
+  const reference = getComboModelReference(target)
+  if (!reference) return null
+  const widgetValue = target.valueWidget.value
+  const value = reference.name
+
+  const matchedValue = findMatchingComboValue(target.definitionWidget, value)
 
   const nodeIsAssetSupported = isAssetSupported(
     target.nodeType,
@@ -389,31 +563,42 @@ function scanComboWidget(
     nodeType: target.nodeType,
     widgetName: target.candidateWidgetName,
     isAssetSupported: nodeIsAssetSupported,
-    name: value,
-    directory: getDirectory?.(target.nodeType),
+    name: matchedValue ?? value,
+    ...(reference.modelInfo && { modelInfo: reference.modelInfo }),
+    directory: getDirectory?.(target.nodeType, target.definitionWidgetName),
     isMissing: undefined
   }
-  if (nodeIsAssetSupported) {
+  if (
+    shouldDeferComboToRelease(
+      nodeIsAssetSupported,
+      releaseModelOptions,
+      reference
+    )
+  ) {
     deferToReleaseOptions(candidate, target, releaseModelOptions)
     return candidate
   }
 
-  const isAbsentFromOptions = () =>
-    !resolveComboValues(target.definitionWidget).includes(value)
   const inventory = getComboWidgetInventory(target.definitionWidget)
   if (inventory && inventory.getStatus() !== 'ready') {
-    pendingVerifications.set(candidate, async (signal) => {
-      await untilSettledOrAborted(inventory.waitForSettled(signal), signal)
-      if (signal?.aborted || inventory.getStatus() !== 'ready') {
-        return undefined
-      }
-      if (target.valueWidget.value !== value) return undefined
-      return isAbsentFromOptions()
-    })
+    deferComboInventoryVerification(
+      target,
+      reference,
+      candidate,
+      inventory,
+      nodeIsAssetSupported
+    )
     return candidate
   }
 
-  candidate.isMissing = isAbsentFromOptions()
+  resolveReadyComboCandidate(
+    target,
+    widgetValue,
+    reference,
+    candidate,
+    matchedValue,
+    nodeIsAssetSupported
+  )
   return candidate
 }
 
@@ -505,7 +690,7 @@ function collectEmbeddedModels(
   return result
 }
 
-export async function verifyAssetSupportedCandidates(
+export async function verifyPendingModelCandidates(
   candidates: MissingModelCandidate[],
   signal?: AbortSignal
 ): Promise<void> {
@@ -516,10 +701,17 @@ export async function verifyAssetSupportedCandidates(
       const verify = pendingVerifications.get(candidate)
       if (!verify) return
       pendingVerifications.delete(candidate)
-      const isMissing = await verify(signal)
+      const isMissing = await verify(candidate, signal)
       if (!signal?.aborted) candidate.isMissing = isMissing
     })
   )
+}
+
+export async function verifyAssetSupportedCandidates(
+  candidates: MissingModelCandidate[],
+  signal?: AbortSignal
+): Promise<void> {
+  await verifyPendingModelCandidates(candidates, signal)
 
   if (signal?.aborted) return
 

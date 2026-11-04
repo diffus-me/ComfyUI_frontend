@@ -7,6 +7,7 @@ export interface MissingModelPipelineResult {
   missingModels: ModelFile[]
   confirmedCandidates: MissingModelCandidate[]
 }
+import type { CandidateModelInfo } from '@/platform/workflowErrors/missingModel/candidateModelsSchema'
 
 /**
  * A single (node, widget, model) binding detected by the missing model pipeline.
@@ -23,6 +24,7 @@ export interface MissingModelCandidate {
   isAssetSupported: boolean
 
   name: string
+  modelInfo?: CandidateModelInfo
   directory?: string
   url?: string
   hash?: string

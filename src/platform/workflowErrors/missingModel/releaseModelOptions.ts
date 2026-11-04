@@ -1,10 +1,24 @@
 import { isCloud } from '@/platform/distribution/types'
+import { resolveCandidateModelDirectory } from '@/platform/workflowErrors/missingModel/candidateModelsSchema'
+import type { CandidateModelDirectory } from '@/platform/workflowErrors/missingModel/candidateModelsSchema'
 import type { ReleaseModelOptions } from '@/platform/workflowErrors/missingModel/missingModelScan'
 import { DEPLOYMENT_LISTING_BACKSTOP_MS } from '@/platform/workspace/api/deploymentListingTimeouts'
 import { couldBootOnDeployment } from '@/platform/workspace/composables/waitForDeploymentPick'
 import { useDeploymentPickStore } from '@/platform/workspace/stores/deploymentPickStore'
 import { isComboInputSpec } from '@/schemas/nodeDef/nodeDefSchemaV2'
+import { useModelToNodeStore } from '@/stores/modelToNodeStore'
 import { useNodeDefStore } from '@/stores/nodeDefStore'
+
+export function resolveModelDirectory(
+  nodeType: string,
+  widgetName: string
+): CandidateModelDirectory | string | undefined {
+  const input = useNodeDefStore().getNodeDefByName(nodeType)?.inputs[widgetName]
+  return (
+    resolveCandidateModelDirectory(input) ??
+    useModelToNodeStore().getCategoryForNodeType(nodeType)
+  )
+}
 
 /**
  * A loader input's model options in the node catalog this page booted with,

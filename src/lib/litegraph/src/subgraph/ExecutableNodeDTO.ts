@@ -1,6 +1,7 @@
 import type {
   LGraph,
   LGraphNode,
+  LLink,
   Subgraph,
   SubgraphNode
 } from '@/lib/litegraph/src/types/entityRegistry'
@@ -39,7 +40,11 @@ type ResolvedInput = {
   /** The slot index of the output on the node that the link originates from. `-1` when widget value is set. */
   origin_slot: number
   /** Boxed widget value (e.g. for widgets). If this box is `undefined`, then an input link is connected, and widget values from the subgraph node are ignored. */
-  widgetInfo?: { value: unknown }
+  widgetInfo?: {
+    value: unknown
+    widget?: NonNullable<LGraphNode['widgets']>[number]
+    widgetNode?: LGraphNode
+  }
 }
 
 /**
@@ -181,53 +186,14 @@ export class ExecutableNodeDTO implements ExecutableLGraphNode {
         `No link found in parent graph for id [${this.id}] slot [${slot}] ${input.name}`
       )
 
-    const { subgraphNode } = this
-
     // Link goes up and out of this subgraph
-    if (subgraphNode && link.originIsIoNode) {
-      const subgraphNodeInput = subgraphNode.inputs.at(link.origin_slot)
-      if (!subgraphNodeInput)
-        throw new SlotIndexError(
-          `No input found for slot [${link.origin_slot}] ${input.name}`
-        )
-
-      if (!subgraphNode.graph)
-        throw new NullGraphError(
-          `SubgraphNode ${subgraphNode.id} has no graph during input resolution`
-        )
-      // Nothing connected
-      const linkId =
-        inputLinkId(subgraphNode.graph, subgraphNode.id, link.origin_slot) ??
-        null
-      if (linkId === null) {
-        const id = subgraphNodeInput.widgetId
-        if (!id) return
-
-        return {
-          node: this,
-          origin_id: this.id,
-          origin_slot: -1,
-          widgetInfo: { value: useWidgetValueStore().getWidget(id)?.value }
-        }
-      }
-
-      const outerLink = subgraphNode.graph.getLink(linkId)
-      if (!outerLink)
-        throw new InvalidLinkError(
-          `No outer link found for slot [${link.origin_slot}] ${input.name}`
-        )
-
-      const subgraphNodeExecutionId: ExecutionId =
-        this.subgraphNodePath.join(':')
-      const subgraphNodeDto = this.nodesByExecutionId.get(
-        subgraphNodeExecutionId
+    if (this.subgraphNode && link.originIsIoNode) {
+      return this._resolveSubgraphInput(
+        this.subgraphNode,
+        link,
+        input.name,
+        visited
       )
-      if (!subgraphNodeDto)
-        throw new Error(
-          `No subgraph node DTO found for id [${subgraphNodeExecutionId}]`
-        )
-
-      return subgraphNodeDto.resolveInput(outerLink.target_slot, visited)
     }
 
     // Not part of a subgraph; use the original link
@@ -252,6 +218,55 @@ export class ExecutableNodeDTO implements ExecutableLGraphNode {
       type ?? input.type,
       visited
     )
+  }
+
+  private _resolveSubgraphInput(
+    subgraphNode: SubgraphNode,
+    link: LLink,
+    inputName: string,
+    visited: Set<string>
+  ): ResolvedInput | undefined {
+    const subgraphNodeInput = subgraphNode.inputs.at(link.origin_slot)
+    if (!subgraphNodeInput)
+      throw new SlotIndexError(
+        `No input found for slot [${link.origin_slot}] ${inputName}`
+      )
+
+    if (!subgraphNode.graph)
+      throw new NullGraphError(
+        `SubgraphNode ${subgraphNode.id} has no graph during input resolution`
+      )
+    const linkId =
+      inputLinkId(subgraphNode.graph, subgraphNode.id, link.origin_slot) ?? null
+    if (linkId === null) {
+      const id = subgraphNodeInput.widgetId
+      if (!id) return
+      return {
+        node: this,
+        origin_id: this.id,
+        origin_slot: -1,
+        widgetInfo: {
+          value: useWidgetValueStore().getWidget(id)?.value,
+          widget: subgraphNode.getWidgetFromSlot(subgraphNodeInput),
+          widgetNode: subgraphNode
+        }
+      }
+    }
+
+    const outerLink = subgraphNode.graph.getLink(linkId)
+    if (!outerLink)
+      throw new InvalidLinkError(
+        `No outer link found for slot [${link.origin_slot}] ${inputName}`
+      )
+
+    const subgraphNodeExecutionId: ExecutionId = this.subgraphNodePath.join(':')
+    const subgraphNodeDto = this.nodesByExecutionId.get(subgraphNodeExecutionId)
+    if (!subgraphNodeDto)
+      throw new Error(
+        `No subgraph node DTO found for id [${subgraphNodeExecutionId}]`
+      )
+
+    return subgraphNodeDto.resolveInput(outerLink.target_slot, visited)
   }
 
   /**

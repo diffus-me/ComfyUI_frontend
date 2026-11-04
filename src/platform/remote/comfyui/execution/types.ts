@@ -119,6 +119,31 @@ export interface LogsRawResponse {
   size: TerminalSize
   entries: LogEntry[]
 }
+interface SubscriptionConsumption {
+  credit_consumption?: number | null
+  discount?: number | null
+  machine_time_consumption?: number | null
+  gpu_acceleration_time_consumption?: number | null
+}
+export interface FinishedWsMessage {
+  node: null
+  prompt_id: JobId
+  subscription_consumption: SubscriptionConsumption | null
+  used_time: number
+}
+export interface MonitorErrorWsMessage {
+  node: null
+  prompt_id: JobId
+  used_time: number
+  message: {
+    need_upgrade: boolean
+    reason?: string
+  }
+}
+export interface InputClearedWsMessage {
+  node: null
+  user_id: string
+}
 export type FeatureFlagsWsMessage = Record<string, unknown>
 /** ComfyUI's `agent` server feature, pushed again on every change. */
 export interface AgentStatusWsMessage {

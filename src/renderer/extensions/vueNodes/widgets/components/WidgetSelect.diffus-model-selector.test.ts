@@ -1,5 +1,6 @@
 import { getActivePinia } from 'pinia'
 import { render, screen } from '@testing-library/vue'
+import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createI18n } from 'vue-i18n'
 
@@ -10,7 +11,14 @@ import { createMockWidget } from '@/renderer/extensions/vueNodes/widgets/compone
 const i18n = createI18n({
   legacy: false,
   locale: 'en',
-  messages: { en: {} }
+  messages: {
+    en: {
+      g: {
+        noResultsFound: 'No results found',
+        search: 'Search'
+      }
+    }
+  }
 })
 
 const stubs = {
@@ -70,11 +78,49 @@ describe('WidgetSelect Diffus model selector routing', () => {
     expect(screen.queryByTestId('default-selector')).not.toBeInTheDocument()
   })
 
-  it('keeps the title-aware selector when the bridge is unavailable', () => {
-    renderWidget()
+  it('falls back to the searchable combo when the bridge is unavailable', async () => {
+    const user = userEvent.setup()
+    render(WidgetSelect, {
+      props: {
+        widget: createMockWidget<string | undefined>({
+          name: 'ckpt_name',
+          type: 'combo',
+          value: 'current.safetensors',
+          options: {
+            values: [
+              'alpha.safetensors',
+              'bravo.safetensors',
+              'charlie.safetensors',
+              'delta.safetensors',
+              'echo.safetensors'
+            ]
+          },
+          spec: {
+            type: 'COMBO',
+            name: 'ckpt_name',
+            model_selector: { model_types: ['checkpoints'] }
+          }
+        }),
+        modelValue: 'current.safetensors'
+      },
+      global: {
+        plugins: [getActivePinia()!, i18n],
+        stubs: {
+          WidgetDiffusModelSelector: stubs.WidgetDiffusModelSelector,
+          WidgetSelectDropdown: stubs.WidgetSelectDropdown,
+          WidgetWithControl: stubs.WidgetWithControl,
+          WidgetLayoutField: {
+            template: '<div><slot /></div>'
+          }
+        }
+      }
+    })
 
-    expect(screen.getByTestId('diffus-model-selector')).toBeInTheDocument()
-    expect(screen.queryByTestId('default-selector')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('combobox', { name: 'ckpt_name' }))
+
+    expect(
+      await screen.findByRole('combobox', { name: 'Search' })
+    ).toBeVisible()
   })
 
   it('displays the selected Gallery title', () => {

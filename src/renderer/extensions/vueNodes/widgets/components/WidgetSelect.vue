@@ -37,7 +37,7 @@ import type { LayoutMode } from '@/renderer/extensions/vueNodes/widgets/componen
 import type { ResultItemType } from '@/schemas/resultItemTypeSchema'
 import { isComboInputSpec } from '@/schemas/nodeDef/nodeDefSchemaV2'
 import type { ComboInputSpec } from '@/schemas/nodeDef/nodeDefSchemaV2'
-import { isDiffusModelSelectorDeclared } from '@/scripts/diffusModelSelector'
+import { isDiffusModelSelectorActive } from '@/scripts/diffusModelSelector'
 import type {
   SimplifiedControlWidget,
   SimplifiedWidget,
@@ -62,7 +62,7 @@ const comboSpec = computed<ComboInputSpec | undefined>(() => {
 })
 
 const isDiffusSelector = computed(() =>
-  isDiffusModelSelectorDeclared(props.widget.spec)
+  isDiffusModelSelectorActive(props.widget.spec)
 )
 
 const specDescriptor = computed<{

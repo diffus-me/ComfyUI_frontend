@@ -2,9 +2,9 @@
 set -euo pipefail
 
 echo "Starting build process for ComfyUI frontend..."
-node_dir='node-v26.8.2-linux-x64'
+node_dir='node-v26.13.0-linux-x64'
 export PATH="/opt/${node_dir}/bin:${PATH}"
-npm install -g pnpm@11.13.1
+npm install -g pnpm
 
 pnpm install
 pnpm run build

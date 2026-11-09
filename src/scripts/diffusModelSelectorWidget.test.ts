@@ -1,6 +1,7 @@
 import { fromPartial } from '@total-typescript/shoehorn'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest'
 
+import { contextMenuFilterExtension } from '@/extensions/core/contextMenuFilter'
 import { LGraph, LGraphNode, LiteGraph } from '@/lib/litegraph/src/litegraph'
 import { createTestSubgraph } from '@/lib/litegraph/src/subgraph/__fixtures__/subgraphHelpers'
 import type { WidgetEventOptions } from '@/lib/litegraph/src/widgets/BaseWidget'
@@ -13,6 +14,7 @@ import {
   getModelSelectorDisplayValue
 } from '@/scripts/diffusModelSelector'
 import { useLitegraphService } from '@/services/litegraphService'
+import type { ComfyApp } from '@/types/comfy'
 
 vi.mock(import('@/scripts/app'))
 
@@ -44,7 +46,7 @@ afterEach(() => {
 })
 
 describe('Diffus model selector Canvas integration', () => {
-  function createWidget() {
+  function createWidget(values = ['original.safetensors']) {
     const graph = new LGraph()
     const node = new LGraphNode('CheckpointLoaderSimple')
     node.serialize_widgets = true
@@ -54,7 +56,7 @@ describe('Diffus model selector Canvas integration', () => {
       'ckpt_name',
       'original.safetensors',
       () => {},
-      { values: ['original.safetensors'] }
+      { values }
     )
     configureDiffusModelSelectorWidget(node, widget, spec)
     const concreteWidget = toConcreteWidget(widget, node, false)
@@ -176,6 +178,41 @@ describe('Diffus model selector Canvas integration', () => {
     widget.value = result
 
     expect(openModelSelector).not.toHaveBeenCalled()
+  })
+
+  it('keeps the Canvas combo search when the bridge is unavailable', async () => {
+    window.diffusApp = {
+      featurePermissions: {
+        checkTierForComfyUI: vi.fn(),
+        openUpgradeDialogByReason: vi.fn(),
+        openComfyUIRewardBundleDialog: vi.fn(() => false)
+      }
+    }
+    const originalContextMenu = LiteGraph.ContextMenu
+    await contextMenuFilterExtension.init?.(fromPartial<ComfyApp>({}))
+    onTestFinished(() => {
+      LiteGraph.closeAllContextMenus(window)
+      LiteGraph.ContextMenu = originalContextMenu
+    })
+    const { node, widget } = createWidget([
+      'alpha.safetensors',
+      'bravo.safetensors',
+      'charlie.safetensors',
+      'delta.safetensors',
+      'echo.safetensors'
+    ])
+
+    widget.onClick(
+      fromPartial<WidgetEventOptions>({
+        node,
+        canvas: { graph_mouse: [0, 0], ds: { scale: 1 } },
+        e: { canvasX: 100 }
+      })
+    )
+
+    expect(document.querySelector('.comfy-context-menu-filter')).toBeInstanceOf(
+      HTMLInputElement
+    )
   })
 })
 

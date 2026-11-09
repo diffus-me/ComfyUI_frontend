@@ -343,7 +343,13 @@ export function configureDiffusModelSelectorWidget(
 
   modelWidget.onClick = (options) => {
     if (!isDiffusModelSelectorActive(spec)) {
-      standardOnClick(options)
+      const getOptionLabel = modelWidget.options.getOptionLabel
+      modelWidget.options.getOptionLabel = undefined
+      try {
+        standardOnClick(options)
+      } finally {
+        modelWidget.options.getOptionLabel = getOptionLabel
+      }
       return
     }
 
